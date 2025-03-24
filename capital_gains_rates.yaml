@@ -1,0 +1,28 @@
+- Tax Rate: 0%
+  Filing Status: single married filing separately;
+  From ($): 0
+  To ($): 47025
+- Tax Rate: 0%
+  Filing Status: married filing jointly qualifying surviving spouse;
+  From ($): 0
+  To ($): 94050
+- Tax Rate: 0%
+  Filing Status: head of household
+  From ($): 0
+  To ($): 63000
+- Tax Rate: 15%
+  Filing Status: single;
+  From ($): 47025
+  To ($): 518900
+- Tax Rate: 15%
+  Filing Status: married filing separately;
+  From ($): 47025
+  To ($): 291850
+- Tax Rate: 15%
+  Filing Status: married filing jointly qualifying surviving spouse;
+  From ($): 94050
+  To ($): 583750
+- Tax Rate: 15%
+  Filing Status: head of household
+  From ($): 63000
+  To ($): 551350
