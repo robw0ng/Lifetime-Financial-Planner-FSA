@@ -39,18 +39,21 @@ function BasicInformation({ scenario }) {
 }
 
 function CashBalance({scenario}){
-    const cashInvestment = 0;
-    if (scenario.investments.length > 0){
-        cashInvestment = scenario.investments?.find(investment => investment.type === "cash");
-    }
+  let cashInvestment = 0;
 
-    return (
-        <section className={styles.cashSection}>
-          <h2 className={styles.sectionTitle}>
-            Account Balance: {cashInvestment ? cashInvestment.balance : "N/A"}
-          </h2>
-        </section>
-    );
+  scenario.investments.forEach(investment => {
+    if (investment.type === 'cash') {
+      cashInvestment = investment.value;
+    }
+  });
+
+  return (
+      <section className={styles.cashSection}>
+        <h2 className={styles.sectionTitle}>
+          Account Balance: {cashInvestment}
+        </h2>
+      </section>
+  );
 }
 
 function ScenarioInfo({ scenario }){

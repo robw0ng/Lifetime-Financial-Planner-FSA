@@ -23,8 +23,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 //TODO: routing goes here
-const scenarioController = require("./controllers/scenario");
-app.use("/scenarios", scenarioController);
+// const scenarioController = require("./controllers/scenario");
+// app.use("/scenarios", scenarioController);
 
 // listening
 app.listen(8000, () => {
