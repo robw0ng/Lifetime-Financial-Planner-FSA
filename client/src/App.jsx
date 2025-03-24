@@ -1,35 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AuthProvider, useAuth } from './AuthContext';
+import { SelectedProvider } from './SelectedContext';
+import NavigationBar from './NavigationBar';
+import Home from './Home';
+import Scenarios from './Scenarios';
+import Investments from './Investments';
+import EventSeries from './EventSeries';
+import Simulations from './Simulations';
+import LoginPage from './LoginPage';
+import ProtectedRoute from './ProtectedRoute';
 
-function App() {
-  const [count, setCount] = useState(0)
+const AppContent = () => {
+  const { user } = useAuth();
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      {/* Only show NavigationBar if the user is logged in */}
+      {user && <NavigationBar />}
+
+      <Routes>
+        {/* Public Route */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Protected Routes */}
+        <Route path="/" element={<ProtectedRoute element={<Home />} />} />
+        <Route path="/scenarios" element={<ProtectedRoute element={<Scenarios />} />} />
+        <Route path="/investments" element={<ProtectedRoute element={<Investments />} />} />
+        <Route path="/eventseries" element={<ProtectedRoute element={<EventSeries />} />} />
+        <Route path="/simulations" element={<ProtectedRoute element={<Simulations />} />} />
+      </Routes>
+    </Router>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <SelectedProvider>
+        <AppContent />
+      </SelectedProvider>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
