@@ -10,6 +10,7 @@ import EventSeries from './EventSeries';
 import Simulations from './Simulations';
 import LoginPage from './LoginPage';
 import ProtectedRoute from './ProtectedRoute';
+import CreateScenario from './CreateScenario';
 
 const AppContent = () => {
   const { user } = useAuth();
@@ -29,6 +30,9 @@ const AppContent = () => {
         <Route path="/investments" element={<ProtectedRoute element={<Investments />} />} />
         <Route path="/eventseries" element={<ProtectedRoute element={<EventSeries />} />} />
         <Route path="/simulations" element={<ProtectedRoute element={<Simulations />} />} />
+
+        <Route path="/create-scenario" element={<ProtectedRoute element={<CreateScenario />} />} />
+
       </Routes>
     </Router>
   );
