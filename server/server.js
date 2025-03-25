@@ -17,6 +17,7 @@ app.use(
 		secret: process.env.SESSION_SECRET,
 		resave: false,
 		saveUninitialized: true,
+		cookie: { httpOnly: true, secure: false },
 	})
 );
 app.use(passport.initialize());
@@ -24,7 +25,9 @@ app.use(passport.session());
 
 //TODO: routing goes here
 const scenarioController = require("./controllers/scenario");
+const authController = require("./controllers/auth");
 app.use("/scenarios", scenarioController);
+app.use("/auth", authController);
 
 // listening
 app.listen(8000, () => {
