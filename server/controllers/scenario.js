@@ -3,6 +3,24 @@ require("dotenv").config();
 const db = require("../models");
 const { Scenario } = db;
 
+// Get all scenarios for logged in user
+router.get("/", async (req, res) => {
+	const { user } = req.session;
+	if (!user) {
+		return res.status(401).json("User not authenticated");
+	}
+
+	try {
+		const allScenarios = await Scenario.findAll({
+			where: { user_id: user.id },
+		});
+		res.status(200).json(allScenarios);
+	} catch (err) {
+		res.status(400).json(err.message);
+		console.log(err.message);
+	}
+});
+
 // Create new scenario for logged in user
 router.post("/", async (req, res) => {
 	const { user } = req.session;
@@ -99,18 +117,72 @@ router.post("/", async (req, res) => {
 	}
 });
 
-// Get all scenarios for logged in user
-router.get("/", async (req, res) => {
+// Modify existing scenario (using id)
+router.put("/edit/:id", async (req, res) => {
 	const { user } = req.session;
 	if (!user) {
 		return res.status(401).json("User not authenticated");
 	}
 
+	const id = req.params.id;
+	const fieldsToUpdate = req.body;
 	try {
-		const allScenarios = await Scenario.findAll({
-			where: { user_id: user.id },
+		const scenario = await Scenario.findOne({ where: { id, user_id: user.id } });
+		if (!scenario) {
+			return res.status(404).json("Scenario not found");
+		}
+
+		await scenario.update(fieldsToUpdate);
+		res.status(200).json({ scenario });
+	} catch (err) {
+		res.status(400).json(err.message);
+		console.log(err.message);
+	}
+});
+
+// Delete existing scenario (using id)
+router.delete("/delete/:id", async (req, res) => {
+	const { user } = req.session;
+	if (!user) {
+		return res.status(401).json("User not authenticated");
+	}
+
+	const id = req.params.id;
+	try {
+		const scenario = await Scenario.findOne({ where: { id, user_id: user.id } });
+		if (!scenario) {
+			return res.status(404).json("Scenario not found");
+		}
+
+		await scenario.destroy();
+		res.status(200).json("Scenario deleted successfully");
+	} catch (err) {
+		res.status(400).json(err.message);
+		console.log(err.message);
+	}
+});
+
+// Duplicate existing scenario (using id)
+router.post("/duplicate/:id", async (req, res) => {
+	const { user } = req.session;
+	if (!user) {
+		return res.status(401).json("User not authenticated");
+	}
+
+	const id = req.params.id;
+	try {
+		const scenario = await Scenario.findOne({ where: { id, user_id: user.id } });
+		if (!scenario) {
+			return res.status(404).json("Scenario not found");
+		}
+
+		const duplicatedScenario = await Scenario.create({
+			...scenario.get(),
+			id: undefined, // Ensure new scenario gets a unique ID
+			name: `${scenario.name} (Copy)`,
 		});
-		res.status(200).json(allScenarios);
+
+		res.status(201).json({ scenario: duplicatedScenario });
 	} catch (err) {
 		res.status(400).json(err.message);
 		console.log(err.message);
