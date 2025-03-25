@@ -1,77 +1,114 @@
-require("dotenv").config();
 const router = require("express").Router();
+require("dotenv").config();
 const db = require("../models");
-const { Scenario, Investment, InvestmentType, EventSeries } = db;
+const { Scenario } = db;
 
-// CREATE NEW SCENARIO (WITH INVESTMENTTYPES, INVESTMENTS, AND EVENTSERIES)
+// Create new scenario for logged in user
 router.post("/", async (req, res) => {
-	// 	const {} = req.body;
-	// 	try {
-	// 		// Step 1: Create the Scenario
-	// 		const newScenario = await Scenario.create();
-	// 		// Step 2: Manually set the `scenario_id` for each investment type
-	// 		const investmentTypesWithFKey = .map((invType) => ({
-	// 			...invType,
-	// 			scenario_id: newScenario.id, // Linking the investment type to the scenario
-	// 		}));
-	// 		// Step 3: Bulk create investment types with the scenario_id
-	// 		const createdInvestmentTypes = await InvestmentType.bulkCreate(investmentTypesWithFKey);
-	// 		// Step 4: Create a lookup map from investment type names to their IDs
-	//         invTypeMap = {};
-	//         for (let invType of createdInvestmentTypes) {
-	//             invTypeMap[invType.name] = invType.id;
-	//         }
-	// 		// Step 5: Manually set the `scenario_id` and `investment_type_id` for each investment
-	// 		const investmentsWithFKey= .map((inv) => ({
-	// 			...inv,
-	//             special_id: inv.type + " " + inv.tax_status,
-	// 			scenario_id: newScenario.id, // Linking the investment to the scenario
-	// 			investment_type_id: invTypeMap[inv.type], // Linking the investment to the correct investment type ID
-	// 		}));
-	// 		// Step 6: Bulk create investments with foreign keys
-	// 		await Investment.bulkCreate(investmentsWithFKey);
-	// 		// Step 7: Manually set the `scenario_id` for each event
-	// 		const eventSeriesWithFKey= .map((ev) => ({
-	// 			...ev,
-	// 			scenario_id: newScenario.id, // Linking the event to the scenario
-	// 		}));
-	// 		// Step 8: Bulk create events with the scenario_id
-	// 		const createdEventSeries = await EventSeries.bulkCreate(eventSeriesWithFKey);
-	// 		// Step 9: Loop through created events and based on type, create IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent
-	// 		for (let ev of createdEventSeries) {
-	// 			if (ev.type === "income") {
-	// 				const eventData = ;
-	// 				await IncomeEventSeries.create({
-	// 					id: ev.id, // Use the `event_id` as the primary key
-	// 					...
-	// 				});
-	// 			} else if (ev.type === "expense") {
-	// 				const eventData = ;
-	// 				await ExpenseEventSeries.create({
-	// 					id: ev.id, // Use the `event_id` as the primary key
-	// 					...
-	// 				});
-	// 			} else if (ev.type === "invest") {
-	// 				const eventData = ;
-	// 				await InvestEventSeries.create({
-	// 					id: ev.id, // Use the `event_id` as the primary key
-	// 					...
-	// 				});
-	// 			}
-	//             else if (ev.type === "rebalance") {
-	// 				const eventData = ;
-	// 				await RebalanceEventSeries.create({
-	// 					id: ev.id, // Use the `event_id` as the primary key
-	// 					...
-	// 				});
-	// 			}
-	// 		}
-	// 		// Step 10: Return the created Scenario object (or send any other relevant data)
-	// 		res.status(201).json(newScenario);
-	// 	} catch (err) {
-	// 		res.status(500).json(err.message);
-	//      console.log(err.message);
-	// 	}
+	const { user } = req.session;
+	if (!user) {
+		return res.status(401).json("User not authenticated");
+	}
+
+	const {
+		name,
+		is_married,
+		birth_year,
+		spouse_birth_year,
+		life_expectancy_type,
+		life_expectancy_value,
+		life_expectancy_mean,
+		life_expectancy_std_dev,
+		spouse_life_expectancy_type,
+		spouse_life_expectancy_value,
+		spouse_life_expectancy_mean,
+		spouse_life_expectancy_std_dev,
+		inflation_assumption_type,
+		inflation_assumption_value,
+		inflation_assumption_mean,
+		inflation_assumption_std_dev,
+		inflation_assumption_upper,
+		inflation_assumption_lower,
+		after_tax_contribution_limit,
+		financial_goal,
+		state_of_residence,
+	} = req.body;
+
+	try {
+		const newScenario = await Scenario.create({
+			name,
+			is_married,
+			birth_year: Number(birth_year),
+			spouse_birth_year: is_married && spouse_birth_year ? Number(spouse_birth_year) : null,
+			// Life Expectancy for user
+			life_expectancy_type,
+			life_expectancy_value: life_expectancy_type === "fixed" ? Number(life_expectancy_value) : null,
+			life_expectancy_mean: life_expectancy_type === "normal" ? Number(life_expectancy_mean) : null,
+			life_expectancy_std_dev: life_expectancy_type === "normal" ? Number(life_expectancy_std_dev) : null,
+			// Life Expectancy for spouse
+			spouse_life_expectancy_type: is_married ? spouse_life_expectancy_type : null,
+			spouse_life_expectancy_value:
+				is_married && spouse_life_expectancy_type === "fixed" && spouse_life_expectancy_value
+					? Number(spouse_life_expectancy_value)
+					: null,
+			spouse_life_expectancy_mean:
+				is_married && spouse_life_expectancy_type === "normal" && spouse_life_expectancy_mean
+					? Number(spouse_life_expectancy_mean)
+					: null,
+			spouse_life_expectancy_std_dev:
+				is_married && spouse_life_expectancy_type === "normal" && spouse_life_expectancy_std_dev
+					? Number(spouse_life_expectancy_std_dev)
+					: null,
+			// Inflation Assumption
+			inflation_assumption_type,
+			inflation_assumption_value:
+				inflation_assumption_type === "fixed" && inflation_assumption_value
+					? Number(inflation_assumption_value)
+					: null,
+			inflation_assumption_mean:
+				inflation_assumption_type === "normal" && inflation_assumption_mean
+					? Number(inflation_assumption_mean)
+					: null,
+			inflation_assumption_std_dev:
+				inflation_assumption_type === "normal" && inflation_assumption_std_dev
+					? Number(inflation_assumption_std_dev)
+					: null,
+			inflation_assumption_upper:
+				inflation_assumption_type === "uniform" && inflation_assumption_upper
+					? Number(inflation_assumption_upper)
+					: null,
+			inflation_assumption_lower:
+				inflation_assumption_type === "uniform" && inflation_assumption_lower
+					? Number(inflation_assumption_lower)
+					: null,
+			after_tax_contribution_limit: Number(after_tax_contribution_limit),
+			financial_goal: Number(financial_goal),
+			state_of_residence,
+			// strategies not given => set them as empty arrays
+			spending_strategy: [],
+			expense_withdrawl_strategy: [],
+			rmd_strategy: [],
+			roth_conversion_strategy: [],
+			// Associate with authenticated user
+			user_id: user.id,
+		});
+		res.status(201).json({ scenario: newScenario });
+	} catch (err) {
+		res.status(400).json(err.message);
+		console.log(err.message);
+	}
+});
+
+// Get all scenarios for logged in user
+router.get("/", async (req, res) => {
+	try {
+		const { user } = req.session;
+		const allScenarios = await Scenario.find;
+		res.status(200).json();
+	} catch (err) {
+		res.status(400).json(err.message);
+		console.log(err.message);
+	}
 });
 
 module.exports = router;

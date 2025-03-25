@@ -27,19 +27,17 @@ const LoginPage = () => {
 				body: JSON.stringify({ token }),
 			});
 
+			const data = await response.json();
 			if (response.status == 201) {
-				const data = await response.json();
 				const userInfo = data.user;
 				console.log("User Authenticated:", userInfo);
 				console.log("User Token: ", token);
-
 				// Save user info in context
 				login(userInfo);
 				// Redirect to home page after login
 				navigate("/");
 			} else {
-				const errData = await response.json();
-				console.log("Authentication failure:", errData);
+				console.log("Authentication failure:", data);
 			}
 		} catch (err) {
 			console.log("Error during Google login:", err.message);
