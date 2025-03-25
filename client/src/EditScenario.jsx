@@ -1,9 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import './CreateScenario.css';
-import { useNavigate } from 'react-router-dom';
 import { useData } from './DataContext';
 
-export default function CreateScenario() {
+export default function EditScenario() {
+  const { id } = useParams(); // Get scenario ID from URL
+  console.log(id);
+  // scenarios list would be got from api call here
+  // example scenarios list is  used
+//   const { scenarios, fetchScenarios } = useData();
+
+  const {scenarios, editScenario} = useData();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: '',
     isMarried: false,
@@ -19,8 +28,28 @@ export default function CreateScenario() {
     stateOfResidence: '',
   });
 
-  const { createScenario } = useData(); // Use createScenario from context
-  const navigate = useNavigate(); // Add useNavigate for redirection
+  const scenarioToEdit = scenarios.find((scenario) => scenario.id === id);
+
+  // Load existing scenario data into form
+  useEffect(() => {
+    console.log(scenarioToEdit);
+    if (scenarioToEdit) {
+      setFormData({
+        name: scenarioToEdit.name,
+        isMarried: scenarioToEdit.isMarried,
+        birthYear: scenarioToEdit.birthYear || '',
+        birthYearSpouse: scenarioToEdit.birthYearSpouse || '',
+        lifeExpectancy: scenarioToEdit.lifeExpectancy || '',
+        lifeExpectancySpouse: scenarioToEdit.lifeExpectancySpouse || '',
+        inflationAssumption: scenarioToEdit.inflationAssumption || '',
+        preTaxContributionLimit: scenarioToEdit.preTaxContributionLimit || '',
+        afterTaxContributionLimit: scenarioToEdit.afterTaxContributionLimit || '',
+        sharingSettings: scenarioToEdit.sharingSettings || '',
+        financialGoal: scenarioToEdit.financialGoal || '',
+        stateOfResidence: scenarioToEdit.stateOfResidence || '',
+      });
+    }
+  }, [id, scenarios]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -32,46 +61,21 @@ export default function CreateScenario() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Initialize empty data structures
-    const newScenario = {
-      ...formData,
-      investments: new Set(),
-      events: new Set(),
-      spendingStrategy: [],
-      rmdStrategy: [],
-      rothConversionStrategy: [],
-      expenseWithdrawalStrategy: [],
-    };
-
     try {
-      await createScenario(newScenario); // ✅ Add scenario using context
-      navigate('/scenarios'); // ✅ Navigate back after creation
-    } catch (error) {
-      console.error('Failed to create scenario:', error);
-    }
+      let editedScenario = scenarioToEdit;
+      editedScenario = { ...editedScenario, ...formData };
 
-    // Reset the form
-    setFormData({
-      name: '',
-      isMarried: false,
-      birthYear: '',
-      birthYearSpouse: '',
-      lifeExpectancy: '',
-      lifeExpectancySpouse: '',
-      inflationAssumption: '',
-      preTaxContributionLimit: '',
-      afterTaxContributionLimit: '',
-      sharingSettings: '',
-      financialGoal: '',
-      stateOfResidence: '',
-    });
+      await editScenario(editedScenario);
+      navigate('/scenarios');
+    } catch (error) {
+      console.error('Error updating scenario:', error);
+    }
   };
 
   return (
     <main>
       <form onSubmit={handleSubmit} className="form-container">
-        <h2>Create New Scenario</h2>
+        <h2>Edit Scenario</h2>
 
         <div className="form-group">
           <label>Name:</label>
@@ -200,7 +204,7 @@ export default function CreateScenario() {
         </div>
 
         <button type="submit" className="submit-btn">
-          Create Scenario
+          Update Scenario
         </button>
       </form>
     </main>

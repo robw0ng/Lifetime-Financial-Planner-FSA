@@ -37,9 +37,11 @@ const LoginPage = () => {
     <div>
       <div>
         <h1>Sign In</h1>
-        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-          <GoogleLogin onSuccess={handleSuccess} onError={handleError} />
-        </GoogleOAuthProvider>
+        <div className='login-btn-container'>
+          <GoogleOAuthProvider  clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <GoogleLogin onSuccess={handleSuccess} onError={handleError} />
+          </GoogleOAuthProvider>
+        </div>
 
         <button onClick={continueAsGuest}>
           Continue as Guest
