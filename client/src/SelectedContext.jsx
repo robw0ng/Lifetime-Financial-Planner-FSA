@@ -14,11 +14,10 @@ export const SelectedProvider = ({ children }) => {
         lifeExpectancy: -1,
         lifeExpectancySpouse: -1, // Optional
         inflationAssumption: 0.0,
-        preTaxContributionLimit: 0.0,
         afterTaxContributionLimit: 0.0,
         sharingSettings: "",
         financialGoal: 0.0,
-        stateOfResidence: "",
+        stateOfResidence: "", // Two letter abbreviation for state
         investments: new Set(), // Empty set for no investments
         events: new Set(), // Empty set for no events
         spendingStrategy: [], // Empty list for no strategy

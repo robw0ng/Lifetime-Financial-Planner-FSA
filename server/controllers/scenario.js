@@ -2,7 +2,14 @@
 // const db = require("../models");
 // const { Scenario, Investment, InvestmentType, EventSeries } = db;
 
-// // CREATE NEW SCENARIO (WITH INVESTMENTTYPES, INVESTMENTS, AND EVENTSERIES)
+// // GET ALL SCENARIOS FOR USER 
+// scenarios.get(`/${}`, async (req, res) => {
+//     const scenarios = await Scenario.findAll({
+//      
+//     })
+// })
+
+// // CREATE NEW SCENARIO (WITH INVESTMENTTYPES, INVESTMENTS, AND EVENTSERIES
 // scenarios.post("/", async (req, res) => {
 // 	const {} = req.body;
 
@@ -78,8 +85,8 @@
 // 		// Step 10: Return the created Scenario object (or send any other relevant data)
 // 		res.status(201).json(newScenario);
 // 	} catch (err) {
-// 		res.status(500).json("Server error on creating new scenario...");
-//         console.log(err);
+// 		res.status(500).json("Server error on creating new scenario");
+//      console.log(err);
 // 	}
 // });
 
