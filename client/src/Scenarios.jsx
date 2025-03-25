@@ -1,11 +1,39 @@
 "use client";
 import React, { useState } from "react";
 import styles from "./Scenarios.module.css";
-import { useSelectedScenario } from "./SelectedContext";
+import { useSelected } from "./SelectedContext";
+import { useData } from "./DataContext";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 
 function  ScenarioActions({ scenario }){
+    const isScenarioSelected = scenario;
+    const { duplicateScenario, deleteScenario } = useData();
+    const { deselectScenario } = useSelected();
+    if (!scenario) {
+        scenario = {
+            id: null,
+            name: "None!",
+        };
+    }
+
+    function handleDeleteButtonClick() {
+        if (scenario.id !== null) {
+            const confirmDelete = window.confirm("Are you sure you want to delete this scenario?");
+            if (confirmDelete) {
+                deleteScenario(scenario.id);
+                deselectScenario();
+            }
+        }
+    }
+
+    function handleDuplicateButtonClick() {
+        if (scenario.id !== null) {
+            duplicateScenario(scenario.id);
+        }
+    }
+
     return (
       <section className={styles.scenarioActionsContainer}>
         <div className={styles.scenarioActions}>
@@ -18,17 +46,37 @@ function  ScenarioActions({ scenario }){
             <label className={styles.underline}>Selected Scenario: <br></br></label>
             <label className={styles.value}>{scenario.name}</label>
             </h3>
-            <button className={`${styles.actionButton} ${styles.duplicateScenario}`}>Duplicate Scenario</button>
-            <Link to={`/edit-scenario/${scenario.id}`} className={`${styles.actionButton} ${styles.editScenario}`}>
-                Edit Scenario
-            </Link>
-            <button className={`${styles.actionButton} ${styles.deleteScenario}`}>Delete Scenario</button>
+            <button className={`${styles.actionButton} ${styles.duplicateScenario}`} onClick={handleDuplicateButtonClick}>Duplicate Scenario</button>
+            {isScenarioSelected ? (
+                <Link to={`/edit-scenario/${scenario.id}`} className={`${styles.actionButton} ${styles.editScenario}`}>
+                    Edit Scenario
+                </Link>
+            ) : (
+                <Link className={`${styles.actionButton} ${styles.editScenario}`}>
+                    Edit Scenario
+                </Link>
+            )}
+            <button className={`${styles.actionButton} ${styles.deleteScenario}`} onClick={handleDeleteButtonClick} >Delete Scenario</button>
         </div>
       </section>
     );
 };
 
 function BasicInformation({ scenario }) {
+
+    if (!scenario) {
+        scenario = {
+            name: "",
+            isMarried: false,
+            lifeExpectancySpouse: "",
+            birthYear: "",
+            lifeExpectancy: "",
+            stateOfResidence: "",
+            financialGoal: "",
+            inflationAssumption: "",
+        };
+    }
+
     return (
         <section className={styles.basic_info}>
           <h2 className={styles.sectionTitle}>
@@ -39,10 +87,10 @@ function BasicInformation({ scenario }) {
                 <p className={styles.info_item}>Name:</p>
                 <p className={styles.info_value}>{scenario.name}</p>
             </div>
-            <div className={styles.info_row}>
+            {/* <div className={styles.info_row}>
                 <p className={styles.info_item}>Description:</p>
                 <p className={styles.info_value}>{scenario.description}</p>
-            </div>
+            </div> */}
             <div className={styles.info_row}>
                 <p className={styles.info_item}>Marital Status:</p>
                 <p className={styles.info_value}>{scenario.isMarried ? "Married" : "Single"}</p>
@@ -95,27 +143,43 @@ function CashBalance({scenario}){
 }
 
 function InvestmentList({ scenario }){
-    // Take only the first three elements from the investments list
-    let investmentsArray = Array.from(scenario.investments);
+    let investmentsArray = [];
+
+    const { setSelectedInvestment } = useSelected();
+
+    if (scenario){
+        investmentsArray = Array.from(scenario.investments);
+    }
 
     if (investmentsArray.length == 0){
-        investmentsArray = [{type: 'No investments to show...', value: 0}]
+        investmentsArray = [{id: null, type: {name:'No investments Available'}, value: ''}]
     }
-    const topInvestments = investmentsArray.slice(0, 3);
+    const topInvestments = investmentsArray
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 3);
+
+    function selectInvestment(investment){
+        if (investment.id !== null || investment.id !== 0){
+            setSelectedInvestment(investment);
+        }
+    }
 
     return (
         <div className={styles.investmentList}>
             <div className={styles.title}>
-            <h2 className={styles.title}>Investments:</h2>
+            <h2 className={styles.title}>Top Investments:</h2>
             <div className={styles.header}>
                 <span>Type</span>
                 <span>Value</span>
             </div>
             {topInvestments.map((investment, index) => (
-                <div key={index} className={styles.investmentItem}>
-                <span>{investment.type}</span>
-                <span>${investment.value.toLocaleString()}</span>
-                </div>
+                <Link key={index} to="/investments"
+                onClick={investment.id !== null ? () => selectInvestment(investment): undefined}>
+                    <div className={styles.investmentItem}>
+                        <span>{investment.type.name}</span>
+                        <span>${investment.value.toLocaleString()}</span>
+                    </div>
+                </Link>
             ))}
             </div>
         </div>
@@ -123,10 +187,20 @@ function InvestmentList({ scenario }){
 };
 
 function Settings({scenario}){
+    if (!scenario) {
+        scenario = {
+            preTaxContributionLimit: "",
+            afterTaxContributionLimit: "",
+            rothConversionOptimizerEnabled: false,
+            rothConversionOptimizerStartYear: "",
+            rothConversionOptimizerEndYear: "",
+        };
+    }
+
     let start = scenario.rothConversionOptimizerStartYear;
     let end = scenario.rothConversionOptimizerEndYear;
 
-    return (
+    return (    
         <section className={styles.settingsContainer}>
             <h2 className={styles.sectionTitle}>Settings and Limits:</h2>
             <div className={styles.info_values}>
@@ -161,107 +235,31 @@ function ScenarioInfo({ scenario }){
     return (
         <section className={styles.info_container}>
             <BasicInformation scenario={scenario} />
-            {/* <CashBalance scenario={scenario}/> */}
             <InvestmentList scenario={scenario} />
+
             <Settings scenario={scenario}/>
         </section>
     );
 }
 
-// need to do an onclick for each scenario to set the selected scenario
 function ScenarioList() {
-    const { selectedScenario, setSelectedScenario } = useSelectedScenario();
+    const { selectedScenario, setSelectedScenario, deselectScenario } = useSelected();
 
     function selectScenario(scenario){
-        if (scenario.id === selectedScenario.id){
-            setSelectedScenario({
-                id: "0",
-                name: "Not Selected",
-                description: "None",
-                isMarried: false,
-                birthYear: -1, // -1 to represent unset state
-                birthYearSpouse: -1, // Optional, so left as -1 when not set
-                lifeExpectancy: -1,
-                lifeExpectancySpouse: -1, // Optional
-                inflationAssumption: 0.0,
-                preTaxContributionLimit: 0.0,
-                afterTaxContributionLimit: 0.0,
-                sharingSettings: "",
-                financialGoal: 0.0,
-                stateOfResidence: "",
-                investments: new Set(), // Empty set for no investments
-                events: new Set(), // Empty set for no events
-                spendingStrategy: [], // Empty list for no strategy
-                rmdStrategy: [], // Empty list for no RMD strategy
-                rothConversionStrategy: [], // Empty list for no conversion strategy
-                expenseWithdrawalStrategy: [], // Empty list for no withdrawal strategy
-                rothConversionOptimizerEnabled: false,
-                rothConversionOptimizerStartYear: -1,
-                rothConversionOptimizerEndYear: -1,
-            })
+        if (selectedScenario && (scenario.id === selectedScenario.id)){
+            deselectScenario();
         }
         else if (scenario.id !== 0){
             setSelectedScenario(scenario);
         }
     }
 
-    // Example list of scenarios
-    let scenarios = [
-        {
-            id: "1",
-            name: "Unemployed",
-            description: "None",
-            isMarried: false,
-            birthYear: -1, // -1 to represent unset state
-            birthYearSpouse: -1, // Optional, so left as -1 when not set
-            lifeExpectancy: -1,
-            lifeExpectancySpouse: -1, // Optional
-            inflationAssumption: 0.0,
-            preTaxContributionLimit: 0.0,
-            afterTaxContributionLimit: 0.0,
-            sharingSettings: "",
-            financialGoal: 0.0,
-            stateOfResidence: "",
-            investments: new Set(), // Empty set for no investments
-            events: new Set(), // Empty set for no events
-            spendingStrategy: [], // Empty list for no strategy
-            rmdStrategy: [], // Empty list for no RMD strategy
-            rothConversionStrategy: [], // Empty list for no conversion strategy
-            expenseWithdrawalStrategy: [], // Empty list for no withdrawal strategy
-            rothConversionOptimizerEnabled: false,
-            rothConversionOptimizerStartYear: -1,
-            rothConversionOptimizerEndYear: -1,
-        }, 
-        {
-            id: "2",
-            name: "gaming",
-            description: "None",
-            isMarried: false,
-            birthYear: -1, // -1 to represent unset state
-            birthYearSpouse: -1, // Optional, so left as -1 when not set
-            lifeExpectancy: -1,
-            lifeExpectancySpouse: -1, // Optional
-            inflationAssumption: 0.0,
-            preTaxContributionLimit: 0.0,
-            afterTaxContributionLimit: 0.0,
-            sharingSettings: "",
-            financialGoal: 0.0,
-            stateOfResidence: "",
-            investments: new Set(), // Empty set for no investments
-            events: new Set(), // Empty set for no events
-            spendingStrategy: [], // Empty list for no strategy
-            rmdStrategy: [], // Empty list for no RMD strategy
-            rothConversionStrategy: [], // Empty list for no conversion strategy
-            expenseWithdrawalStrategy: [], // Empty list for no withdrawal strategy
-            rothConversionOptimizerEnabled: false,
-            rothConversionOptimizerStartYear: -1,
-            rothConversionOptimizerEndYear: -1,
-        }, 
-    ];
+    const {scenarios, setScenarios} = useData();
+    let scenariosList = scenarios;
+    console.log(scenariosList);
 
-    // If the scenarios list is empty, display a placeholder item
-    if (scenarios.length <= 0) {
-        scenarios = [{ name: 'No scenarios to show...', id: 0 }];
+    if (scenariosList.length <= 0) {
+        scenariosList = [{ name: 'No scenarios available...', id: null }];
     }
 
     return (
@@ -272,15 +270,15 @@ function ScenarioList() {
                     <div className={styles.header}>
                         <span>Name:</span>
                     </div>
-                    {scenarios.map((scenario, index) => (
+                    {scenariosList.map((scenario, index) => (
                         <div
                             key={index}
                             className={
-                                scenario.id === selectedScenario.id
+                                selectedScenario && (scenario.id === selectedScenario.id)
                                     ? styles.selectedScenarioItem
                                     : styles.scenarioItem
                             }
-                            onClick={() => selectScenario(scenario)}
+                            onClick={scenario.id !== null ? () => selectScenario(scenario) : undefined}
                         >
                             <span>{scenario.name}</span>
                         </div>
@@ -292,8 +290,8 @@ function ScenarioList() {
 }
 
 const Scenarios = () => {
-    const {selectedScenario, setSelectedScenario} = useSelectedScenario()
-    console.log(selectedScenario);
+    const {selectedScenario, setSelectedScenario} = useSelected()
+
     return (
         <main className={styles.scenarios}>
             <section className={styles.column}>

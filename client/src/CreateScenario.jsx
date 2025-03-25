@@ -1,7 +1,7 @@
-import { useState } from "react";
-import "./CreateScenario.css";
-import { useNavigate } from "react-router-dom";
-import { useSelectedScenario } from "./SelectedContext";
+import { useState } from 'react';
+import './CreateScenario.css';
+import { useNavigate } from 'react-router-dom';
+import { useData } from './DataContext';
 
 export default function CreateScenario() {
 	const { setSelectedScenario } = useSelectedScenario();
@@ -32,7 +32,8 @@ export default function CreateScenario() {
 		stateOfResidence: "",
 	});
 
-	const navigate = useNavigate(); // Add useNavigate for redirection
+  const { createScenario } = useData(); // Use createScenario from context
+  const navigate = useNavigate(); // Add useNavigate for redirection
 
 	const handleChange = (e) => {
 		const { name, value, type, checked } = e.target;

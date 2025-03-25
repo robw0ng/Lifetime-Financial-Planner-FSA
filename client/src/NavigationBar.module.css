@@ -1,14 +1,14 @@
 .navigationBar {
   background-color: #6eb5d0;
   border-radius: 5px;
-  /* padding: 21px 69px 21px 18px; */
   padding: 10px 0px 10px 0px;
   overflow: hidden;
-  position: absolute;
+  position: sticky; /* Changed from sticky to fixed */
+  display: block;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 60px;
+  width: 100vw;
+  z-index: 1000;
 }
 
 .navigationBar a{
