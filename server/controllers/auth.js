@@ -26,8 +26,8 @@ router.post("/", async (req, res) => {
 
 		res.status(201).json({ user: { id: user.id, email: user.email, name: user.name }, newUser: registered });
 	} catch (err) {
-		res.status(401).json("Invalid authentication token");
-		console.log(err);
+		res.status(401).json(err.message);
+		console.log(err.message);
 	}
 });
 

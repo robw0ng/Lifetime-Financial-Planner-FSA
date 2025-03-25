@@ -69,8 +69,8 @@ router.post("/", async (req, res) => {
 	// 		// Step 10: Return the created Scenario object (or send any other relevant data)
 	// 		res.status(201).json(newScenario);
 	// 	} catch (err) {
-	// 		res.status(500).json("Server error on creating new scenario");
-	//      console.log(err);
+	// 		res.status(500).json(err.message);
+	//      console.log(err.message);
 	// 	}
 });
 
