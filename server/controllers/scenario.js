@@ -101,10 +101,16 @@ router.post("/", async (req, res) => {
 
 // Get all scenarios for logged in user
 router.get("/", async (req, res) => {
+	const { user } = req.session;
+	if (!user) {
+		return res.status(401).json("User not authenticated");
+	}
+
 	try {
-		const { user } = req.session;
-		const allScenarios = await Scenario.find;
-		res.status(200).json();
+		const allScenarios = await Scenario.findAll({
+			where: { user_id: user.id },
+		});
+		res.status(200).json(allScenarios);
 	} catch (err) {
 		res.status(400).json(err.message);
 		console.log(err.message);
