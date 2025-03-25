@@ -19,7 +19,7 @@ const LoginPage = () => {
 	const handleSuccess = async (credentialResponse) => {
 		try {
 			const token = credentialResponse.credential;
-			const response = await fetch("http://localhost:5173/auth", {
+			const response = await fetch("http://localhost:8000/auth", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

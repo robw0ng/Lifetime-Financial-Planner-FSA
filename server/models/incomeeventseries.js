@@ -67,7 +67,6 @@ module.exports = (sequelize, DataTypes) => {
 		{
 			sequelize,
 			modelName: "IncomeEventSeries",
-			tableName: "incomeeventseries",
 			timestamps: false,
 		}
 	);
