@@ -8,20 +8,48 @@ const RMD_AGE = 74;
 const EARLY_WITHDRAWAL_AGE = 59;
 const SS_TAXABLE_PORTION = 0.85;
 
-async function loadTaxBrackets(type = 'federal') {
-    const filename = type === 'federal' ? 'output.yaml' : type === 'state' ? 'tax_brackets.yaml' : 'capital_gains_brackets.yaml';
+async function loadTaxBrackets(type = 'federal', state = null) {
+    let filename;
+    switch (type) {
+        case 'federal':
+            filename = 'output.yaml';
+            break;
+        case 'state':
+            if (!state) return null;
+            filename = `state_tax_brackets/${state}.yaml`;
+            break;
+        case 'capital_gains':
+            filename = 'capital_gains_brackets.yaml';
+            break;
+        case 'standard_deduction':
+            filename = 'standard_deductions.yaml';
+            break;
+        default:
+            throw new Error(`Unknown tax bracket type: ${type}`);
+    }
+
     try {
         const filePath = path.join(__dirname, filename);
-        if (fs.existsSync(filePath)) {
-            const data = yaml.load(fs.readFileSync(filePath, 'utf8'));
-            return data.map(bracket => ({
-                rate: parseFloat(bracket['Tax Rate'].replace('%', '')) / 100,
-                filingStatus: bracket['Filing Status'] || null,
-                from: bracket['From ($)'],
-                to: bracket['To ($)'] === null ? Infinity : bracket['To ($)']
+        if (!fs.existsSync(filePath)) {
+            if (type === 'state') return null; // State tax might not exist
+            throw new Error(`Tax file not found: ${filename}`);
+        }
+
+        const data = yaml.load(fs.readFileSync(filePath, 'utf8'));
+        
+        if (type === 'standard_deduction') {
+            return data.map(deduction => ({
+                filingStatus: deduction['Filing Status'],
+                amount: deduction['Standard Deduction ($)'],
             }));
         }
-        return null; // Return null for state tax if file doesn't exist
+
+        return data.map(bracket => ({
+            rate: parseFloat(bracket['Tax Rate'].replace('%', '')) / 100,
+            filingStatus: bracket['Filing Status'] || null,
+            from: bracket['From ($)'],
+            to: bracket['To ($)'] === null ? Infinity : bracket['To ($)']
+        }));
     } catch (error) {
         console.error(`Error loading ${type} tax brackets:`, error);
         if (type === 'federal') throw error;
@@ -55,13 +83,15 @@ async function simulateScenario(scenario) {
     const federalTaxBrackets = await loadTaxBrackets('federal');
     const stateTaxBrackets = await loadTaxBrackets('state');
     const capitalGainsBrackets = await loadTaxBrackets('capital_gains');
+    const standardDeductions = await loadTaxBrackets('standard_deduction');
 
     // Initialize state object
     const state = {
         currentTaxBrackets: {
             federal: federalTaxBrackets,
             state: stateTaxBrackets,
-            capitalGains: capitalGainsBrackets
+            capitalGains: capitalGainsBrackets,
+            standardDeductions: standardDeductions
         },
         retirementLimits: scenario.after_tax_contribution_limit,
         curYearIncome: 0,
@@ -152,7 +182,7 @@ async function simulateScenario(scenario) {
         await processInvestEvents(state, scenario, year);
 
         // 9. Process Rebalance Events
-        // TODO: Implement this
+        await processRebalanceEvents(state, scenario, year);
     }
 }
 
@@ -177,6 +207,12 @@ function updateTaxBrackets(state, inflationRate) {
             rate: bracket.rate,
             from: Math.round(bracket.from * (1 + inflationRate)),
             to: bracket.to === Infinity ? Infinity : Math.round(bracket.to * (1 + inflationRate))
+        }));
+    }
+
+    if (state.standardDeductions) {
+        state.standardDeductions = state.standardDeductions.map(deduction => ({
+            amount: Math.round(deduction.amount * (1 + inflationRate))
         }));
     }
 }
@@ -475,6 +511,7 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year) {
     // Calculate federal income tax
     let federalIncomeTax = 0;
     let remainingIncome = prevYearFedTaxableIncome;
+    remainingIncome -= state.standardDeductions[scenario.isMarried ? 'Married filing jointly or Qualifying surviving spouse' : 'Single or Married filing separately']
     
     for (const bracket of state.currentTaxBrackets.federal) {
         const incomeInBracket = Math.min(
@@ -734,6 +771,190 @@ async function withdrawForExpense(state, scenario, amount, userAge) {
     }
 }
 
+async function processInvestEvents(state, scenario, year) {
+    // Find cash investment
+    const cashInvestment = state.investments.find(inv => inv.investmentType === 'cash');
+    if (!cashInvestment || cashInvestment.value <= 0) return;
+
+    // Get invest events for current year
+    const investEvents = state.events.filter(event => 
+        event.type === 'invest' &&
+        year >= event.start_year_value &&
+        (!event.duration_value || year < event.start_year_value + event.duration_value)
+    );
+
+    //there should only be 1 investevent for a given year
+    for (const event of investEvents) {
+        const excessCash = cashInvestment.value;
+        if (excessCash <= 0) break;
+
+        // Calculate inflation-adjusted contribution limit
+        const baseLimit = state.retirementLimits || 0;
+        const inflationRate = sampleInflationRate(scenario);
+        const inflationAdjustedLimit = baseLimit * Math.pow(1 + inflationRate, year - event.start_year_value);
+
+        // Group investments by tax status
+        const investmentsByTaxStatus = {
+            'after-tax': [],
+            'other': []
+        };
+
+        event.asset_allocation.forEach(allocation => {
+            const investment = state.investments.find(inv => inv.id === allocation.investment_id);
+            if (!investment) return;
+
+            if (investment.tax_status === 'after-tax') {
+                investmentsByTaxStatus['after-tax'].push({ investment, allocation: allocation.percentage });
+            } else {
+                investmentsByTaxStatus['other'].push({ investment, allocation: allocation.percentage });
+            }
+        });
+
+        // Calculate initial amounts for all investments
+        const initialPurchases = new Map();
+        let afterTaxTotal = 0;
+        let nonRetirementTotal = 0;
+
+        // Calculate after-tax investment amounts
+        investmentsByTaxStatus['after-tax'].forEach(({ investment, allocation }) => {
+            const amount = (excessCash * allocation) / 100;
+            initialPurchases.set(investment.id, amount);
+            afterTaxTotal += amount;
+        });
+
+        // Calculate non-retirement investment amounts
+        investmentsByTaxStatus['other'].forEach(({ investment, allocation }) => {
+            const amount = (excessCash * allocation) / 100;
+            initialPurchases.set(investment.id, amount);
+            nonRetirementTotal += amount;
+        });
+
+        // Adjust if after-tax total exceeds limit
+        const finalPurchases = new Map();
+        if (afterTaxTotal > inflationAdjustedLimit) {
+            const scaleDown = inflationAdjustedLimit / afterTaxTotal;
+            const excessAmount = afterTaxTotal - inflationAdjustedLimit;
+            
+            // Scale down after-tax investments
+            investmentsByTaxStatus['after-tax'].forEach(({ investment }) => {
+                const amount = initialPurchases.get(investment.id) * scaleDown;
+                finalPurchases.set(investment.id, amount);
+            });
+
+            // Scale up non-retirement investments proportionally
+            if (nonRetirementTotal > 0) {
+                //scale up by recalculating non-retirement investments with an extra excessAmount
+                investmentsByTaxStatus['other'].forEach(({ investment, allocation }) => {
+                    const amount = ((excessAmount + excessCash) * allocation) / 100;
+                    finalPurchases.set(investment.id, amount);
+                });
+            }
+        } else {
+            // No scaling needed, use initial amounts
+            initialPurchases.forEach((amount, id) => {
+                finalPurchases.set(id, amount);
+            });
+        }
+
+        // Execute purchases
+        for (const [investmentId, amount] of finalPurchases) {
+            const investment = state.investments.find(inv => inv.id === investmentId);
+            if (!investment || amount <= 0) continue;
+
+            investment.value += amount;
+            if (!investment.purchase_price) {
+                investment.purchase_price = amount;
+            } else {
+                // Update cost basis
+                investment.purchase_price = investment.purchase_price + amount;
+            }
+        }
+
+        // Deduct total from cash
+        cashInvestment.value -= excessCash;
+    }
+}
+
+async function processRebalanceEvents(state, scenario, year) {
+    // Get rebalance events for current year
+    const rebalanceEvents = state.events.filter(event => 
+        event.type === 'rebalance' &&
+        year >= event.start_year_value &&
+        (!event.duration_value || year < event.start_year_value + event.duration_value)
+    );
+
+    //at most 1 rebalance event a year
+    for (const event of rebalanceEvents) {
+        // Calculate total portfolio value for investments in this rebalance
+        let totalValue = 0;
+        const currentInvestments = new Map();
+
+        event.asset_allocation.forEach(allocation => {
+            const investment = state.investments.find(inv => inv.id === allocation.investment_id);
+            if (!investment) return;
+            currentInvestments.set(investment.id, investment);
+            totalValue += investment.value;
+        });
+
+        if (totalValue <= 0) continue;
+
+        //up to here
+
+        // Calculate target values and needed adjustments
+        const adjustments = new Map();
+        event.asset_allocation.forEach(allocation => {
+            const investment = currentInvestments.get(allocation.investment_id);
+            if (!investment) return;
+
+            const targetValue = (totalValue * allocation.percentage) / 100;
+            const adjustment = targetValue - investment.value;
+            adjustments.set(investment.id, adjustment);
+        });
+
+        // Process sales first (negative adjustments)
+        const cashInvestment = state.investments.find(inv => inv.investmentType === 'cash');
+        if (!cashInvestment) continue;
+
+        for (const [investmentId, adjustment] of adjustments) {
+            if (adjustment >= 0) continue;
+            
+            const investment = currentInvestments.get(investmentId);
+            const sellAmount = -adjustment;
+
+            // Calculate capital gains for non-retirement investments
+            if (investment.tax_status === 'non-retirement') {
+                const sellFraction = sellAmount / investment.value;
+                const capitalGain = sellFraction * (investment.value - investment.purchase_price);
+                state.curYearGains += capitalGain;
+                
+                // Update cost basis
+                investment.purchase_price *= (1 - sellFraction);
+            }
+
+            // Execute sale
+            investment.value -= sellAmount;
+            cashInvestment.value += sellAmount;
+        }
+
+        // Process purchases second (positive adjustments)
+        for (const [investmentId, adjustment] of adjustments) {
+            if (adjustment <= 0) continue;
+
+            const investment = currentInvestments.get(investmentId);
+            const buyAmount = Math.min(adjustment, cashInvestment.value);
+            if (buyAmount <= 0) continue;
+
+            // Execute purchase
+            investment.value += buyAmount;
+            if (!investment.purchase_price) {
+                investment.purchase_price = buyAmount;
+            } else {
+                investment.purchase_price += buyAmount;
+            }
+            cashInvestment.value -= buyAmount;
+        }
+    }
+}
 // Helper functions for sampling from probability distributions
 function sampleInflationRate(scenario) {
     switch (scenario.inflation_assumption_type) {
