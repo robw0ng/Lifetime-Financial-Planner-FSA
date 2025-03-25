@@ -7,45 +7,26 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
+  width: 100%;
+  height: 60px;
 }
 
 .navigationBar a{
   color: inherit;
 }
 
-@media (width<=991px) {
-  .navigationBar {
-    padding-right: 20px;
-  }
-}
-
 .container {
   gap: 20px;
   display: flex;
-}
-
-@media (width<=991px) {
-  .container {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-  }
+  flex-direction: row;
 }
 
 .brandColumn {
   flex-direction: column;
-  align-items: stretch;
   width: 26%;
   margin-left: 0;
   line-height: normal;
   display: flex;
-}
-
-@media (width<=991px) {
-  .brandColumn {
-    width: 100%;
-  }
 }
 
 .brandTitle {
@@ -63,27 +44,6 @@
   font-weight: 400;
 }
 
-@media (width<=991px) {
-  .brandTitle {
-    margin-top: 40px;
-  }
-}
-
-.navColumn {
-  flex-direction: column;
-  align-items: stretch;
-  width: 54%;
-  margin-left: 20px;
-  line-height: normal;
-  display: flex;
-}
-
-@media (width<=991px) {
-  .navColumn {
-    width: 100%;
-  }
-}
-
 .buttonContainer {
   color: #000;
   flex-wrap: wrap;
@@ -99,12 +59,6 @@
   font-size: 20px;
   font-weight: 400;
   display: flex;
-}
-
-@media (width<=991px) {
-  .buttonContainer {
-    margin-top: 40px;
-  }
 }
 
 .navButton {
@@ -135,14 +89,6 @@
   cursor: pointer;
 }
 
-@media (width<=991px) {
-  .navButton {
-    white-space: initial;
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-}
-
 .profileColumn {
   flex-direction: column;
   align-items: stretch;
@@ -150,12 +96,6 @@
   margin-left: 20px;
   line-height: normal;
   display: flex;
-}
-
-@media (width<=991px) {
-  .profileColumn {
-    width: 100%;
-  }
 }
 
 .profileContainer {
@@ -174,12 +114,6 @@
   font-size: 20px;
   font-weight: 400;
   display: flex;
-}
-
-@media (width<=991px) {
-  .profileContainer {
-    margin-top: 40px;
-  }
 }
 
 .avatar {

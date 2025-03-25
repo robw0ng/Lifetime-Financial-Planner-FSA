@@ -3,6 +3,11 @@ h2{
     margin-bottom: 0px;
 }
 
+h3{
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
 p{
     margin-top: 0px;
     margin-bottom: 0px;
@@ -10,20 +15,27 @@ p{
 
 .scenarios {
     background-color: #1a1b1f;
-    flex-direction: column;
     align-items: stretch;
     display: flex;
+    flex-direction: row;
     overflow: hidden;
 }
 
-.scenarioActions {
+.column{
+    margin-right: 10px;
+}
+
+.selectedScenario {
+    margin-top: 20px;
+}
+
+.scenarioActionsContainer {
     color: #fff;
     background-color: #2c2e35;
     border-radius: 20px;
     flex-direction: column;
     align-items: start;
-    max-width: 562px;
-    padding: 14px 18px 14px 18px;
+    padding: 14px;
     font-family:
         Inter,
         -apple-system,
@@ -33,91 +45,239 @@ p{
     font-size: 20px;
     font-weight: 400;
     display: flex;
-    overflow: hidden;
+    overflow-y: auto;
+    height: 28vh;
+    align-items: center;
+    width: 15vw;
 }
 
-.actionsHeader{
-    margin-top: 0px;
+.scenarioActions {
+    background-color: #4d515e;
+    border-radius: 12px;
+    font-family: Arial, sans-serif;
+    overflow-y: auto;
+    height: 100%;
+    width: 100%;
 }
 
 .createNewScenario {
+    display: inline-block;
     background-color: #33ca60;
     border-radius: 10px;
-    padding: 8px 16px;
-    overflow: hidden;
     color: inherit;
     border: none;
     cursor: pointer;
     font: inherit;
+    width: 90%;
+    text-decoration: none;
 }
 
 .duplicateScenario{
     background-color: #3351ca;
     border-radius: 10px;
-    padding: 8px 28px;
-    overflow: hidden;
     color: inherit;
     border: none;
     cursor: pointer;
     font: inherit;
-    width: 234px;
+    width: 90%;
+    padding: 0px;
 }
 
 .editScenario{
+    display: inline-block;
     background-color: #cab933;
     border-radius: 10px;
-    padding: 8px;
-    overflow: hidden;
     color: inherit;
     border: none;
     cursor: pointer;
     font: inherit;
-    width: 234px;
+    width: 90%;
+    text-decoration: none;
+}
+
+.actionButton:hover{
+    color: inherit;
+    opacity: 80%;
 }
 
 .deleteScenario{
     background-color: #ca3d33;
     border-radius: 10px;
-    margin-top: 13px;
-    padding: 8px 28px;
-    overflow: hidden;
-    color: inherit;
     border: none;
     cursor: pointer;
     font: inherit;
-    width: 234px;
+    width: 90%;
+    padding: 0px;
 }
 
-.container {
+.scenarioListContainer {
     background-color: #2c2e35;
     border-radius: 20px;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    width: 562px;
-    /* padding: 22px; */
+    width: 15vw;
+    display: flex;
+    margin-top: 10px;
+    height: 53vh;
+    padding: 14px;
+}
+
+.scenarioList {
+    background-color: #4d515e;
+    margin: 1%;
+    border-radius: 12px;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    width: 90%;
+    height: 100%;
+    padding:10px;
+}
+
+.scenarioItem {
+    display: flex;
+    justify-content: space-between;
+    background-color: #2c2e35;
+    color: rgba(255, 255, 255, 0.87);
+    padding: 10px;
+    margin: 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+}
+
+.scenarioItem:hover {
+    background-color: #373c51;
+}
+
+.selectedScenarioItem {
+    display: flex;
+    justify-content: space-between;
+    background-color: #6577b8;
+    color: rgba(255, 255, 255, 0.87);
+    padding: 10px;
+    margin: 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+}
+
+.info_container {
+    background-color: #2c2e35;
+    border-radius: 20px;
+    padding: 14px;
+    flex-direction: column;
+    align-items: center;
+    width: 25vw;
     display: flex;
 }
 
-.infoSection {
+.basic_info {
     background-color: #4d515e;
     border-radius: 20px;
-    margin-top: 3%;
-    margin-bottom: 3%;
     width: 90%;
     padding: 10px;
     text-align: left;
 }
 
-.infoSection p{
-    margin-left: 20px;
+.info_values{
+    display: flex;
+    flex-direction: column;
+}
+
+.info_row{
+    display: flex;
+    flex-direction: row;
+    border-width: 1px;
+    border-color: #2c2e35;
+    margin-bottom: 3px;
+    border-style: solid;
+    border-radius: 5px;
+    width: 100%;
+}
+
+.info_value{
+    width: 100%;
+    text-align: center;
+}
+
+.info_item{
+    background-color: #2c2e35;
+    margin: 1px 1px 1px 1px;
+    border: none;
+    border-radius: 5px;
+    width: 100%;
+    text-align: center;
 }
 
 .cashSection{
     background-color: #4d515e;
     border-radius: 20px;
-    margin-top: 3%;
-    margin-bottom: 3%;
+    margin-top: 1%;
+    width: 90%;
+    padding: 10px;
+    text-align: left;
+}
+
+.investmentList {
+    background-color: #4d515e;
+    margin: 1%;
+    padding: 10px;
+    border-radius: 12px;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    width: 90%;
+    height: 23.7vh;
+}
+  
+.title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #444;
+    padding-bottom: 4px;
+    padding-top: 5px;
+    text-align: left;
+    color: rgba(255, 255, 255, 0.87);
+}
+
+.header {
+    padding-left: 10px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.87);
+}
+
+.investmentItem {
+    display: flex;
+    justify-content: space-between;
+    background-color: #2c2e35;
+    color: rgba(255, 255, 255, 0.87);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+}
+
+.investmentItem:hover{
+    background-color: #373c51;
+}
+
+.selectedInvestmentItem {
+    display: flex;
+    justify-content: space-between;
+    background-color: #6577b8;
+    color: rgba(255, 255, 255, 0.87);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+}
+
+.settingsContainer {
+    background-color: #4d515e;
+    border-radius: 20px;
+    margin-bottom: 1%;
     width: 90%;
     padding: 10px;
     text-align: left;
