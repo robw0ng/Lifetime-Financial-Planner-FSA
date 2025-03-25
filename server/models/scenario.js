@@ -147,7 +147,6 @@ module.exports = (sequelize, DataTypes) => {
 		{
 			sequelize,
 			modelName: "Scenario",
-			tableName: "scenarios",
 			timestamps: false,
 		}
 	);

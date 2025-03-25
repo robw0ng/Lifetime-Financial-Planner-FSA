@@ -9,7 +9,12 @@ const { Sequelize } = require("sequelize");
 // TODO: any extra db config or init script
 // middleware
 const app = express();
-app.use(cors());
+app.use(
+	cors({
+		origin: "http://localhost:5173",
+		credentials: true,
+	})
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
@@ -17,14 +22,21 @@ app.use(
 		secret: process.env.SESSION_SECRET,
 		resave: false,
 		saveUninitialized: true,
+		cookie: {
+			httpOnly: true,
+			secure: false,
+			maxAge: 10 * 60 * 1000,
+		},
 	})
 );
 app.use(passport.initialize());
 app.use(passport.session());
 
 //TODO: routing goes here
-// const scenarioController = require("./controllers/scenario");
-// app.use("/scenarios", scenarioController);
+const scenarioController = require("./controllers/scenario");
+const authController = require("./controllers/auth");
+app.use("/scenarios", scenarioController);
+app.use("/auth", authController);
 
 // listening
 app.listen(8000, () => {

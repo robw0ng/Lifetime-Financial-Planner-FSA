@@ -10,6 +10,9 @@ import EventSeries from './EventSeries';
 import Simulations from './Simulations';
 import LoginPage from './LoginPage';
 import ProtectedRoute from './ProtectedRoute';
+import CreateScenario from './CreateScenario';
+import EditScenario from './EditScenario';
+import { DataProvider } from './DataContext';
 
 const AppContent = () => {
   const { user } = useAuth();
@@ -29,6 +32,9 @@ const AppContent = () => {
         <Route path="/investments" element={<ProtectedRoute element={<Investments />} />} />
         <Route path="/eventseries" element={<ProtectedRoute element={<EventSeries />} />} />
         <Route path="/simulations" element={<ProtectedRoute element={<Simulations />} />} />
+
+        <Route path="/create-scenario" element={<ProtectedRoute element={<CreateScenario />} />} />
+        <Route path="/edit-scenario/:id" element={<ProtectedRoute element={<EditScenario />} />} />
       </Routes>
     </Router>
   );
@@ -38,7 +44,9 @@ function App() {
   return (
     <AuthProvider>
       <SelectedProvider>
-        <AppContent />
+        <DataProvider>
+            <AppContent />
+        </DataProvider>
       </SelectedProvider>
     </AuthProvider>
   );

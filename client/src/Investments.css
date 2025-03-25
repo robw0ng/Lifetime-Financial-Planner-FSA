@@ -1,42 +1,24 @@
-h2{
-    margin-top: 0px;
-    margin-bottom: 0px;
-}
-
-h3{
-    margin-top: 0px;
-    margin-bottom: 0px;
-}
-
-p{
-    margin-top: 0px;
-    margin-bottom: 0px;
-}
-
-.scenarios {
-    background-color: #1a1b1f;
-    align-items: stretch;
+.investments {
     display: flex;
     flex-direction: row;
-    overflow: hidden;
-    height: 88vh;
 }
 
 .column{
     margin-right: 10px;
+    height: 100vh;
 }
 
-.selectedScenario {
-    margin-top: 20px;
+.action-button:hover{
+    color: inherit;
+    opacity: 80%;
 }
 
-.scenarioActionsContainer {
+.investment-actions-container {
     color: #fff;
     background-color: #2c2e35;
     border-radius: 20px;
     flex-direction: column;
     align-items: start;
-    padding: 14px;
     font-family:
         Inter,
         -apple-system,
@@ -47,21 +29,22 @@ p{
     font-weight: 400;
     display: flex;
     overflow-y: auto;
-    height: 33%;
+    height: 29%;
     align-items: center;
-    width: 15vw;
+    width: 25vw;
+    /* width: 100%; */
 }
 
-.scenarioActions {
+.investment-actions {
     background-color: #4d515e;
     border-radius: 12px;
+    margin: 15px;
     font-family: Arial, sans-serif;
     overflow-y: auto;
     height: 100%;
-    width: 100%;
 }
 
-.createNewScenario {
+.create-btn {
     display: inline-block;
     background-color: #33ca60;
     border-radius: 10px;
@@ -73,7 +56,7 @@ p{
     text-decoration: none;
 }
 
-.duplicateScenario{
+.dup-btn{
     background-color: #3351ca;
     border-radius: 10px;
     color: inherit;
@@ -84,7 +67,7 @@ p{
     padding: 0px;
 }
 
-.editScenario{
+.edit-btn{
     display: inline-block;
     background-color: #cab933;
     border-radius: 10px;
@@ -96,12 +79,7 @@ p{
     text-decoration: none;
 }
 
-.actionButton:hover{
-    color: inherit;
-    opacity: 80%;
-}
-
-.deleteScenario{
+.del-btn{
     background-color: #ca3d33;
     border-radius: 10px;
     border: none;
@@ -116,23 +94,40 @@ p{
     border-radius: 20px;
     flex-direction: column;
     align-items: center;
-    width: 15vw;
+    /* width: 100%; */
     display: flex;
     margin-top: 10px;
-    height: 55%;
-    padding: 14px;
+    height: 50%;
+    width: 25vw;
 }
 
-.scenarioList {
+.scenario-list{
     background-color: #4d515e;
-    margin: 1%;
     border-radius: 12px;
     color: #ffffff;
     font-family: Arial, sans-serif;
-    width: 90%;
     height: 100%;
-    padding:10px;
-    overflow-y: auto;
+    margin: 15px;
+    width: 94%;
+}
+
+.title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #444;
+    padding-bottom: 4px;
+    padding-top: 5px;
+    text-align: left;
+    color: rgba(255, 255, 255, 0.87);
+}
+
+.header {
+    padding-left: 10px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.87);
 }
 
 .scenarioItem {
@@ -163,103 +158,44 @@ p{
     cursor: pointer;
 }
 
-.info_container {
+.investmentListContainer {
     background-color: #2c2e35;
     border-radius: 20px;
-    padding: 14px;
     flex-direction: column;
     align-items: center;
+    display: flex;
+    /* width: 100%; */
     width: 25vw;
-    display: flex;
+    height: 77%;
+    padding: 15px;
 }
 
-.basic_info {
-    background-color: #4d515e;
-    border-radius: 20px;
-    width: 90%;
-    padding: 10px;
-    text-align: left;
-}
-
-.info_values{
-    display: flex;
-    flex-direction: column;
-}
-
-.info_row{
-    display: flex;
-    flex-direction: row;
-    border-width: 1px;
-    border-color: #2c2e35;
-    margin-bottom: 3px;
-    border-style: solid;
-    border-radius: 5px;
-    width: 100%;
-}
-
-.info_value{
-    width: 100%;
-    text-align: center;
-}
-
-.info_item{
-    background-color: #2c2e35;
-    margin: 1px 1px 1px 1px;
-    border: none;
-    border-radius: 5px;
-    width: 100%;
-    text-align: center;
-}
-
-.cashSection{
-    background-color: #4d515e;
-    border-radius: 20px;
-    margin-top: 1%;
-    width: 90%;
-    padding: 10px;
-    text-align: left;
-}
 
 .investmentList {
     background-color: #4d515e;
-    margin: 1%;
-    padding: 10px;
-    border-radius: 12px;
+    border-radius: 20px;
+    /* padding: 15px; */
     color: #ffffff;
     font-family: Arial, sans-serif;
-    width: 90%;
-    height: 20vh;
+    height: 100%;
+    width: 100%;
     overflow-y: auto;
-}
-  
-.title {
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 12px;
-    border-bottom: 2px solid #444;
-    padding-bottom: 4px;
-    padding-top: 5px;
-    text-align: left;
-    color: rgba(255, 255, 255, 0.87);
-}
-
-.header {
-    padding-left: 10px;
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    color: rgba(255, 255, 255, 0.87);
 }
 
 .investmentItem {
     display: flex;
-    justify-content: space-between;
+    justify-content: spac;
+    flex-direction: row;
     background-color: #2c2e35;
     color: rgba(255, 255, 255, 0.87);
     padding: 10px;
     border-radius: 8px;
     margin-bottom: 6px;
     cursor: pointer;
+}
+
+.investment-span {
+    width: 33%;
 }
 
 .investmentItem:hover{
@@ -277,11 +213,43 @@ p{
     cursor: pointer;
 }
 
-.settingsContainer {
+.investment-info-container {
+    background-color: #2c2e35;
+    border-radius: 20px;
+    flex-direction: column;
+    align-items: center;
+    display: flex;
+    /* width: 100%; */
+    width: 25vw;
+    height: 77%;
+    padding: 15px;
+}
+
+.investment-inner-container{
     background-color: #4d515e;
     border-radius: 20px;
-    margin-bottom: 1%;
-    width: 90%;
-    padding: 10px;
+    width: 100%;
     text-align: left;
+}
+
+.info-row{
+    display: flex;
+    flex-direction: row;
+    border-width: 1px;
+    border-color: #2c2e35;
+    margin-bottom: 3px;
+    border-style: solid;
+    border-radius: 5px;
+    width: 100%;
+}
+
+.info-item{
+    background-color: #2c2e35;
+    margin: 1px 1px 1px 1px;
+    border: none;
+    border-radius: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-right: 10px;
+    text-align: center;
 }
