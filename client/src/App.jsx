@@ -17,6 +17,7 @@ import CreateInvestment from './CreateInvestment';
 import EditInvestment from './EditInvestment';
 import CreateEventSeries from './CreateEventSeries';
 import EditEventSeries from './EditEventSeries';
+import Strategies from './Strategies';
 
 
 const AppContent = () => {
