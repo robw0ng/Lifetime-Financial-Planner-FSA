@@ -184,6 +184,74 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+
+  const createEventSeries = async (scenarioId, newEventSeries) => {
+    try {
+      const newEventWithId = { ...newEventSeries, id: `${Date.now()}` };
+
+      let updatedScenarioToSelect = null;
+
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id === scenarioId) {
+            const updatedEvents = new Set(scenario.events);
+            updatedEvents.add(newEventWithId);
+
+            const updatedScenario = {
+              ...scenario,
+              events: updatedEvents,
+            };
+
+            updatedScenarioToSelect = updatedScenario;
+
+            return updatedScenario;
+          }
+          return scenario;
+        })
+      );
+
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
+
+      // TODO: Send to backend later
+    } catch (error) {
+      console.error('Error creating event series:', error);
+    }
+  };
+
+  const editEventSeries = async (scenarioId, editedEventSeries) => {
+    try {
+      let updatedScenarioToSelect = null;
+
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id === scenarioId) {
+            const updatedEvents = new Set(
+              Array.from(scenario.events).map((event) =>
+                event.id === editedEventSeries.id ? editedEventSeries : event
+              )
+            );
+
+            const updatedScenario = {
+              ...scenario,
+              events: updatedEvents,
+            };
+
+            updatedScenarioToSelect = updatedScenario;
+            return updatedScenario;
+          }
+          return scenario;
+        })
+      );
+
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
+    } catch (error) {
+      console.error('Error editing event series:', error);
+    }
+  };
   // ✅ Function to create a new scenario
   const createScenario = async (newScenario) => {
     try {
@@ -396,6 +464,36 @@ export const DataProvider = ({ children }) => {
     }
   };
   
+  const deleteEventSeries = async (scenarioId, eventSeriesId) => {
+    try {
+      let updatedScenarioToSelect = null;
+
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id === scenarioId) {
+            const updatedEvents = new Set(
+              Array.from(scenario.events).filter(event => event.id !== eventSeriesId)
+            );
+
+            const updatedScenario = {
+              ...scenario,
+              events: updatedEvents,
+            };
+
+            updatedScenarioToSelect = updatedScenario;
+            return updatedScenario;
+          }
+          return scenario;
+        })
+      );
+
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
+    } catch (error) {
+      console.error('Error deleting event series:', error);
+    }
+  };
 
   // ✅ Duplicate an investment within a scenario
   const duplicateInvestment = async (scenarioId, investmentId) => {
@@ -477,6 +575,48 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+
+  const duplicateEventSeries = async (scenarioId, eventSeriesId) => {
+    try {
+      let duplicatedEvent = null;
+      let updatedScenarioToSelect = null;
+
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id === scenarioId) {
+            const eventToDuplicate = Array.from(scenario.events).find(event => event.id === eventSeriesId);
+            if (!eventToDuplicate) return scenario;
+
+            duplicatedEvent = {
+              ...eventToDuplicate,
+              id: `${Date.now()}`,
+              name: `${eventToDuplicate.name} (Copy)`,
+            };
+
+            const updatedEvents = new Set(scenario.events);
+            updatedEvents.add(duplicatedEvent);
+
+            const updatedScenario = {
+              ...scenario,
+              events: updatedEvents,
+            };
+
+            updatedScenarioToSelect = updatedScenario;
+            return updatedScenario;
+          }
+          return scenario;
+        })
+      );
+
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
+
+      return duplicatedEvent;
+    } catch (error) {
+      console.error('Error duplicating event series:', error);
+    }
+  };
   // ✅ Automatically fetch scenarios when user logs in or email changes
   useEffect(() => {
     if (user?.email) {
@@ -486,18 +626,22 @@ export const DataProvider = ({ children }) => {
 
   return (
     <DataContext.Provider value={{ 
-      scenarios, 
-      setScenarios,
-      loading, 
-      fetchScenarios, 
-      createScenario, 
-      editScenario, 
-      duplicateScenario, 
-      deleteScenario,
-      createInvestment,
-      editInvestment,
-      duplicateInvestment,
-      deleteInvestment
+    scenarios, 
+    setScenarios,
+    loading, 
+    fetchScenarios, 
+    createScenario, 
+    editScenario, 
+    duplicateScenario, 
+    deleteScenario,
+    createInvestment,
+    editInvestment,
+    duplicateInvestment,
+    deleteInvestment,
+    createEventSeries,
+    editEventSeries,
+    duplicateEventSeries,
+    deleteEventSeries
     }}>
       {children}
     </DataContext.Provider>
