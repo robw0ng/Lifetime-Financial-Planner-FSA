@@ -1,7 +1,10 @@
 const router = require("express").Router();
 require("dotenv").config();
 const db = require("../models");
-const { Scenario } = db;
+const { Scenario, Investment, InvestmentType, EventSeries } = db;
+
+// Get specific scenario
+router.get("/:", async (req, res) => {});
 
 // Get all scenarios for logged in user
 router.get("/", async (req, res) => {
@@ -13,6 +16,7 @@ router.get("/", async (req, res) => {
 	try {
 		const allScenarios = await Scenario.findAll({
 			where: { user_id: user.id },
+			include: [{ model: Investment }, { model: InvestmentType }, { model: EventSeries }],
 		});
 		res.status(200).json(allScenarios);
 	} catch (err) {
