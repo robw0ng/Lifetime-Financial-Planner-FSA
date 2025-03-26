@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { useSelected } from './SelectedContext';
 
 const DataContext = createContext();
 
@@ -7,6 +8,7 @@ export const DataProvider = ({ children }) => {
   const { user } = useAuth(); // ✅ Use email from AuthContext
   const [scenarios, setScenarios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { selectedScenario, setSelectedScenario, selectedInvestment, setSelectedInvestment } = useSelected();
 
   // ✅ Temporary hardcoded list of scenarios
   const mockScenarios = [
@@ -28,7 +30,7 @@ export const DataProvider = ({ children }) => {
         rothConversionOptimizerStartYear: 2025,
         rothConversionOptimizerEndYear: 2030,
         investments: new Set([
-            { id:"1", type: {name:"Stocks"}, account: "PTR", value: 15000 },
+            { id:"1", type: {name:"Stocks", description:"", expected_annual_return:"", expense_ratio:"", expected_annual_income:"", taxability:""}, account: "PTR", value: 15000 },
             { id:"2", type: {name:"Bonds"}, account: "PTR", value: 10000 },
             { id:"3", type: {name:"Real Estate"}, account: "PTR", value: 25000 },
             { id:"4", type: {name:"Mutual Funds"}, account: "PTR", value: 20000 },
@@ -227,6 +229,160 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  // ✅ Function to create a new investment within a specific scenario
+  const createInvestment = async (scenarioId, newInvestment) => {
+    try {
+      const newInvestmentWithId = { ...newInvestment, id: `${Date.now()}` };
+  
+      let updatedScenarioToSelect = null;
+  
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id === scenarioId) {
+            const updatedInvestments = new Set(scenario.investments);
+            updatedInvestments.add(newInvestmentWithId);
+  
+            const updatedScenario = {
+              ...scenario,
+              investments: updatedInvestments,
+            };
+  
+            // ✅ Store for later
+            updatedScenarioToSelect = updatedScenario;
+  
+            return updatedScenario;
+          }
+          return scenario;
+        })
+      );
+  
+      // ✅ Safe to call AFTER state update is queued
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        setTimeout(() => setSelectedInvestment(newInvestmentWithId), 0);
+      }
+  
+      // TODO: Send to backend later
+    } catch (error) {
+      console.error('Error creating investment:', error);
+    }
+  };
+
+  const editInvestment = async (scenarioId, editedInvestment) => {
+    try {
+      let updatedScenarioToSelect = null;
+  
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id === scenarioId) {
+            const updatedInvestments = new Set(
+              Array.from(scenario.investments).map((inv) =>
+                inv.id === editedInvestment.id ? editedInvestment : inv
+              )
+            );
+            
+            const updatedScenario = {
+              ...scenario,
+              investments: updatedInvestments,
+            };
+  
+            updatedScenarioToSelect = updatedScenario;
+            return updatedScenario;
+          }
+          return scenario;
+        })
+      );
+  
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        setTimeout(() => setSelectedInvestment(editedInvestment), 0);
+      }
+    } catch (error) {
+      console.error('Error editing investment:', error);
+    }
+  };
+  
+
+  // ✅ Duplicate an investment within a scenario
+  const duplicateInvestment = async (scenarioId, investmentId) => {
+    try {
+      let updatedScenarioToSelect = null;
+
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id === scenarioId) {
+            const investmentsArray = Array.from(scenario.investments);
+            const investmentToDuplicate = investmentsArray.find(inv => inv.id === investmentId);
+            if (!investmentToDuplicate) return scenario;
+
+              const duplicatedInvestment = {
+              ...investmentToDuplicate,
+              id: `${Date.now()}`,
+              type: { 
+                ...investmentToDuplicate.type, 
+                name: `${investmentToDuplicate.type.name} (Copy)` 
+              },
+              };
+
+            const updatedInvestments = new Set(scenario.investments);
+            updatedInvestments.add(duplicatedInvestment);
+
+            const updatedScenario = {
+              ...scenario,
+              investments: updatedInvestments,
+            };
+
+            updatedScenarioToSelect = updatedScenario;
+            return updatedScenario;
+          }
+          return scenario;
+        })
+      );
+
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
+
+      // TODO: Sync with backend if needed
+    } catch (error) {
+      console.error('Error duplicating investment:', error);
+    }
+  };
+
+  // ✅ Delete an investment from a scenario
+  const deleteInvestment = async (scenarioId, investmentId) => {
+    try {
+      let updatedScenarioToSelect = null;
+
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id === scenarioId) {
+            const updatedInvestments = new Set(
+              Array.from(scenario.investments).filter(inv => inv.id !== investmentId)
+            );
+
+            const updatedScenario = {
+              ...scenario,
+              investments: updatedInvestments,
+            };
+
+            updatedScenarioToSelect = updatedScenario;
+            return updatedScenario;
+          }
+          return scenario;
+        })
+      );
+
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
+
+      // TODO: Sync with backend if needed
+    } catch (error) {
+      console.error('Error deleting investment:', error);
+    }
+  };
+
   // ✅ Automatically fetch scenarios when user logs in or email changes
   useEffect(() => {
     if (user?.email) {
@@ -235,7 +391,20 @@ export const DataProvider = ({ children }) => {
   }, [user?.email]);
 
   return (
-    <DataContext.Provider value={{ scenarios, loading, fetchScenarios, createScenario, editScenario, duplicateScenario, deleteScenario }}>
+    <DataContext.Provider value={{ 
+    scenarios, 
+    setScenarios,
+    loading, 
+    fetchScenarios, 
+    createScenario, 
+    editScenario, 
+    duplicateScenario, 
+    deleteScenario,
+    createInvestment,
+    editInvestment,
+    duplicateInvestment,
+    deleteInvestment
+    }}>
       {children}
     </DataContext.Provider>
   );
