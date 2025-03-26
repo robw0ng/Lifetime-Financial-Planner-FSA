@@ -9,7 +9,19 @@
 }
 
 .spending {
-    width: 25%;
+    width: 20%;
+}
+
+.expense {
+    width: 20%
+}
+
+.roth {
+    width: 20%
+}
+
+.rmd {
+    width: 20%
 }
 
 .action-button:hover{
@@ -54,12 +66,17 @@
 
 .strategy-item{
     display: flex;
-    justify-content: space-evenly;
     flex-direction: row;
     background-color: #2c2e35;
     color: rgba(255, 255, 255, 0.87);
     border-radius: 8px;
     cursor: pointer;
+    margin-bottom: 5px;
+}
+
+.strategy-item span{
+    width: 33%;
+
 }
 
 .selected-strategy-item{

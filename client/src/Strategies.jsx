@@ -142,6 +142,68 @@ function SpendingStrategyList() {
     );
 }
   
+function StrategyList({ title, strategyKey, strategyItems }) {
+    const { selectedScenario } = useSelected();
+    const { reorderStrategy } = useData();
+  
+    function handleMove(index, direction) {
+      const toIndex = direction === "up" ? index - 1 : index + 1;
+      reorderStrategy(selectedScenario.id, strategyKey, index, toIndex);
+    }
+  
+    return (
+      <div className="strategies-list-container">
+        <div className="strategies-inner">
+          <h2 className="title">{title}</h2>
+          <div className="header">
+            <span className="strategies-span">Move</span>
+            <span className="strategies-span">Name</span>
+            <span className="strategies-span">Value</span>
+          </div>
+          {strategyItems.length === 0 ? (
+            <div className="strategy-item">
+              <span className="strategies-span">—</span>
+              <span className="strategies-span">None</span>
+              <span className="strategies-span">—</span>
+            </div>
+          ) : (
+            strategyItems.map((item, index) => (
+              <div key={index} className="strategy-item">
+                <span className="strategies-span move-controls">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMove(index, "up");
+                    }}
+                    disabled={index <= 0}
+                    className="move-button"
+                  >
+                    ⬆️
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMove(index, "down");
+                    }}
+                    disabled={index >= strategyItems.length - 1}
+                    className="move-button"
+                  >
+                    ⬇️
+                  </button>
+                </span>
+                <span className="strategies-span">{item.type?.name || item.name}</span>
+                <span className="strategies-span">
+                  ${item.value?.toLocaleString() ?? "—"}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+
 export default function Strategies() {
   const { selectedScenario } = useSelected();
 
@@ -152,36 +214,42 @@ export default function Strategies() {
 
   return (
     <main className="event-series">
-      <section className="actions column">
-        <ScenarioList />
-      </section>
+        <section className="actions column">
+            <ScenarioList />
+        </section>
 
-      <section className="spending column">
-        <SpendingStrategyList scenario={selectedScenario}/>
-
-      </section>
-    {/* <section className="expense column">
-        <StrategySection
-          title="Expense Withdrawal Strategy"
-          items={expenseWithdrawalStrategy}
-          itemType="investment"
-        />
-    </section>
-      <section className="roth column">
-        <StrategySection
-          title="Roth Conversion Strategy"
-          items={rothConversionStrategy}
-          itemType="investment"
-        />
-      </section>
-    <section className="rmd column">
-        <StrategySection
-            title="RMD Strategy"
-            items={rmdStrategy}
-            itemType="investment"
+        <section className="spending column">
+            {/* <SpendingStrategyList scenario={selectedScenario} /> */}
+            <StrategyList
+            title="Spending Strategy"
+            strategyKey="spendingStrategy"
+            strategyItems={selectedScenario?.spendingStrategy || []}
             />
-    </section> */}
+        </section>
 
+        <section className="expense column">
+            <StrategyList
+            title="Expense Withdrawal Strategy"
+            strategyKey="expenseWithdrawalStrategy"
+            strategyItems={selectedScenario?.expenseWithdrawalStrategy || []}
+            />
+        </section>
+
+        <section className="roth column">
+            <StrategyList
+            title="Roth Conversion Strategy"
+            strategyKey="rothConversionStrategy"
+            strategyItems={selectedScenario?.rothConversionStrategy || []}
+            />
+        </section>
+
+        <section className="rmd column">
+            <StrategyList
+            title="RMD Strategy"
+            strategyKey="rmdStrategy"
+            strategyItems={selectedScenario?.rmdStrategy || []}
+            />
+        </section>
     </main>
   );
 }

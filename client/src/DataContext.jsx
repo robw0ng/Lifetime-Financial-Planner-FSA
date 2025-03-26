@@ -156,7 +156,7 @@ export const DataProvider = ({ children }) => {
       ]),
       spendingStrategy: [
         {
-          id: "ev5",
+          id: "ev101",
           name: "Lifestyle Expenses",
           type: "expense",
           startYear: { value: 2023, type: "fixed" },
@@ -168,73 +168,118 @@ export const DataProvider = ({ children }) => {
           isDiscretionary: true,
         },
         {
-          id: "ev7",
-          name: "Vacation Expenses",
+          id: "ev102",
+          name: "Vacation Travel",
           type: "expense",
           startYear: { value: 2025, type: "fixed" },
-          duration: { value: 10, type: "fixed" },
-          initialAmount: 10000,
-          expectedChange: { value: "2%", type: "fixed" },
+          duration: { value: 15, type: "fixed" },
+          initialAmount: 12000,
+          expectedChange: { value: "3%", type: "fixed" },
           inflationAdjusted: true,
           userPercentage: 100,
           isDiscretionary: true,
         },
         {
-          id: "ev5",
-          name: "Lifestyle Expenses",
+          id: "ev103",
+          name: "Dining Out",
+          type: "expense",
+          startYear: { value: 2024, type: "fixed" },
+          duration: { value: 35, type: "fixed" },
+          initialAmount: 6000,
+          expectedChange: { value: "2%", type: "fixed" },
+          inflationAdjusted: false,
+          userPercentage: 70,
+          isDiscretionary: true,
+        },
+        {
+          id: "ev104",
+          name: "Entertainment Subscriptions",
           type: "expense",
           startYear: { value: 2023, type: "fixed" },
-          duration: { value: 40, type: "fixed" },
-          initialAmount: 30000,
-          expectedChange: { value: "1%", type: "fixed" },
-          inflationAdjusted: true,
-          userPercentage: 50,
+          duration: { value: 30, type: "fixed" },
+          initialAmount: 1500,
+          expectedChange: { value: "$50", type: "fixed" },
+          inflationAdjusted: false,
+          userPercentage: 90,
           isDiscretionary: true,
         },
         {
-          id: "ev7",
-          name: "Vacation Expenses",
+          id: "ev105",
+          name: "Seasonal Shopping",
           type: "expense",
-          startYear: { value: 2025, type: "fixed" },
-          duration: { value: 10, type: "fixed" },
-          initialAmount: 10000,
-          expectedChange: { value: "2%", type: "fixed" },
+          startYear: { value: 2026, type: "fixed" },
+          duration: { value: 20, type: "fixed" },
+          initialAmount: 5000,
+          expectedChange: { value: "1.5%", type: "fixed" },
           inflationAdjusted: true,
-          userPercentage: 100,
+          userPercentage: 60,
           isDiscretionary: true,
         },
         {
-          id: "ev5",
-          name: "Lifestyle Expenses",
+          id: "ev106",
+          name: "Hobbies and Gear",
           type: "expense",
-          startYear: { value: 2023, type: "fixed" },
-          duration: { value: 40, type: "fixed" },
-          initialAmount: 30000,
-          expectedChange: { value: "1%", type: "fixed" },
+          startYear: { value: 2024, type: "fixed" },
+          duration: { value: 25, type: "fixed" },
+          initialAmount: 8000,
+          expectedChange: { value: "2.5%", type: "fixed" },
           inflationAdjusted: true,
-          userPercentage: 50,
-          isDiscretionary: true,
-        },
-        {
-          id: "ev7",
-          name: "Vacation Expenses",
-          type: "expense",
-          startYear: { value: 2025, type: "fixed" },
-          duration: { value: 10, type: "fixed" },
-          initialAmount: 10000,
-          expectedChange: { value: "2%", type: "fixed" },
-          inflationAdjusted: true,
-          userPercentage: 100,
+          userPercentage: 75,
           isDiscretionary: true,
         },
       ],
-      rmdStrategy: [],
-      rothConversionStrategy: [],
-      expenseWithdrawalStrategy: [],
+      
+      rmdStrategy: [
+        {
+          id: "inv3", // Real Estate Fund
+          type: { name: "Real Estate Fund" },
+          account: "PTR",
+          value: 50000,
+        },
+        {
+          id: "inv1", // S&P 500
+          type: { name: "S&P 500" },
+          account: "PTR",
+          value: 60000,
+        },
+      ],
+      rothConversionStrategy: [
+        {
+          id: "inv1", // S&P 500
+          type: { name: "S&P 500" },
+          account: "PTR",
+          value: 60000,
+        },
+        {
+          id: "inv3", // Real Estate Fund
+          type: { name: "Real Estate Fund" },
+          account: "PTR",
+          value: 50000,
+        },
+      ],
+      expenseWithdrawalStrategy: [
+        {
+          id: "inv4", // Cash
+          type: { name: "Cash" },
+          account: "NR",
+          value: 10000,
+        },
+        {
+          id: "inv2", // Municipal Bonds
+          type: { name: "Municipal Bonds" },
+          account: "NR",
+          value: 20000,
+        },
+        {
+          id: "inv5", // Crypto Index
+          type: { name: "Crypto Index" },
+          account: "ATR",
+          value: 15000,
+        },
+      ],
     },
   ];
   
-
   // ✅ Function to fetch scenarios using user's email
   const fetchScenarios = async () => {
     try {
@@ -256,7 +301,6 @@ export const DataProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
 
   const createEventSeries = async (scenarioId, newEventSeries) => {
     try {
@@ -691,7 +735,7 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  const reorderSpendingStrategy = (scenarioId, fromIndex, toIndex) => {
+  const reorderStrategy = (scenarioId, strategyKey, fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;
   
     let updatedScenarioToSelect = null;
@@ -700,7 +744,7 @@ export const DataProvider = ({ children }) => {
       prevScenarios.map((scenario) => {
         if (scenario.id !== scenarioId) return scenario;
   
-        const strategyCopy = [...scenario.spendingStrategy];
+        const strategyCopy = [...(scenario[strategyKey] || [])];
         if (
           fromIndex < 0 ||
           toIndex < 0 ||
@@ -715,7 +759,7 @@ export const DataProvider = ({ children }) => {
   
         const updatedScenario = {
           ...scenario,
-          spendingStrategy: strategyCopy,
+          [strategyKey]: strategyCopy,
         };
   
         updatedScenarioToSelect = updatedScenario;
@@ -727,13 +771,9 @@ export const DataProvider = ({ children }) => {
       setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
     }
   
-    // TODO: Send updated spendingStrategy order to the backend
-    // await fetch(`/api/scenarios/${scenarioId}/spending-strategy`, {
-    //   method: 'PUT',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(strategyCopy),
-    // });
+    // TODO: Push reordered strategy to backend (e.g., /api/scenarios/:id/:strategyKey)
   };
+  
 
   // ✅ Automatically fetch scenarios when user logs in or email changes
   useEffect(() => {
@@ -760,7 +800,7 @@ export const DataProvider = ({ children }) => {
     editEventSeries,
     duplicateEventSeries,
     deleteEventSeries,
-    reorderSpendingStrategy
+    reorderStrategy
     }}>
       {children}
     </DataContext.Provider>
