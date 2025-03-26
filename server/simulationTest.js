@@ -1,8 +1,5 @@
 const { simulateScenario } = require('./simulation');
 const { Scenario, Investment, InvestmentType, EventSeries, IncomeEventSeries, ExpenseEventSeries, InvestEventSeries, RebalanceEventSeries } = require("./models");
-const yaml = require('js-yaml');
-const fs = require('fs');
-const path = require('path');
 
 async function createTestScenario() {
     // Create base scenario for testing

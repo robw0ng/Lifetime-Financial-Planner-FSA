@@ -1,4 +1,4 @@
-const { Scenario, Investment, InvestmentType, EventSeries, IncomeEventSeries } = require("./models");
+const { Investment, InvestmentType, EventSeries } = require("./models");
 const fs = require('fs');
 const yaml = require('js-yaml');
 const path = require('path');
@@ -16,7 +16,7 @@ async function loadTaxBrackets(type = 'federal', state = null) {
             break;
         case 'state':
             if (!state) return null;
-            filename = `state_tax_brackets/${state}.yaml`;
+            filename = `${state.toUpperCase()}_tax_brackets.yaml`;
             break;
         case 'capital_gains':
             filename = 'capital_gains_brackets.yaml';
@@ -44,6 +44,16 @@ async function loadTaxBrackets(type = 'federal', state = null) {
             }));
         }
 
+        if (type === 'state') {
+            return data.map(bracket => ({
+                rate: bracket.additional_rate,
+                filingStatus: bracket.filing_status,
+                from: bracket.excess_over,
+                to: bracket.range[1] === null ? Infinity : bracket.range[1],
+                baseTax: bracket.base_tax
+            }));
+        }
+
         return data.map(bracket => ({
             rate: parseFloat(bracket['Tax Rate'].replace('%', '')) / 100,
             filingStatus: bracket['Filing Status'] || null,
@@ -57,14 +67,22 @@ async function loadTaxBrackets(type = 'federal', state = null) {
     }
 }
 
-//assuming there is RMD table information
 async function loadRMDTable() {
     try {
-        const filePath = path.join(__dirname, 'rmd_table.yaml');
-        if (fs.existsSync(filePath)) {
-            return yaml.load(fs.readFileSync(filePath, 'utf8'));
+        const filePath = path.join(__dirname, 'uniform_lifetime_table.yaml');
+        if (!fs.existsSync(filePath)) {
+            throw new Error('RMD table not found');
         }
-        throw new Error('RMD table not found');
+        const data = yaml.load(fs.readFileSync(filePath, 'utf8'));
+        
+        // Convert to map for faster lookup, skip header row
+        const rmdTable = new Map();
+        data.Uniform_Lifetime_Table.forEach(entry => {
+            if (entry.age !== 'Age') {  // Skip header row
+                rmdTable.set(parseInt(entry.age), parseFloat(entry.distribution_period));
+            }
+        });
+        return rmdTable;
     } catch (error) {
         console.error('Error loading RMD table:', error);
         throw error;
@@ -344,7 +362,7 @@ async function processRMD(state, scenario, year) {
 
     // Get distribution period from RMD table
     const rmdTable = await loadRMDTable();
-    const distributionPeriod = rmdTable[userAge]
+    const distributionPeriod = rmdTable.get(userAge)
 
     // Calculate RMD amount
     const rmdAmount = totalPreTaxValue / distributionPeriod;
@@ -542,31 +560,35 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year) {
 
     // Calculate federal income tax
     let federalIncomeTax = 0;
-    let remainingIncome = prevYearFedTaxableIncome;
-    remainingIncome -= state.standardDeductions[state.is_Married ? 'Married filing jointly or Qualifying surviving spouse' : 'Single or Married filing separately']
+    const remainingIncome = prevYearFedTaxableIncome;
+    const federalTaxableIncome = remainingIncome - state.standardDeductions[state.is_Married ? 'Married filing jointly or Qualifying surviving spouse' : 'Single or Married filing separately']
     
     for (const bracket of state.currentTaxBrackets.federal) {
         const incomeInBracket = Math.min(
-            Math.max(0, remainingIncome - bracket.from),
+            Math.max(0, federalTaxableIncome - bracket.from),
             bracket.to - bracket.from
         );
         federalIncomeTax += incomeInBracket * bracket.rate;
-        remainingIncome -= incomeInBracket;
-        if (remainingIncome <= 0) break;
+        federalTaxableIncome -= incomeInBracket;
+        if (federalTaxableIncome <= 0) break;
     }
 
     // Calculate state income tax if applicable
-    let stateIncomeTax = 0;
+    let stateTax = 0;
     if (state.currentTaxBrackets.state) {
-        remainingIncome = prevYearFedTaxableIncome;
-        for (const bracket of state.currentTaxBrackets.state) {
-            const incomeInBracket = Math.min(
-                Math.max(0, remainingIncome - bracket.from),
-                bracket.to - bracket.from
-            );
-            stateIncomeTax += incomeInBracket * bracket.rate;
-            remainingIncome -= incomeInBracket;
-            if (remainingIncome <= 0) break;
+        const filingStatus = state.is_married ? 'Married filing jointly and qualifying' : 'Single and married filing separately';
+        
+        // Find the applicable tax bracket based on income and filing status
+        const applicableBracket = state.currentTaxBrackets.state.find(bracket => 
+            bracket.filingStatus === filingStatus && 
+            remainingIncome > bracket.from &&
+            (bracket.to === Infinity || remainingIncome <= bracket.to)
+        );
+
+        if (applicableBracket) {
+            // Calculate state tax using base tax plus additional rate on excess
+            stateTax = applicableBracket.baseTax + 
+                      (remainingIncome - applicableBracket.from) * applicableBracket.rate;
         }
     }
 
@@ -616,7 +638,7 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year) {
         }, 0);
 
     // Calculate total payment needed
-    const totalPayment = nonDiscExpenses + federalIncomeTax + stateIncomeTax + capitalGainsTax + earlyWithdrawalTax;
+    const totalPayment = nonDiscExpenses + federalIncomeTax + stateTax + capitalGainsTax + earlyWithdrawalTax;
 
     // Find cash investment
     const cashInvestment = state.investments.find(inv => inv.investmentType === 'cash');

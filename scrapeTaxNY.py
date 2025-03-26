@@ -83,7 +83,7 @@ for idx, table_id in enumerate(table_ids):
     all_tax_data.extend(tax_brackets)
 
 # Save as YAML
-yaml_filename = "tax_brackets.yaml"
+yaml_filename = "NY_tax_brackets.yaml"
 with open(yaml_filename, "w") as file:
     yaml.dump(all_tax_data, file, default_flow_style=False)
 
