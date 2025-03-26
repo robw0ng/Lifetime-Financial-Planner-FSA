@@ -272,10 +272,19 @@ async function processIncome(state, scenario, year, inflationRate) {
         }
 
         // Apply expected annual change if any
+        // if values > 1 then amount else percentage
         if (event.expected_change_type === 'fixed') {
-            event.amount *= (1 + event.expected_change_value);
+            if (event.expected_change_value > 1 || event.expected_change_value < -1) {
+                event.amount += event.expected_change_value;
+            } else {
+                event.amount *= (1 + event.expected_change_value);
+            }
         } else if (event.expected_change_type === 'normal') {
-            event.amount *= (1 + sampleNormal(event.expected_change_mean, event.expected_change_std_dev));
+            if (event.expected_change_mean > 1 || event.expected_change_mean < -1) {
+                event.amount += sampleNormal(event.expected_change_mean, event.expected_change_std_dev);
+            } else {
+                event.amount *= (1 + sampleNormal(event.expected_change_mean, event.expected_change_std_dev));
+            }
         }
 
         // Apply inflation adjustment if enabled
@@ -378,41 +387,56 @@ async function processInvestmentUpdates(state, scenario) {
         const startValue = investment.value;
 
         // Calculate generated income
+        // if values > 1 then amount else percentage
         let generatedIncome = 0;
         switch (investmentType.expected_income_type) {
             case 'fixed':
-                generatedIncome = investmentType.expected_income_value;
-                break;
-            case 'percentage':
-                generatedIncome = startValue * (investmentType.expected_income_value / 100);
+                if (investmentType.expected_income_value > 1 || investmentType.expected_income_value < -1) {
+                    generatedIncome = investmentType.expected_income_value;
+                } else {
+                    generatedIncome = startValue * investmentType.expected_income_value;
+                }
                 break;
             case 'normal':
-                generatedIncome = startValue * sampleNormal(
-                    investmentType.expected_income_mean,
-                    investmentType.expected_income_std_dev
-                );
+                if (investmentType.expected_income_mean > 1 || investmentType.expected_income_mean < -1) {
+                    generatedIncome = sampleNormal(
+                        investmentType.expected_income_mean,
+                        investmentType.expected_income_std_dev
+                    );
+                } else {
+                    generatedIncome = startValue * (1 + sampleNormal(
+                        investmentType.expected_income_mean,
+                        investmentType.expected_income_std_dev
+                    ));
+                }
                 break;
         }
 
         // Add to taxable income if applicable
-        if (investment.tax_status === 'non-retirement' && investmentType.taxability === 'taxable') {
+        if (investment.tax_status === 'non-retirement' && investmentType.taxability) {
             state.curYearIncome += generatedIncome;
         }
 
         // Calculate value change
+        // if values > 1 then amount else percentage
         let valueChange = 0;
         switch (investmentType.expected_change_type) {
             case 'fixed':
+                if (investmentType.expected_change_value > 1 || investmentType.expected_change_value < -1) {
                 valueChange = investmentType.expected_change_value;
-                break;
-            case 'percentage':
-                valueChange = investment.value * (investmentType.expected_change_value / 100);
+                } else {
+                    valueChange = investment.value * investmentType.expected_change_value;
+                }
                 break;
             case 'normal':
+                if (investmentType.expected_change_mean > 1 || investmentType.expected_change_mean < -1) {
+                    valueChange = sampleNormal(investmentType.expected_change_mean, investmentType.expected_change_std_dev);
+                } else {
                 valueChange = investment.value * sampleNormal(
                     investmentType.expected_change_mean,
                     investmentType.expected_change_std_dev
                 );
+            }
                 break;
         }
 
@@ -559,10 +583,25 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year) {
                 event.amount = event.initial_amount;
             }
     
+            //change the amount according to expected change
             if (event.expected_change_type === 'fixed') {
-                event.amount *= (1 + event.expected_change_value);
+                if (event.expected_change_value > 1 || event.expected_change_value < -1) {
+                    event.amount += event.expected_change_value;
+                } else {
+                    event.amount *= (1 + event.expected_change_value);
+                }
             } else if (event.expected_change_type === 'normal') {
-                event.amount *= (1 + sampleNormal(event.expected_change_mean, event.expected_change_std_dev));
+                if (event.expected_change_mean > 1 || event.expected_change_mean < -1) {
+                    event.amount += sampleNormal(event.expected_change_mean, event.expected_change_std_dev);
+                } else {
+                    event.amount *= (1 + sampleNormal(event.expected_change_mean, event.expected_change_std_dev));
+                }
+            } else if (event.expected_change_type === 'uniform') {
+                if (event.expected_change_mean > 1 || event.expected_change_mean < -1) {
+                    event.amount += sampleUniform(event.expected_change_lower, event.expected_change_upper);
+                } else {
+                    event.amount *= (1 + sampleUniform(event.expected_change_lower, event.expected_change_upper));
+                }
             }
 
             return total + event.amount;
@@ -674,21 +713,26 @@ async function processDiscretionaryExpenses(state, scenario, year) {
                 event.amount = event.initial_amount;
             }
             
-            let change = 0;
-            if (event.expected_change_type === 'percentage') {
-                change = event.expected_change_value;
+            if (event.expected_change_type === 'fixed') {
+                if (event.expected_change_value > 1 || event.expected_change_value < -1) {
+                    event.amount += event.expected_change_value;
+                } else {
+                    event.amount *= (1 + event.expected_change_value);
+                }
             } else if (event.expected_change_type === 'normal') {
-                change = sampleNormal(event.expected_change_mean, event.expected_change_std_dev);
+                if (event.expected_change_mean > 1 || event.expected_change_mean < -1) {
+                    event.amount += sampleNormal(event.expected_change_mean, event.expected_change_std_dev);
+                } else {
+                    event.amount *= (1 + sampleNormal(event.expected_change_mean, event.expected_change_std_dev));
+                }
             } else if (event.expected_change_type === 'uniform') {
-                change = sampleUniform(event.expected_change_lower, event.expected_change_upper);
+                if (event.expected_change_lower > 1 || event.expected_change_lower < -1) {
+                    event.amount += sampleUniform(event.expected_change_lower, event.expected_change_upper);
+                } else {
+                    event.amount *= (1 + sampleUniform(event.expected_change_lower, event.expected_change_upper));
+                }
             }
 
-            // Apply change based on amount or percentage
-            if (event.expected_change_type === 'amount') {
-                event.amount += event.expected_change_value;
-            } else { // percentage
-                event.amount *= (1 + change);
-            }
 
             // Apply inflation adjustment if needed
             if (event.inflation_adjusted) {
@@ -750,8 +794,11 @@ async function withdrawForExpense(state, scenario, amount, userAge) {
         // Calculate and track capital gains for non-pre-tax investments
         if (investment.tax_status !== 'pre-tax') {
             const sellFraction = sellAmount / investment.value;
-            const capitalGain = sellFraction * (investment.value - (investment.purchase_price || 0));
+            const capitalGain = sellFraction * (investment.value - investment.purchase_price);
             state.curYearGains += capitalGain;
+            
+            // Update cost basis
+            investment.purchase_price *= (1 - sellFraction);
         }
 
         // Update income for pre-tax withdrawals
@@ -898,8 +945,6 @@ async function processRebalanceEvents(state, scenario, year) {
 
         if (totalValue <= 0) continue;
 
-        //up to here
-
         // Calculate target values and needed adjustments
         const adjustments = new Map();
         event.asset_allocation.forEach(allocation => {
@@ -955,6 +1000,7 @@ async function processRebalanceEvents(state, scenario, year) {
         }
     }
 }
+
 // Helper functions for sampling from probability distributions
 function sampleInflationRate(scenario) {
     switch (scenario.inflation_assumption_type) {
@@ -964,6 +1010,11 @@ function sampleInflationRate(scenario) {
             return sampleNormal(
                 scenario.inflation_assumption_mean,
                 scenario.inflation_assumption_std_dev
+            );
+        case "uniform":
+            return sampleUniform(
+                scenario.inflation_assumption_lower,
+                scenario.inflation_assumption_upper
             );
     }
 }

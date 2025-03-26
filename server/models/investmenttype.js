@@ -65,7 +65,7 @@ module.exports = (sequelize, DataTypes) => {
 				allowNull: true,
 			},
 			taxability: {
-				type: DataTypes.STRING,
+				type: DataTypes.BOOLEAN,
 				allowNull: false,
 			},
 			scenario_id: {
