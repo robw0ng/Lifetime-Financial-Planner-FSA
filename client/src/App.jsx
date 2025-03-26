@@ -15,6 +15,7 @@ import EditScenario from './EditScenario';
 import { DataProvider } from './DataContext';
 import CreateInvestment from './CreateInvestment';
 import EditInvestment from './EditInvestment';
+import Strategies from './Strategies';
 
 const AppContent = () => {
   const { user } = useAuth();
@@ -34,12 +35,14 @@ const AppContent = () => {
         <Route path="/investments" element={<ProtectedRoute element={<Investments />} />} />
         <Route path="/eventseries" element={<ProtectedRoute element={<EventSeries />} />} />
         <Route path="/simulations" element={<ProtectedRoute element={<Simulations />} />} />
+        <Route path="/strategies" element={<ProtectedRoute element={<Strategies />} />} />
 
         <Route path="/create-scenario" element={<ProtectedRoute element={<CreateScenario />} />} />
         <Route path="/edit-scenario/:id" element={<ProtectedRoute element={<EditScenario />} />} />
 
         <Route path="/create-investment" element={<ProtectedRoute element={<CreateInvestment />} />} />
         <Route path="/edit-investment/:id" element={<ProtectedRoute element={<EditInvestment />} />} />
+        
       </Routes>
     </Router>
   );

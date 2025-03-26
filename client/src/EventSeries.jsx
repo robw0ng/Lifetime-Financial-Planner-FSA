@@ -1,4 +1,5 @@
 import "./EventSeries.css"
+import "./Investments.css"
 import { Link } from "react-router-dom";
 import { useSelected } from "./SelectedContext";
 import { useData } from "./DataContext";

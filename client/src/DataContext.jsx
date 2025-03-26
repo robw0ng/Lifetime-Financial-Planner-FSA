@@ -486,18 +486,18 @@ export const DataProvider = ({ children }) => {
 
   return (
     <DataContext.Provider value={{ 
-    scenarios, 
-    setScenarios,
-    loading, 
-    fetchScenarios, 
-    createScenario, 
-    editScenario, 
-    duplicateScenario, 
-    deleteScenario,
-    createInvestment,
-    editInvestment,
-    duplicateInvestment,
-    deleteInvestment
+      scenarios, 
+      setScenarios,
+      loading, 
+      fetchScenarios, 
+      createScenario, 
+      editScenario, 
+      duplicateScenario, 
+      deleteScenario,
+      createInvestment,
+      editInvestment,
+      duplicateInvestment,
+      deleteInvestment
     }}>
       {children}
     </DataContext.Provider>

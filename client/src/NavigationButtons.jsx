@@ -23,6 +23,9 @@ function NavigationButtons() {
       <Link to="/simulations" className={location.pathname === "/simulations" ? styles.active : styles.navButton}>
         Simulations
       </Link>
+      <Link to="/strategies" className={location.pathname === "/strategies" ? styles.active : styles.navButton}>
+        Strategies
+      </Link>
     </div>
   </div>
   );

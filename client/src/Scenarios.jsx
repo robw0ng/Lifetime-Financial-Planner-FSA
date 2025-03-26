@@ -242,7 +242,7 @@ function ScenarioInfo({ scenario }){
     );
 }
 
-function ScenarioList() {
+export function ScenarioList() {
     const { selectedScenario, setSelectedScenario, deselectScenario } = useSelected();
 
     function selectScenario(scenario){
