@@ -77,7 +77,9 @@ async function simulateScenario(scenario) {
     const spouse_life_expectancy = scenario.is_married ?
         (scenario.spouse_life_expectancy_type === "fixed" ? scenario.spouse_life_expectancy_value : sampleNormal(scenario.spouse_life_expectancy_mean, scenario.spouse_life_expectancy_std_dev)) : 0;
 
-    const endYear = Math.max(life_expectancy, spouse_life_expectancy);
+    const userEndYear = currentYear + life_expectancy;
+    const spouseEndYear = currentYear + spouse_life_expectancy;
+    const endYear = Math.max(userEndYear, spouseEndYear);
     
     // Load tax brackets
     const federalTaxBrackets = await loadTaxBrackets('federal');
@@ -103,7 +105,8 @@ async function simulateScenario(scenario) {
         prevYearEarlyWithdrawals: 0,
         prevYearGains: 0,
         events: [], // Store all event objects here
-        investments: [] // Store all investment objects here
+        investments: [], // Store all investment objects here
+        is_married: scenario.is_married
     };
 
     // Initialize investments with purchase prices
@@ -150,6 +153,22 @@ async function simulateScenario(scenario) {
     }
 
     for (let year = currentYear; year <= endYear; year++) {
+        //check for mortality
+        if (state.is_married && (year > userEndYear || year > spouseEndYear)) {
+            state.is_married = false;
+
+            //the percentages of income and expense transactions associated with the deceased spouse are omitted from transaction amounts for future years
+            const incomeOrExpenseEvents = state.events.filter(event => event.type === 'income' || event.type === 'expense');
+            for (const event of incomeOrExpenseEvents) {
+                if (year > userEndYear) {
+                    event.amount *= (1 - event.user_percentage);
+                    event.user_percentage = 0;
+                } else {
+                    event.amount *= event.user_percentage;
+                    event.user_percentage = 1;
+                }
+            }
+        }
         // 1. Preliminaries
         //get the inflation assumption for the year
         const inflationRate = sampleInflationRate(scenario);
@@ -290,17 +309,6 @@ async function processIncome(state, scenario, year, inflationRate) {
         // Apply inflation adjustment if enabled
         if (event.is_inflation_adjusted) {
             event.amount *= (1 + inflationRate);
-        }
-
-        // Adjust for mortality
-        const age = year - scenario.birth_year;
-        const spouseAge = scenario.is_married ? year - scenario.spouse_birth_year : 0;
-        
-        if (age > scenario.life_expectancy) {
-            event.amount *= (1 - event.user_percentage / 100);
-        }
-        if (scenario.is_married && spouseAge > scenario.spouse_life_expectancy) {
-            event.amount *= (1 - (100 - event.user_percentage) / 100);
         }
 
         // Add to cash investment
@@ -448,7 +456,7 @@ async function processInvestmentUpdates(state, scenario) {
 
         // Calculate and subtract expenses
         const avgValue = (startValue + investment.value) / 2;
-        const expenses = avgValue * (investmentType.expense_ratio / 100);
+        const expenses = avgValue * (investmentType.expense_ratio);
         investment.value -= expenses;
     }
 }
@@ -535,7 +543,7 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year) {
     // Calculate federal income tax
     let federalIncomeTax = 0;
     let remainingIncome = prevYearFedTaxableIncome;
-    remainingIncome -= state.standardDeductions[scenario.isMarried ? 'Married filing jointly or Qualifying surviving spouse' : 'Single or Married filing separately']
+    remainingIncome -= state.standardDeductions[state.is_Married ? 'Married filing jointly or Qualifying surviving spouse' : 'Single or Married filing separately']
     
     for (const bracket of state.currentTaxBrackets.federal) {
         const incomeInBracket = Math.min(
@@ -563,7 +571,7 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year) {
     }
 
     // Calculate capital gains tax (simplified - using federal rate only)
-    const capitalGainsTax = calculateCapitalGainsTax(state.prevYearGains, state.currentTaxBrackets.capitalGains, scenario.is_married);
+    const capitalGainsTax = calculateCapitalGainsTax(state.prevYearGains, state.currentTaxBrackets.capitalGains, state.is_married);
 
     // Calculate early withdrawal penalty (10% of early withdrawals)
     const earlyWithdrawalTax = state.prevYearEarlyWithdrawals * 0.1;
@@ -637,6 +645,9 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year) {
                 const sellFraction = sellAmount / investment.value;
                 const capitalGain = sellFraction * (investment.value - (investment.purchase_price || 0));
                 state.curYearGains += capitalGain;
+                
+                // Update cost basis
+                investment.purchase_price *= (1 - sellFraction);
             }
 
             // Update income for pre-tax withdrawals
@@ -818,10 +829,33 @@ async function withdrawForExpense(state, scenario, amount, userAge) {
     }
 }
 
+// Add helper function for calculating glide path allocations
+function calculateGlidePathAllocations(event, year) {
+    // If glide path is not enabled, use fixed asset allocation
+    if (!event.is_glide_path) {
+        return event.asset_allocation;
+    }
+
+    const startYear = event.start_year_value;
+    const endYear = event.start_year_value + (event.duration_value || 0);
+    
+    // Calculate interpolation factor (0 to 1)
+    const progress = (year - startYear) / (endYear - startYear);
+
+    // Interpolate between start and end allocations
+    const result = {};
+for (const [investmentId, startPct] of Object.entries(event.asset_allocation)) {
+    const endPct = event.asset_allocation2[investmentId] || 0;
+    result[investmentId] = startPct + (endPct - startPct) * progress;
+}
+
+    return result;
+}
+
 async function processInvestEvents(state, scenario, year) {
     // Find cash investment
     const cashInvestment = state.investments.find(inv => inv.investmentType === 'cash');
-    if (!cashInvestment || cashInvestment.value <= 0) return;
+    if (!cashInvestment) return;
 
     // Get invest events for current year
     const investEvents = state.events.filter(event => 
@@ -830,9 +864,11 @@ async function processInvestEvents(state, scenario, year) {
         (!event.duration_value || year < event.start_year_value + event.duration_value)
     );
 
-    //there should only be 1 investevent for a given year
+    //there should only be 1 invest event for a given year
     for (const event of investEvents) {
-        const excessCash = cashInvestment.value;
+        // Calculate excess cash above max_cash threshold
+        const maxCash = event.max_cash || 0;
+        const excessCash = Math.max(0, cashInvestment.value - maxCash);
         if (excessCash <= 0) break;
 
         // Calculate inflation-adjusted contribution limit
@@ -840,20 +876,22 @@ async function processInvestEvents(state, scenario, year) {
         const inflationRate = sampleInflationRate(scenario);
         const inflationAdjustedLimit = baseLimit * Math.pow(1 + inflationRate, year - event.start_year_value);
 
+        // Get current allocations based on glide path (defaults to fixed if not enabled)
+        const currentAllocations = calculateGlidePathAllocations(event, year);
+
         // Group investments by tax status
         const investmentsByTaxStatus = {
             'after-tax': [],
             'other': []
         };
 
-        event.asset_allocation.forEach(allocation => {
-            const investment = state.investments.find(inv => inv.id === allocation.investment_id);
+        Object.entries(currentAllocations).forEach(([investmentId, percentage]) => {
+            const investment = state.investments.find(inv => inv.id === investmentId);
             if (!investment) return;
-
             if (investment.tax_status === 'after-tax') {
-                investmentsByTaxStatus['after-tax'].push({ investment, allocation: allocation.percentage });
+                investmentsByTaxStatus['after-tax'].push({ investment, allocation: percentage });
             } else {
-                investmentsByTaxStatus['other'].push({ investment, allocation: allocation.percentage });
+                investmentsByTaxStatus['other'].push({ investment, allocation: percentage });
             }
         });
 
@@ -864,14 +902,14 @@ async function processInvestEvents(state, scenario, year) {
 
         // Calculate after-tax investment amounts
         investmentsByTaxStatus['after-tax'].forEach(({ investment, allocation }) => {
-            const amount = (excessCash * allocation) / 100;
+            const amount = (excessCash * allocation);
             initialPurchases.set(investment.id, amount);
             afterTaxTotal += amount;
         });
 
         // Calculate non-retirement investment amounts
         investmentsByTaxStatus['other'].forEach(({ investment, allocation }) => {
-            const amount = (excessCash * allocation) / 100;
+            const amount = (excessCash * allocation);
             initialPurchases.set(investment.id, amount);
             nonRetirementTotal += amount;
         });
@@ -892,7 +930,7 @@ async function processInvestEvents(state, scenario, year) {
             if (nonRetirementTotal > 0) {
                 //scale up by recalculating non-retirement investments with an extra excessAmount
                 investmentsByTaxStatus['other'].forEach(({ investment, allocation }) => {
-                    const amount = ((excessAmount + excessCash) * allocation) / 100;
+                    const amount = ((excessAmount + excessCash) * allocation);
                     finalPurchases.set(investment.id, amount);
                 });
             }
@@ -930,14 +968,16 @@ async function processRebalanceEvents(state, scenario, year) {
         (!event.duration_value || year < event.start_year_value + event.duration_value)
     );
 
-    //at most 1 rebalance event a year
     for (const event of rebalanceEvents) {
+        // Get current allocations based on glide path (defaults to fixed if not enabled)
+        const currentAllocations = calculateGlidePathAllocations(event, year);
+
         // Calculate total portfolio value for investments in this rebalance
         let totalValue = 0;
         const currentInvestments = new Map();
 
-        event.asset_allocation.forEach(allocation => {
-            const investment = state.investments.find(inv => inv.id === allocation.investment_id);
+        Object.entries(currentAllocations).forEach(([investmentId, percentage]) => {
+            const investment = state.investments.find(inv => inv.id === investmentId);
             if (!investment) return;
             currentInvestments.set(investment.id, investment);
             totalValue += investment.value;
@@ -947,11 +987,10 @@ async function processRebalanceEvents(state, scenario, year) {
 
         // Calculate target values and needed adjustments
         const adjustments = new Map();
-        event.asset_allocation.forEach(allocation => {
-            const investment = currentInvestments.get(allocation.investment_id);
+        Object.entries(currentAllocations).forEach(([investmentId, percentage]) => {
+            const investment = currentInvestments.get(investmentId);
             if (!investment) return;
-
-            const targetValue = (totalValue * allocation.percentage) / 100;
+            const targetValue = (totalValue * percentage);
             const adjustment = targetValue - investment.value;
             adjustments.set(investment.id, adjustment);
         });
