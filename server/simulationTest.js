@@ -271,9 +271,18 @@ async function createTestScenario() {
 
 async function runTest() {
     try {
-        console.log("Creating test scenario...");
-        const scenario = await createTestScenario();
-        
+        //create the scenario or find it
+        try {
+            scenario = await createTestScenario();
+            console.log("Created test scenario");
+        } catch {
+            console.log("Finding test scenario...")
+            scenario = await Scenario.findOne({
+                where: { name: "Retirement Planning Scenario" }
+            });
+            console.log(scenario)
+        }
+
         console.log("Running simulation...");
         await simulateScenario(scenario);
         
