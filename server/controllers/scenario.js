@@ -4,7 +4,7 @@ const db = require("../models");
 const { Scenario, Investment, InvestmentType, EventSeries } = db;
 
 // Get specific scenario
-router.get("/:", async (req, res) => {});
+//router.get("/:", async (req, res) => {});
 
 // Get all scenarios for logged in user
 router.get("/", async (req, res) => {
@@ -174,14 +174,9 @@ router.delete("/delete/:id", async (req, res) => {
 
 // Duplicate existing scenario (using id)
 router.post("/duplicate/:id", async (req, res) => {
-	const { user } = req.session;
-	if (!user) {
-		return res.status(401).json("User not authenticated");
-	}
-
 	const id = req.params.id;
 	try {
-		const scenario = await Scenario.findOne({ where: { id, user_id: user.id } });
+		const scenario = await Scenario.findOne({ where: { id } });
 		if (!scenario) {
 			return res.status(404).json("Scenario not found");
 		}
