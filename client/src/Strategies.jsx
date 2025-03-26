@@ -1,105 +1,147 @@
 import { useSelected } from "./SelectedContext";
 import { useData } from "./DataContext";
-import { ScenarioList } from "./Scenarios";
 import "./EventSeries.css"; // reusing your existing styles
 import { Link } from "react-router-dom";
 import './Strategies.css';
 
-function StrategyActions({}){
+function ScenarioList() {
+    const { selectedScenario, setSelectedScenario, deselectScenario } = useSelected();
+
+    function selectScenario(scenario){
+        if (selectedScenario && (scenario.id === selectedScenario.id)){
+            deselectScenario();
+        }
+        else if (scenario.id !== 0){
+            setSelectedScenario(scenario);
+        }
+    }
+
+    const {scenarios, setScenarios} = useData();
+    let scenariosList = scenarios;
+    // console.log(scenariosList);
+
+    if (scenariosList.length <= 0) {
+        scenariosList = [{ name: 'No scenarios available...', id: null }];
+    }
+
     return (
-        <div>test</div>
+        <section className={"scenarioListContainer"}>
+            <div className={"scenarioList"}>
+                <div className={"title"}>
+                    <h2 className={"title"}>Scenarios:</h2>
+                    <div className={"header"}>
+                        <span>Name:</span>
+                    </div>
+                    {scenariosList.map((scenario, index) => (
+                        <div
+                            key={index}
+                            className={
+                                selectedScenario && (scenario.id === selectedScenario.id)
+                                    ? "selectedScenarioItem"
+                                    : "scenarioItem"
+                            }
+                            onClick={scenario.id !== null ? () => selectScenario(scenario) : undefined}
+                        >
+                            <span>{scenario.name}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
     );
 }
 
-function StrategySection({ title, items, itemType }) {
-  return (
-    <div className="strategies-list-container">
-      <div className="strategies-actions">
-        <h2 className="title">{title}</h2>
-        <div className="header">
-          <span className="strategies-span">Name</span>
-          {itemType === "investment" && <span className="investment-span">Value</span>}
-          <span className="investment-span">Type</span>
-        </div>
-        {items.length === 0 ? (
-          <div className="investmentItem">
-            <span className="investment-span">None</span>
-            {itemType === "investment" && <span className="investment-span">—</span>}
-            <span className="investment-span">—</span>
-          </div>
-        ) : (
-          items.map((item, index) => (
-            <div key={item.id ?? index} className="investmentItem">
-              <span className="investment-span">{item.name || item.type?.name || "Unnamed"}</span>
-              {itemType === "investment" && (
-                <span className="investment-span">
-                  ${item.value?.toLocaleString() ?? "—"}
-                </span>
-              )}
-              <span className="investment-span">{item.type || item.type?.name || "—"}</span>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-};
+function SpendingStrategyList() {
+    const {
+      selectedScenario,
+      setSelectedScenario,
+      selectedStrategy,
+      deselectStrategy,
+      selectedStrategyItem,
+      setSelectedStrategy,
+      setSelectedStrategyItem,
+      deselectStrategyItem,
+    } = useSelected();
 
-function  ScenarioActions({ scenario }){
-    const isScenarioSelected = scenario;
-    // const { duplicateScenario, deleteScenario } = useData();
-    // const { deselectScenario } = useSelected();
-    if (!scenario) {
-        scenario = {
-            id: null,
-            name: "None!",
-        };
+    const { reorderSpendingStrategy } = useData(); // use the context function
+  
+    let spendingStrategy = [];
+    if (selectedScenario) {
+      spendingStrategy = Array.from(selectedScenario.spendingStrategy);
+    }
+  
+    if (!selectedScenario || spendingStrategy.length === 0) {
+      spendingStrategy = [
+        {
+          id: null,
+          name: "No expenses to show!",
+          startYear: null,
+          duration: null,
+        },
+      ];
+    }
+  
+    function handleMove(index, direction) {
+        if (!selectedScenario) return;
+      
+        const targetIndex = direction === "up" ? index - 1 : index + 1;
+      
+        reorderSpendingStrategy(selectedScenario.id, index, targetIndex);
+        console.log(selectedScenario)
     }
 
-    // function handleDeleteButtonClick() {
-    //     if (scenario.id !== null) {
-    //         const confirmDelete = window.confirm("Are you sure you want to delete this scenario?");
-    //         if (confirmDelete) {
-    //             deleteScenario(scenario.id);
-    //             deselectScenario();
-    //         }
-    //     }
-    // }
-
-    // function handleDuplicateButtonClick() {
-    //     if (scenario.id !== null) {
-    //         duplicateScenario(scenario.id);
-    //     }
-    // }
-
     return (
-      <section className={'strategies-actions-container'}>
-        <div className={'strategies-actions'}>
-            <h2 className={''}>Actions:</h2>
-            <Link to="/create-scenario" className={'action-button create-btn'}>
-                Create New Scenario
-            </Link>
+      <div className="strategies-list-container">  
+        <div className="strategies-inner">
+          <h2 className="title">Spending Strategy</h2>
+          <div className="header">
+            <span className="strategies-span">Move</span>
+            <span className="strategies-span">Name</span>
+            <span className="strategies-span">Year</span>
+          </div>
+          {spendingStrategy.map((spend, index) => (
+            <div
+              key={index}
+              className={
+                selectedStrategyItem === spend
+                  ? "selected-strategy-item"
+                  : "strategy-item"
+              }
+            >
+            <span className="strategies-span move-controls">
+            <button
+                onClick={(e) => {
+                e.stopPropagation();
+                handleMove(index, "up");
+                }}
+                disabled={index <= 0}
+                className="move-button"
+            >
+                ⬆️
+            </button>
+            <button
+                onClick={(e) => {
+                e.stopPropagation();
+                handleMove(index, "down");
+                }}
+                disabled={index >= spendingStrategy.length - 1}
+                className="move-button"
+            >
+                ⬇️
+            </button>
+            </span>
 
-            <h3 className={''}>
-            <label className={''}>Selected Scenario: <br></br></label>
-            <label className={''}>{scenario.name}</label>
-            </h3>
-            <button className={`action-button dup-btn`} onClick={undefined}>Duplicate Scenario</button>
-            {isScenarioSelected ? (
-                <Link to={`/edit-scenario/${scenario.id}`} className={'action-button edit-btn'}>
-                    Edit Scenario
-                </Link>
-            ) : (
-                <Link className={`action-button edit-btn`}>
-                    Edit Scenario
-                </Link>
-            )}
-            <button className={`action-button del-btn`} onClick={undefined} >Delete Scenario</button>
+              <span className="strategies-span">{spend.name}</span>
+              <span className="strategies-span">
+                {spend.startYear?.value ?? ""}
+              </span>
+            </div>
+          ))}
         </div>
-      </section>
+      </div>
     );
-};
-
+}
+  
 export default function Strategies() {
   const { selectedScenario } = useSelected();
 
@@ -111,16 +153,11 @@ export default function Strategies() {
   return (
     <main className="event-series">
       <section className="actions column">
-        <StrategyActions />
         <ScenarioList />
       </section>
 
       <section className="spending column">
-        <StrategySection
-          title="Spending Strategy (Discretionary Expenses)"
-          items={spendingStrategy}
-          itemType="event"
-        />
+        <SpendingStrategyList scenario={selectedScenario}/>
 
       </section>
     {/* <section className="expense column">

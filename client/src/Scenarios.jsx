@@ -256,7 +256,7 @@ export function ScenarioList() {
 
     const {scenarios, setScenarios} = useData();
     let scenariosList = scenarios;
-    console.log(scenariosList);
+    // console.log(scenariosList);
 
     if (scenariosList.length <= 0) {
         scenariosList = [{ name: 'No scenarios available...', id: null }];

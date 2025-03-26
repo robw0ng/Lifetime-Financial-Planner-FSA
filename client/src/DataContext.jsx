@@ -154,7 +154,80 @@ export const DataProvider = ({ children }) => {
           },
         },
       ]),
-      spendingStrategy: [],
+      spendingStrategy: [
+        {
+          id: "ev5",
+          name: "Lifestyle Expenses",
+          type: "expense",
+          startYear: { value: 2023, type: "fixed" },
+          duration: { value: 40, type: "fixed" },
+          initialAmount: 30000,
+          expectedChange: { value: "1%", type: "fixed" },
+          inflationAdjusted: true,
+          userPercentage: 50,
+          isDiscretionary: true,
+        },
+        {
+          id: "ev7",
+          name: "Vacation Expenses",
+          type: "expense",
+          startYear: { value: 2025, type: "fixed" },
+          duration: { value: 10, type: "fixed" },
+          initialAmount: 10000,
+          expectedChange: { value: "2%", type: "fixed" },
+          inflationAdjusted: true,
+          userPercentage: 100,
+          isDiscretionary: true,
+        },
+        {
+          id: "ev5",
+          name: "Lifestyle Expenses",
+          type: "expense",
+          startYear: { value: 2023, type: "fixed" },
+          duration: { value: 40, type: "fixed" },
+          initialAmount: 30000,
+          expectedChange: { value: "1%", type: "fixed" },
+          inflationAdjusted: true,
+          userPercentage: 50,
+          isDiscretionary: true,
+        },
+        {
+          id: "ev7",
+          name: "Vacation Expenses",
+          type: "expense",
+          startYear: { value: 2025, type: "fixed" },
+          duration: { value: 10, type: "fixed" },
+          initialAmount: 10000,
+          expectedChange: { value: "2%", type: "fixed" },
+          inflationAdjusted: true,
+          userPercentage: 100,
+          isDiscretionary: true,
+        },
+        {
+          id: "ev5",
+          name: "Lifestyle Expenses",
+          type: "expense",
+          startYear: { value: 2023, type: "fixed" },
+          duration: { value: 40, type: "fixed" },
+          initialAmount: 30000,
+          expectedChange: { value: "1%", type: "fixed" },
+          inflationAdjusted: true,
+          userPercentage: 50,
+          isDiscretionary: true,
+        },
+        {
+          id: "ev7",
+          name: "Vacation Expenses",
+          type: "expense",
+          startYear: { value: 2025, type: "fixed" },
+          duration: { value: 10, type: "fixed" },
+          initialAmount: 10000,
+          expectedChange: { value: "2%", type: "fixed" },
+          inflationAdjusted: true,
+          userPercentage: 100,
+          isDiscretionary: true,
+        },
+      ],
       rmdStrategy: [],
       rothConversionStrategy: [],
       expenseWithdrawalStrategy: [],
@@ -617,6 +690,51 @@ export const DataProvider = ({ children }) => {
       console.error('Error duplicating event series:', error);
     }
   };
+
+  const reorderSpendingStrategy = (scenarioId, fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return;
+  
+    let updatedScenarioToSelect = null;
+  
+    setScenarios((prevScenarios) =>
+      prevScenarios.map((scenario) => {
+        if (scenario.id !== scenarioId) return scenario;
+  
+        const strategyCopy = [...scenario.spendingStrategy];
+        if (
+          fromIndex < 0 ||
+          toIndex < 0 ||
+          fromIndex >= strategyCopy.length ||
+          toIndex >= strategyCopy.length
+        ) {
+          return scenario;
+        }
+  
+        const [moved] = strategyCopy.splice(fromIndex, 1);
+        strategyCopy.splice(toIndex, 0, moved);
+  
+        const updatedScenario = {
+          ...scenario,
+          spendingStrategy: strategyCopy,
+        };
+  
+        updatedScenarioToSelect = updatedScenario;
+        return updatedScenario;
+      })
+    );
+  
+    if (selectedScenario?.id === scenarioId) {
+      setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+    }
+  
+    // TODO: Send updated spendingStrategy order to the backend
+    // await fetch(`/api/scenarios/${scenarioId}/spending-strategy`, {
+    //   method: 'PUT',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(strategyCopy),
+    // });
+  };
+
   // ✅ Automatically fetch scenarios when user logs in or email changes
   useEffect(() => {
     if (user?.email) {
@@ -641,7 +759,8 @@ export const DataProvider = ({ children }) => {
     createEventSeries,
     editEventSeries,
     duplicateEventSeries,
-    deleteEventSeries
+    deleteEventSeries,
+    reorderSpendingStrategy
     }}>
       {children}
     </DataContext.Provider>
