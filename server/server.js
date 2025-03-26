@@ -15,20 +15,21 @@ app.use(
 		credentials: true,
 	})
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 app.use(
 	session({
 		secret: process.env.SESSION_SECRET,
 		resave: false,
-		saveUninitialized: true,
+		saveUninitialized: false,
 		cookie: {
 			httpOnly: true,
 			secure: false,
 			maxAge: 10 * 60 * 1000,
+			sameSite: "lax",
 		},
 	})
 );
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(passport.initialize());
 app.use(passport.session());
 
