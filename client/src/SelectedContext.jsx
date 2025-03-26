@@ -19,6 +19,10 @@ export const SelectedProvider = ({ children }) => {
         setSelectedInvestment(null);
     }
 
+    const deselectEventSeries = () =>{
+        setSelectedEventSeries(null);
+    }
+
     return (
         <SelectedContext.Provider value={{ selectedScenario, 
         setSelectedScenario, 
@@ -27,7 +31,8 @@ export const SelectedProvider = ({ children }) => {
         deselectInvestment, 
         deselectScenario,
         selectedEventSeries,
-        setSelectedEventSeries
+        setSelectedEventSeries,
+        deselectEventSeries
         }}>
             {children}
         </SelectedContext.Provider>
