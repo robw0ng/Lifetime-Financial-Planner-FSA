@@ -3,13 +3,16 @@ import { useAuth } from "./AuthContext";
 import { useNavigate } from "react-router-dom";
 import styles from "./NavigationBar.module.css";
 import defaultAvatar from './assets/nopfp.webp';
+import { useData } from "./DataContext";
 
 function NavigationUser() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const {setScenarios} = useData();
 
   const handleLogout = () => {
     logout(); // Clear user state from AuthContext
+    setScenarios([]);
     navigate('/login'); // Redirect to login page after logout
   };
 

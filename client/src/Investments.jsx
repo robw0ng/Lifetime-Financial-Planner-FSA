@@ -5,7 +5,7 @@ import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 
 function ScenarioList() {
-    const { selectedScenario, setSelectedScenario, deselectScenario } = useSelected();
+    const { selectedScenario, setSelectedScenario, deselectScenario, deselectInvestment } = useSelected();
     const { scenarios } = useData();
 
     function selectScenario(scenario){
@@ -14,6 +14,7 @@ function ScenarioList() {
         }
         else if (scenario.id !== 0){
             setSelectedScenario(scenario);
+            deselectInvestment();
         }
     }
     let scenariosList = scenarios;
@@ -50,54 +51,123 @@ function ScenarioList() {
     );
 }
 
-function InvestmentList(){
-    const { selectedScenario, setSelectedScenario, selectedInvestment, setSelectedInvestment, deselectInvestment } = useSelected();
+// function InvestmentList(){
+//     const { selectedScenario, setSelectedScenario, selectedInvestment, setSelectedInvestment, deselectInvestment } = useSelected();
 
-    function selectInvestment(investment){
-        if (selectedInvestment && (investment.id === selectedInvestment.id)){
-            deselectInvestment();
-        }
-        else if (investment.id !== null || investment.id !== 0){
-            setSelectedInvestment(investment);
-        }
+//     function selectInvestment(investment){
+//         if (selectedInvestment && (investment.id === selectedInvestment.id)){
+//             deselectInvestment();
+//         }
+//         else if (investment.id !== null || investment.id !== 0){
+//             setSelectedInvestment(investment);
+//         }
+//     }
+
+//     let investmentsArray = [];
+
+//     if (selectedScenario){
+//         investmentsArray = Array.from(selectedScenario.investments);
+//     }
+
+//     if (investmentsArray.length == 0){
+//         investmentsArray = [{id: null, type: {name:'No investments Available'}, value: ''}]
+//     }
+
+//     return (
+//         <div className="investmentListContainer">
+//             <div className="investmentList">
+//                 <h2 className="title">Investments:</h2>
+//                 <div className="header">
+//                     <span className="investment-span">Type</span>
+//                     <span className="investment-span">Account</span>
+//                     <span className="investment-span">Value</span>
+//                 </div>
+//                 {investmentsArray.map((investment, index) => (
+//                     <div key={index} className={
+//                         selectedInvestment && (investment.id === selectedInvestment.id)
+//                         ? "selectedInvestmentItem"
+//                         : "investmentItem"
+//                     }
+//                     onClick={investment.id !== null ? () => selectInvestment(investment): undefined}
+//                     >
+//                     <span className="investment-span">{investment.type.name}</span>
+//                     <span className="investment-span">{investment.account}</span>
+//                     <span className="investment-span">${investment.value.toLocaleString()}</span>
+//                     </div>
+//                 ))}
+//             </div>
+//         </div>
+//     );
+// };
+
+function InvestmentList() {
+    const {
+      selectedScenario,
+      selectedInvestment,
+      setSelectedInvestment,
+      deselectInvestment,
+    } = useSelected();
+  
+    function selectInvestment(investment) {
+      if (selectedInvestment && investment.id === selectedInvestment.id) {
+        deselectInvestment();
+      } else if (investment?.id) {
+        setSelectedInvestment(investment);
+      }
     }
-
+  
     let investmentsArray = [];
-
-    if (selectedScenario){
-        investmentsArray = Array.from(selectedScenario.investments);
+  
+    if (selectedScenario) {
+      investmentsArray = Array.from(selectedScenario.investments);
     }
-
-    if (investmentsArray.length == 0){
-        investmentsArray = [{id: null, type: {name:'No investments Available'}, value: ''}]
+  
+    if (investmentsArray.length === 0) {
+      investmentsArray = [
+        {
+          id: null,
+          type: { name: 'No investments available' },
+          value: '',
+          account: '',
+        },
+      ];
     }
-
+  
     return (
-        <div className="investmentListContainer">
-            <div className="investmentList">
-                <h2 className="title">Investments:</h2>
-                <div className="header">
-                    <span className="investment-span">Type</span>
-                    <span className="investment-span">Account</span>
-                    <span className="investment-span">Value</span>
-                </div>
-                {investmentsArray.map((investment, index) => (
-                    <div key={index} className={
-                        selectedInvestment && (investment.id === selectedInvestment.id)
-                        ? "selectedInvestmentItem"
-                        : "investmentItem"
-                    }
-                    onClick={investment.id !== null ? () => selectInvestment(investment): undefined}
-                    >
-                    <span className="investment-span">{investment.type.name}</span>
-                    <span className="investment-span">{investment.account}</span>
-                    <span className="investment-span">${investment.value.toLocaleString()}</span>
-                    </div>
-                ))}
+      <div className="investmentListContainer">
+        <div className="investmentList">
+          <h2 className="title">Investments:</h2>
+          <div className="header">
+            <span className="investment-span">Type</span>
+            <span className="investment-span">Account</span>
+            <span className="investment-span">Value</span>
+          </div>
+          {investmentsArray.map((investment, index) => (
+            <div
+              key={investment.id ?? index}
+              className={
+                selectedInvestment && investment.id === selectedInvestment.id
+                  ? 'selectedInvestmentItem'
+                  : 'investmentItem'
+              }
+              onClick={
+                investment.id !== null ? () => selectInvestment(investment) : undefined
+              }
+            >
+              <span className="investment-span">
+                {investment?.type?.name ?? '—'}
+              </span>
+              <span className="investment-span">{investment?.account ?? '—'}</span>
+              <span className="investment-span">
+                {investment?.value ? `$${investment.value.toLocaleString()}` : '—'}
+              </span>
             </div>
+          ))}
         </div>
+      </div>
     );
-};
+  }
+  
 
 function InvestmentTypeInfo({ investment }) {
   if (!investment || !investment.type) {
@@ -133,15 +203,15 @@ function InvestmentTypeInfo({ investment }) {
         </div>
         <div className={"info-row"}>
           <label className={"info-item"}>Expected Annual Return: </label>
-          <label className={""}>{type.expectedChange}</label>
+          <label className={""}>{type.expected_annual_return}</label>
         </div>
         <div className={"info-row"}>
           <label className={"info-item"}>Expense Ratio: </label>
-          <label className={""}>{type.expenseRatio}%</label>
+          <label className={""}>{type.expense_ratio}%</label>
         </div>
         <div className={"info-row"}>
           <label className={"info-item"}>Expected Income: </label>
-          <label className={""}>{type.expectedIncome}</label>
+          <label className={""}>{type.expected_annual_income}</label>
         </div>
         <div className={"info-row"}>
           <label className={"info-item"}>Taxability: </label>
@@ -161,55 +231,113 @@ function InvestmentTypeInfo({ investment }) {
 }
 
 
-function InvestmentActions({ investment }){
+// function InvestmentActions({ investment }){
 
-    // const isScenarioSelected = scenario;
-    // const { duplicateScenario, deleteScenario } = useData();
-    // const { deselectScenario } = useSelected();
+//     const { selectedScenario } = useSelected();
+
+//     if (!investment) {
+//         investment = {
+//             id: null,
+//             type: {name:"None!"},
+//         };
+//     }
+
+
+//     return (
+//       <section className="investment-actions-container">
+//         <div className="investment-actions">
+//             <h2 className="">Investment Actions:</h2>
+
+//             {selectedScenario ? (
+//                 <Link to="/create-investment" className="action-button create-btn">
+//                     Create New Investment
+//                 </Link>
+//             ) : (
+//                 <Link to="" className="action-button create-btn">
+//                     Create New Investment
+//                 </Link>
+//             )}
+
+//             <h3 className="">
+//             <label className="">Selected Investment:</label>
+//             <label className="">{investment.type.name}</label>
+//             </h3>
+//             <button className="action-button dup-btn" onClick={undefined}>Duplicate Investment</button>
+//                 <Link className="action-button edit-btn">
+//                     Edit Investment
+//                 </Link>
+//             <button className="action-button del-btn" onClick={undefined} >Delete Investment</button>
+//         </div>
+//       </section>
+//     );
+// };
+
+function InvestmentActions({ investment }) {
+    const { selectedScenario, deselectInvestment } = useSelected();
+    const { duplicateInvestment, deleteInvestment } = useData();
+  
     if (!investment) {
-        investment = {
-            id: null,
-            type: {name:"None!"},
-        };
+      investment = {
+        id: null,
+        type: { name: "None!" },
+      };
     }
-
-    // function handleDeleteButtonClick() {
-    //     if (scenario.id !== null) {
-    //         const confirmDelete = window.confirm("Are you sure you want to delete this scenario?");
-    //         if (confirmDelete) {
-    //             deleteScenario(scenario.id);
-    //             deselectScenario();
-    //         }
-    //     }
-    // }
-
-    // function handleDuplicateButtonClick() {
-    //     if (scenario.id !== null) {
-    //         duplicateScenario(scenario.id);
-    //     }
-    // }
-
+  
+    function handleDeleteButtonClick() {
+      if (investment.id !== null && selectedScenario?.id) {
+        const confirmDelete = window.confirm("Are you sure you want to delete this investment?");
+        if (confirmDelete) {
+          deleteInvestment(selectedScenario.id, investment.id);
+          deselectInvestment();
+        }
+      }
+    }
+  
+    function handleDuplicateButtonClick() {
+      if (investment.id !== null && selectedScenario?.id) {
+        duplicateInvestment(selectedScenario.id, investment.id);
+      }
+    }
+  
     return (
       <section className="investment-actions-container">
         <div className="investment-actions">
-            <h2 className="">Investment Actions:</h2>
-            <Link to="/create-scenario" className="action-button create-btn">
-                Create New Investment
+          <h2 className="">Investment Actions:</h2>
+  
+          {selectedScenario ? (
+            <Link to="/create-investment" className="action-button create-btn">
+              Create New Investment
             </Link>
-
-            <h3 className="">
+          ) : (
+            <Link to="" className="action-button create-btn">
+              Create New Investment
+            </Link>
+          )}
+  
+          <h3 className="">
             <label className="">Selected Investment:</label>
             <label className="">{investment.type.name}</label>
-            </h3>
-            <button className="action-button dup-btn" onClick={undefined}>Duplicate Investment</button>
-                <Link className="action-button edit-btn">
-                    Edit Investment
-                </Link>
-            <button className="action-button del-btn" onClick={undefined} >Delete Investment</button>
+          </h3>
+  
+          <button className="action-button dup-btn" onClick={handleDuplicateButtonClick}>
+            Duplicate Investment
+          </button>
+  
+          {investment.id !== null ? (
+            <Link to={`/edit-investment/${investment.id}`} className="action-button edit-btn">
+              Edit Investment
+            </Link>
+          ) : (
+            <Link className="action-button edit-btn">Edit Investment</Link>
+          )}
+  
+          <button className="action-button del-btn" onClick={handleDeleteButtonClick}>
+            Delete Investment
+          </button>
         </div>
       </section>
     );
-};
+  }
 
 export default function Investments(){
     const { selectedInvestment } = useSelected();
