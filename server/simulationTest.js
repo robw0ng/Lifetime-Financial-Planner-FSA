@@ -284,10 +284,16 @@ async function runTest() {
             include: [
                 { model: Investment },
                 { model: InvestmentType },
-                { model: EventSeries },
+                { model: EventSeries,
+                    include: [
+                        { model: IncomeEventSeries },
+                        { model: ExpenseEventSeries },
+                        { model: InvestEventSeries },
+                        { model: RebalanceEventSeries }
+                    ]
+                },
             ],
         });
-        console.log(scenario);
 
         console.log("Running simulation...");
         await simulateScenario(scenario);

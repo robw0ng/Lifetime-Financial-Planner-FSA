@@ -19,7 +19,7 @@ async function loadTaxBrackets(type = 'federal', state = null) {
             filename = `${state.toUpperCase()}_tax_brackets.yaml`;
             break;
         case 'capital_gains':
-            filename = 'capital_gains_brackets.yaml';
+            filename = 'capital_gains_rates.yaml';
             break;
         case 'standard_deduction':
             filename = 'standard_deductions.yaml';
@@ -29,7 +29,8 @@ async function loadTaxBrackets(type = 'federal', state = null) {
     }
 
     try {
-        const filePath = path.join(__dirname, filename);
+        //file is 1 level up from server directory
+        const filePath = path.join(__dirname, "..", filename);
         if (!fs.existsSync(filePath)) {
             if (type === 'state') return null; // State tax might not exist
             throw new Error(`Tax file not found: ${filename}`);
@@ -122,37 +123,50 @@ async function simulateScenario(scenario) {
         prevYearSS: 0,
         prevYearEarlyWithdrawals: 0,
         prevYearGains: 0,
-        events: [], // Store all event objects here
-        investments: [], // Store all investment objects here
+        events: [],
+        investments: [],
+        investmentTypes: [],
         is_married: scenario.is_married
     };
-
-    // Initialize investments with purchase prices
-    for (const investment of scenario.investments) {
+    
+    // Get all investments, eventseries, investmenttypes and store in state
+    //store only essential dataValues
+    for (const investment of scenario.Investments) {
         state.investments.push({
-            ...investment,
-            purchase_price: investment.value // Set initial purchase price
+            ...investment.dataValues,
+            purchase_price: investment.dataValues.value // Set initial purchase price
         });
     }
 
-    // Get all events and store in state
-    state.events = await EventSeries.findAll({
-        where: {
-            scenario_id: scenario.id
+    for (const investmenttype of scenario.InvestmentTypes) {
+        state.investmentTypes.push({
+            ...investmenttype.dataValues
+        })
+    }
+
+    for (const eventseries of scenario.EventSeries) {
+        // Extract the main event series data
+        let eventData = { ...eventseries.dataValues };
+
+        // Remove all event series references
+        delete eventData.IncomeEventSery;
+        delete eventData.ExpenseEventSery;
+        delete eventData.InvestEventSery;
+        delete eventData.RebalanceEventSery;
+
+        // Determine the specific event type and add only its dataValues
+        if (eventseries.IncomeEventSery) {
+            Object.assign(eventData, eventseries.IncomeEventSery.dataValues);
+        } else if (eventseries.ExpenseEventSery) {
+            Object.assign(eventData, eventseries.ExpenseEventSery.dataValues);
+        } else if (eventseries.InvestEventSery) {
+            Object.assign(eventData, eventseries.InvestEventSery.dataValues);
+        } else if (eventseries.RebalanceEventSery) {
+            Object.assign(eventData, eventseries.RebalanceEventSery.dataValues);
         }
-    });
 
-    // Get all investments and store in state
-    state.investments = await Investment.findAll({
-        where: {
-            scenario_id: scenario.id
-        },
-        include: [InvestmentType]
-    });
-
-    //set a purchase_price field for each investment
-    for (const investment of state.investments) {
-        investment.purchase_price = investment.value;
+        // Push cleaned-up event data
+        state.events.push(eventData);
     }
 
     // Calculate and store start years and durations for all events
@@ -165,12 +179,12 @@ async function simulateScenario(scenario) {
         }
         
         if (event.duration_type !== 'fixed' && !event.duration_value) {
-            const duration = await getEventDuration(event, scenario);
+            const duration = await getEventDuration(event);
             event.duration_value = duration;
         }
     }
 
-    for (let year = currentYear; year <= endYear; year++) {
+    for (let year = currentYear; year <= currentYear+1; year++) {
         //check for mortality
         if (state.is_married && (year > userEndYear || year > spouseEndYear)) {
             state.is_married = false;
@@ -254,7 +268,7 @@ function updateTaxBrackets(state, inflationRate) {
     }
 }
 
-async function getEventStartYear(event, scenario, allEvents) {
+async function getEventStartYear(event, allEvents) {
     switch (event.start_year_type) {
         case 'fixed':
             return event.start_year_value;
@@ -264,12 +278,12 @@ async function getEventStartYear(event, scenario, allEvents) {
             return Math.round(sampleUniform(event.start_year_lower, event.start_year_upper));
         case 'with_event':
             const otherEvent = allEvents.find(e => e.name === event.start_year_other_event);
-            return otherEvent ? await getEventStartYear(otherEvent, scenario, allEvents) : null;
+            return otherEvent ? await getEventStartYear(otherEvent, allEvents) : null;
         case 'after_event':
             const targetEvent = allEvents.find(e => e.name === event.start_year_other_event);
             if (!targetEvent) return null;
-            const targetStart = await getEventStartYear(targetEvent, scenario, allEvents);
-            const targetDuration = await getEventDuration(targetEvent, scenario);
+            const targetStart = await getEventStartYear(targetEvent, allEvents);
+            const targetDuration = await getEventDuration(targetEvent);
             return targetStart + targetDuration;
         default:
             return null;
@@ -408,7 +422,7 @@ async function processInvestmentUpdates(state, scenario) {
     for (const investment of state.investments) {
         if (investment.value <= 0) continue;
 
-        const investmentType = scenario.investment_types.find(inv => inv.id === investment.investment_type_id);
+        const investmentType = state.investmentTypes.find(inv => inv.id === investment.investment_type_id);
 
         const startValue = investment.value;
 
