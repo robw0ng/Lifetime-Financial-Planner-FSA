@@ -413,7 +413,7 @@ async function processInvestmentUpdates(state, scenario) {
         }
 
         // Add to taxable income if applicable
-        if (investment.tax_status === 'non-retirement' && investmentType.taxability) {
+        if (investment.tax_status === 'non-retirement' && investmentType.taxability === 'true') {
             state.curYearIncome += generatedIncome;
         }
 
