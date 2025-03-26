@@ -77,6 +77,7 @@ export const DataProvider = ({ children }) => {
 				headers: {
 					"Content-Type": "application/json",
 				},
+				credentials: "include",
 			});
 			if (response.status !== 200) {
 				throw new Error("Failed to fetch scenarios");
@@ -101,6 +102,7 @@ export const DataProvider = ({ children }) => {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ newScenario }),
+					credentials: "include",
 				});
 
 				if (response.status !== 201) {
@@ -129,6 +131,7 @@ export const DataProvider = ({ children }) => {
 					method: "PUT",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ editedScenario }),
+					credentials: "include",
 				});
 
 				if (response.status !== 200) {
@@ -173,6 +176,7 @@ export const DataProvider = ({ children }) => {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ duplicatedScenario }),
+					credentials: "include",
 				});
 
 				if (response.status !== 201) {
@@ -201,6 +205,7 @@ export const DataProvider = ({ children }) => {
 				const response = await fetch(`http://localhost:8000/scenarios/delete/${scenarioId}`, {
 					method: "DELETE",
 					headers: { "Content-Type": "application/json" },
+					credentials: "include",
 				});
 
 				if (response.status !== 200) {
