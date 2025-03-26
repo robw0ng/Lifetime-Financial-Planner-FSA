@@ -652,7 +652,7 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year) {
     if (neededWithdrawal > 0) {
         let remainingWithdrawal = neededWithdrawal;
         
-        for (const investmentId of scenario.expense_withdrawal_strategy) {
+        for (const investmentId of scenario.expense_withdrawl_strategy) {
             if (remainingWithdrawal <= 0) break;
 
             const investment = state.investments.find(inv => inv.id === investmentId);
@@ -814,7 +814,7 @@ async function processDiscretionaryExpenses(state, scenario, year) {
 }
 
 async function withdrawForExpense(state, scenario, amount, userAge) {
-    for (const investmentId of scenario.expense_withdrawal_strategy) {
+    for (const investmentId of scenario.expense_withdrawl_strategy) {
         if (amount <= 0) break;
 
         const investment = state.investments.find(inv => inv.id === investmentId);

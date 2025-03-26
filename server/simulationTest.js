@@ -1,9 +1,17 @@
 const { simulateScenario } = require('./simulation');
-const { Scenario, Investment, InvestmentType, EventSeries, IncomeEventSeries, ExpenseEventSeries, InvestEventSeries, RebalanceEventSeries } = require("./models");
+const { User, Scenario, Investment, InvestmentType, EventSeries, IncomeEventSeries, ExpenseEventSeries, InvestEventSeries, RebalanceEventSeries } = require("./models");
+require("dotenv").config();
+const db = require("./models");
 
 async function createTestScenario() {
     // Create base scenario for testing
+    const user = await User.create({
+        name: 'Test User',
+        email: 'testuser@example.com',
+      });
+  
     const scenario = await Scenario.create({
+        user_id: user.id,
         name: "Retirement Planning Scenario",
         is_married: true,
         birth_year: 1985,
@@ -20,7 +28,11 @@ async function createTestScenario() {
         inflation_assumption_value: 0.03,
         is_roth_optimizer_enabled: true,
         roth_start_year: 2050,
-        roth_end_year: 2060
+        roth_end_year: 2060,
+        spending_strategy: [],
+        expense_withdrawl_strategy: [],
+        rmd_strategy: [],
+        roth_conversion_strategy: [],
     });
 
     // Create investment types
@@ -63,7 +75,7 @@ async function createTestScenario() {
     });
 
     // Create investments
-    await Investment.create({
+    const cash_investment = await Investment.create({
         special_id: "cash",
         value: 100,
         tax_status: "non-retirement",
@@ -71,7 +83,7 @@ async function createTestScenario() {
         scenario_id: scenario.id
     });
 
-    await Investment.create({
+    const SP_non_retirement = await Investment.create({
         special_id: "S&P 500 non-retirement",
         value: 10000,
         tax_status: "non-retirement",
@@ -79,7 +91,7 @@ async function createTestScenario() {
         scenario_id: scenario.id
     });
 
-    await Investment.create({
+    const bond_non_retirement = await Investment.create({
         special_id: "tax-exempt bonds",
         value: 2000,
         tax_status: "non-retirement",
@@ -87,7 +99,7 @@ async function createTestScenario() {
         scenario_id: scenario.id
     });
 
-    await Investment.create({
+    const SP_pretax = await Investment.create({
         special_id: "S&P 500 pre-tax",
         value: 10000,
         tax_status: "pre-tax",
@@ -95,7 +107,7 @@ async function createTestScenario() {
         scenario_id: scenario.id
     });
 
-    await Investment.create({
+    const SP_aftertax = await Investment.create({
         special_id: "S&P 500 after-tax",
         value: 2000,
         tax_status: "after-tax",
@@ -236,6 +248,23 @@ async function createTestScenario() {
             "tax-exempt bonds": 0.3
         }
     });
+
+    const spendingStrategy = ["vacation", "streaming services"];  // List of discretionary expenses
+    const expenseWithdrawalStrategy = [
+        SP_non_retirement.id,
+        bond_non_retirement.id,
+        SP_aftertax.id
+    ];  // List of investments for expense withdrawals
+    const RMDStrategy = [SP_pretax.id];  // Pre-tax investments for RMDs
+    const RothConversionStrategy = [SP_pretax.id];
+
+    scenario.spending_strategy = spendingStrategy;
+    scenario.expense_withdrawl_strategy = expenseWithdrawalStrategy;
+    scenario.rmd_strategy = RMDStrategy;
+    scenario.roth_conversion_strategy = RothConversionStrategy;
+
+    await scenario.save()
+    console.log(scenario)
 
     return scenario;
 }
