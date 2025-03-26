@@ -448,12 +448,18 @@ export const DataProvider = ({ children }) => {
 		<DataContext.Provider
 			value={{
 				scenarios,
+				setScenarios,
 				loading,
 				fetchScenarios,
 				createScenario,
 				editScenario,
 				duplicateScenario,
 				deleteScenario,
+				fetchInvestments,
+				createInvestment,
+				editInvestment,
+				duplicateInvestment,
+				deleteInvestment,
 				fetchEventSeries,
 				createEventSeries,
 				editEventSeries,

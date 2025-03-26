@@ -20,11 +20,11 @@ function NavigationButtons() {
       <Link to="/eventseries" className={location.pathname === "/eventseries" ? styles.active : styles.navButton}>
         Event Series
       </Link>
-      <Link to="/simulations" className={location.pathname === "/simulations" ? styles.active : styles.navButton}>
-        Simulations
-      </Link>
       <Link to="/strategies" className={location.pathname === "/strategies" ? styles.active : styles.navButton}>
         Strategies
+      </Link>
+      <Link to="/simulations" className={location.pathname === "/simulations" ? styles.active : styles.navButton}>
+        Simulations
       </Link>
     </div>
   </div>

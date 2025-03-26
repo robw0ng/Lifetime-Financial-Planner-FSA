@@ -9,7 +9,19 @@
 }
 
 .spending {
-    width: 25%;
+    width: 20%;
+}
+
+.expense {
+    width: 20%
+}
+
+.roth {
+    width: 20%
+}
+
+.rmd {
+    width: 20%
 }
 
 .action-button:hover{
@@ -17,33 +29,15 @@
     opacity: 80%;
 }
 
-
-.strategies-actions-container{
-    color: #fff;
-    background-color: #2c2e35;
-    border-radius: 20px;
-    flex-direction: column;
-    align-items: start;
-    font-family:
-        Inter,
-        -apple-system,
-        Roboto,
-        Helvetica,
-        sans-serif;
-    font-size: 20px;
-    font-weight: 400;
-    display: flex;
-    overflow-y: auto;
-    align-items: center;
-}
-
-.strategies-actions{
+.strategies-inner{
     background-color: #4d515e;
     border-radius: 12px;
     margin: 15px;
     font-family: Arial, sans-serif;
     overflow-y: auto;
     height: 100%;
+    width: 95%;
+    overflow-y: auto;
 }
 
 .strategies-list-container{
@@ -61,6 +55,71 @@
     font-size: 20px;
     font-weight: 400;
     display: flex;
-    overflow-y: auto;
     align-items: center;
+    height: 85%;
+    margin-top: 10px;
+}
+
+.active-strategy-type{
+    background-color: #6577b8;
+}
+
+.strategy-item{
+    display: flex;
+    flex-direction: row;
+    background-color: #2c2e35;
+    color: rgba(255, 255, 255, 0.87);
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+
+.strategy-item span{
+    width: 33%;
+
+}
+
+.selected-strategy-item{
+    display: flex;
+    justify-content: space-evenly;
+    background-color: #6577b8;
+    color: rgba(255, 255, 255, 0.87);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.move-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  
+  .move-button {
+    font-size: 1rem;
+    padding: 2px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  
+  .move-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+.scenarioListContainer{
+    height: 85%;
+    width: 100%;
+}
+
+.scenarioList {
+    background-color: #4d515e;
+    margin: 10px;
+    border-radius: 12px;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    padding:10px;
+    overflow-y: auto;
+    height: 100%;
 }
