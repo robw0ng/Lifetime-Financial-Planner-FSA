@@ -48,6 +48,9 @@ router.post("/", async (req, res) => {
 		inflation_assumption_upper,
 		inflation_assumption_lower,
 		after_tax_contribution_limit,
+		is_roth_optimizer_enabled,
+		roth_start_year,
+		roth_end_year,
 		financial_goal,
 		state_of_residence,
 	} = req.body;
@@ -100,6 +103,9 @@ router.post("/", async (req, res) => {
 					? Number(inflation_assumption_lower)
 					: null,
 			after_tax_contribution_limit: Number(after_tax_contribution_limit),
+			is_roth_optimizer_enabled,
+			roth_start_year: is_roth_optimizer_enabled ? roth_start_year : null,
+			roth_end_year: is_roth_optimizer_enabled ? roth_end_year : null,
 			financial_goal: Number(financial_goal),
 			state_of_residence,
 			// strategies not given => set them as empty arrays

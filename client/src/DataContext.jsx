@@ -101,7 +101,7 @@ export const DataProvider = ({ children }) => {
 				const response = await fetch("http://localhost:8000/scenarios", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ newScenario }),
+					body: JSON.stringify(newScenario),
 					credentials: "include",
 				});
 

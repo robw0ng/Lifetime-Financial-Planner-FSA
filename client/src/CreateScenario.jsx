@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useData } from "./DataContext";
 
 export default function CreateScenario() {
-	const { setSelectedScenario } = useSelectedScenario();
 	const [formData, setFormData] = useState({
 		name: "",
 		isMarried: false,
@@ -16,7 +15,7 @@ export default function CreateScenario() {
 		lifeExpectancyMean: "",
 		lifeExpectancyStdDev: "",
 		// Life Expectancy for spouse:
-		spouseLifeExpectancyType: "fixed", // options: 'fixed' or 'normal'
+		spouseLifeExpectancyType: "", // options: 'fixed' or 'normal'
 		spouseLifeExpectancyValue: "",
 		spouseLifeExpectancyMean: "",
 		spouseLifeExpectancyStdDev: "",
@@ -28,6 +27,9 @@ export default function CreateScenario() {
 		inflationAssumptionUpper: "",
 		inflationAssumptionLower: "",
 		afterTaxContributionLimit: "",
+		isRothOptimizerEnabled: false,
+		rothStartYear: "",
+		rothEndYear: "",
 		financialGoal: "",
 		stateOfResidence: "",
 	});
@@ -51,7 +53,7 @@ export default function CreateScenario() {
 			name: formData.name,
 			is_married: formData.isMarried,
 			birth_year: Number(formData.birthYear),
-			spouse_birth_year: formData.isMarried && formData.birthYearSpouse ? Number(formData.birthYearSpouse) : null,
+			spouse_birth_year: formData.isMarried ? Number(formData.birthYearSpouse) : null,
 			// Life Expectancy for user:
 			life_expectancy_type: formData.lifeExpectancyType,
 			life_expectancy_value:
@@ -86,6 +88,9 @@ export default function CreateScenario() {
 			inflation_assumption_lower:
 				formData.inflationAssumptionType === "uniform" ? Number(formData.inflationAssumptionLower) : null,
 			after_tax_contribution_limit: Number(formData.afterTaxContributionLimit),
+			is_roth_optimizer_enabled: formData.isRothOptimizerEnabled,
+			roth_start_year: formData.isRothOptimizerEnabled ? Number(formData.rothStartYear) : null,
+			roth_end_year: formData.isRothOptimizerEnabled ? Number(formData.rothEndYear) : null,
 			financial_goal: Number(formData.financialGoal),
 			state_of_residence: formData.stateOfResidence,
 			// strategies are empty initially
@@ -98,24 +103,8 @@ export default function CreateScenario() {
 		// send the data to the end point. get the newly created as the response.
 		// then use setSelectedScenario on the new obj
 		try {
-			const response = await fetch("http://localhost:5173/scenarios", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(newScenario),
-				credentials: "include",
-			});
-
-			const data = await response.json();
-			if (response.status == 201) {
-				const newScenario = data.scenario;
-				console.log("Scenario Data:", newScenario);
-				setSelectedScenario(newScenario);
-				navigate("/scenarios");
-			} else {
-				console.log("Scenario creation failure:", data);
-			}
+			await createScenario(newScenario);
+			navigate("/scenarios");
 		} catch (err) {
 			console.log("Error during scenario creation:", err.message);
 		}
@@ -126,21 +115,24 @@ export default function CreateScenario() {
 			isMarried: false,
 			birthYear: "",
 			birthYearSpouse: "",
-			lifeExpectancyType: "fixed",
+			lifeExpectancyType: "fixed", // options: 'fixed' or 'normal'
 			lifeExpectancyValue: "",
 			lifeExpectancyMean: "",
 			lifeExpectancyStdDev: "",
-			spouseLifeExpectancyType: "fixed",
+			spouseLifeExpectancyType: "", // options: 'fixed' or 'normal'
 			spouseLifeExpectancyValue: "",
 			spouseLifeExpectancyMean: "",
 			spouseLifeExpectancyStdDev: "",
-			inflationAssumptionType: "fixed",
+			inflationAssumptionType: "fixed", // options: 'fixed', 'normal', or 'uniform'
 			inflationAssumptionValue: "",
 			inflationAssumptionMean: "",
 			inflationAssumptionStdDev: "",
 			inflationAssumptionUpper: "",
 			inflationAssumptionLower: "",
 			afterTaxContributionLimit: "",
+			isRothOptimizerEnabled: false,
+			rothStartYear: "",
+			rothEndYear: "",
 			financialGoal: "",
 			stateOfResidence: "",
 		});
@@ -156,13 +148,7 @@ export default function CreateScenario() {
 				</div>
 				<div className="form-group">
 					<label>Marital Status:</label>
-					<input
-						type="checkbox"
-						name="isMarried"
-						checked={formData.isMarried}
-						onChange={handleChange}
-						required
-					/>{" "}
+					<input type="checkbox" name="isMarried" checked={formData.isMarried} onChange={handleChange} />{" "}
 					Married
 				</div>
 				<div className="form-group">
@@ -235,6 +221,7 @@ export default function CreateScenario() {
 								value={formData.spouseLifeExpectancyType}
 								onChange={handleChange}
 								required>
+								<option value=""></option>
 								<option value="fixed">Fixed</option>
 								<option value="normal">Normal</option>
 							</select>
@@ -365,6 +352,40 @@ export default function CreateScenario() {
 						required
 					/>
 				</div>
+				<div className="form-group">
+					<label>Is Roth Optimizer Enabled?:</label>
+					<input
+						type="checkbox"
+						name="isRothOptimizerEnabled"
+						checked={formData.isRothOptimizerEnabled}
+						onChange={handleChange}
+					/>{" "}
+					Roth Optimizer Enabled
+				</div>
+				{formData.isRothOptimizerEnabled && (
+					<>
+						<div className="form-group">
+							<label>Roth Start Year:</label>
+							<input
+								type="number"
+								name="rothStartYear"
+								value={formData.rothStartYear}
+								onChange={handleChange}
+								required
+							/>
+						</div>
+						<div className="form-group">
+							<label>Roth End Year:</label>
+							<input
+								type="number"
+								name="rothEndYear"
+								value={formData.rothEndYear}
+								onChange={handleChange}
+								required
+							/>
+						</div>
+					</>
+				)}
 				<div className="form-group">
 					<label>Financial Goal:</label>
 					<input
