@@ -78,7 +78,7 @@ async function loadTaxBrackets(type = 'federal', state = null) {
 
 async function loadRMDTable() {
     try {
-        const filePath = path.join(__dirname, 'uniform_lifetime_table.yaml');
+        const filePath = path.join(__dirname, '..', 'uniform_lifetime_table.yaml');
         if (!fs.existsSync(filePath)) {
             throw new Error('RMD table not found');
         }
@@ -140,7 +140,7 @@ async function simulateScenario(scenario) {
         investments: [],
         investmentTypes: [],
         is_married: scenario.is_married,
-        inflationRate: 0
+        inflationRate: 0,
     };
     
     // Get all investments, eventseries, investmenttypes and store in state
@@ -246,18 +246,22 @@ async function simulateScenario(scenario) {
 
         // 2. Process Income Events
         await processIncome(state, year);
-        //console.log(state.investments)
+        console.log(state.investments)
+
+        year = 2059
 
         // 3. Process RMD
         await processRMD(state, scenario, year);
-        //console.log(state.investments)
+        console.log(state.investments)
 
         // 4. Update Investment Values
         await processInvestmentUpdates(state);
         //console.log(state.investments)
 
         // 5. Process Roth Conversion
-        await processRothConversion(state, scenario, year);
+        if (scenario.is_roth_optimizer_enabled && year >= scenario.roth_start_year && year <= scenario.roth_end_year) {
+            await processRothConversion(state, scenario, year);
+        }
         //console.log(state.investments)
 
         // 6. Process Non-discretionary Expenses and Taxes
@@ -270,11 +274,11 @@ async function simulateScenario(scenario) {
 
         // 8. Process Investment Events
         await processInvestEvents(state, year);
-        console.log(state.investments)
+        //console.log(state.investments)
 
         // 9. Process Rebalance Events
         await processRebalanceEvents(state, year);
-        console.log(state.investments)
+        //console.log(state.investments)
 
         // Store current year values for next year's tax calculation
         state.prevYearIncome = state.curYearIncome;
@@ -437,11 +441,13 @@ async function processRMD(state, scenario, year) {
     const totalPreTaxValue = preTaxInvestments.reduce((sum, inv) => sum + inv.value, 0);
 
     // Get distribution period from RMD table
-    const rmdTable = await loadRMDTable();
-    const distributionPeriod = rmdTable.get(userAge)
+    //first RMD for year of user age 73 paid in age 74. always pay previous year's RMD
+    const RMDtable = await loadRMDTable();
+    const distributionPeriod = RMDtable.get(userAge-1)
+    console.log(distributionPeriod)
 
     // Calculate RMD amount
-    const rmdAmount = Math.round(totalPreTaxValue / distributionPeriod * 100) / 100;
+    let rmdAmount = Math.round(totalPreTaxValue / distributionPeriod * 100) / 100;
     state.curYearIncome += rmdAmount;
     
     // Get RMD strategy order from scenario
@@ -457,8 +463,10 @@ async function processRMD(state, scenario, year) {
         const transferAmount = Math.min(rmdAmount, sourceInv.value);
         rmdAmount -= transferAmount;
 
-        // Reduce source investment value
+        // Reduce source investment value and purchase price
+        const original_price_transfer_amt = sourceInv.purchase_price * transferAmount / sourceInv.value;
         sourceInv.value -= transferAmount;
+        sourceInv.purchase_price -= original_price_transfer_amt;
 
         // Find or create corresponding non-retirement investment
         let targetInv = state.investments.find(inv => 
@@ -466,15 +474,20 @@ async function processRMD(state, scenario, year) {
             inv.tax_status === 'non-retirement'
         );
 
+        //increase target investment value and purchase price
         if (targetInv) {
             targetInv.value += transferAmount;
+            targetInv.purchase_price += original_price_transfer_amt;
         } else {
             // Create new non-retirement investment
             state.investments.push({
-                ...sourceInv,
-                id: `new_${sourceInv.id}`,
+                id: state.investments[state.investments.length - 1]?.id + 1 || 1,
+                special_id: sourceInv.special_id.replace('pre-tax', 'non-retirement'),  // Replace 'pre-tax' with 'after-tax'
+                value: transferAmount,
                 tax_status: 'non-retirement',
-                value: transferAmount
+                investment_type_id: sourceInv.investment_type_id,
+                scenario_id: sourceInv.scenario_id,
+                purchase_price: original_price_transfer_amt
             });
         }
     }
@@ -561,12 +574,11 @@ async function processInvestmentUpdates(state) {
 
 async function processRothConversion(state, scenario, year) {
     console.log('\nProcessing Roth conversions...');
-    if (!scenario.enable_roth_conversion) return;
 
     const userAge = year - scenario.birth_year;
     
     // Calculate federal taxable income
-    const curYearFedTaxableIncome = state.curYearIncome - ((1-SS_TAXABLE_PORTION) * state.curYearSS);
+    let curYearFedTaxableIncome = state.curYearIncome - ((1-SS_TAXABLE_PORTION) * state.curYearSS);
 
     // Round to 2 decimal places
     curYearFedTaxableIncome = Math.round(curYearFedTaxableIncome * 100) / 100;
@@ -605,7 +617,9 @@ async function processRothConversion(state, scenario, year) {
         const transferAmount = Math.min(remainingConversion, sourceInv.value);
         remainingConversion -= transferAmount;
 
-        // Reduce source investment value
+        // Reduce source investment value and purchase price
+        const original_price_transfer_amt = sourceInv.purchase_price * transferAmount / sourceInv.value;
+        sourceInv.purchase_price -= original_price_transfer_amt;
         sourceInv.value -= transferAmount;
 
         // Find or create corresponding after-tax retirement investment
@@ -615,21 +629,25 @@ async function processRothConversion(state, scenario, year) {
         );
 
         if (targetInv) {
+            targetInv.purchase_price += original_price_transfer_amt;
             targetInv.value += transferAmount;
         } else {
             // Create new after-tax retirement investment
             state.investments.push({
-                ...sourceInv,
-                id: `roth_${sourceInv.id}`,
+                id: state.investments[state.investments.length - 1]?.id + 1 || 1,
+                special_id: sourceInv.special_id.replace('pre-tax', 'after-tax'),  // Replace 'pre-tax' with 'after-tax'
+                value: transferAmount,
                 tax_status: 'after-tax',
-                value: transferAmount
+                investment_type_id: sourceInv.investment_type_id,
+                scenario_id: sourceInv.scenario_id,
+                purchase_price: original_price_transfer_amt
             });
         }
     }
 
     // Update income and early withdrawal totals
     state.curYearIncome += rothConversionAmount;
-    
+
     // Add to early withdrawals if user is under 59
     if (userAge < EARLY_WITHDRAWAL_AGE) {
         state.curYearEarlyWithdrawals = (state.curYearEarlyWithdrawals || 0) + rothConversionAmount;
