@@ -139,7 +139,8 @@ async function simulateScenario(scenario) {
         events: [],
         investments: [],
         investmentTypes: [],
-        is_married: scenario.is_married
+        is_married: scenario.is_married,
+        inflationRate: 0
     };
     
     // Get all investments, eventseries, investmenttypes and store in state
@@ -200,7 +201,7 @@ async function simulateScenario(scenario) {
     }
 
     //need to change back to endYear
-    for (let year = currentYear; year <= currentYear+1; year++) {
+    for (let year = currentYear; year <= currentYear; year++) {
         console.log(`\n=== Processing Year ${year} ===`);
         
         //check for mortality
@@ -227,7 +228,7 @@ async function simulateScenario(scenario) {
         }
         // 1. Preliminaries
         //get the inflation assumption for the year
-        const inflationRate = sampleInflationRate(scenario);
+        state.inflationRate = sampleInflationRate(scenario);
         
         // Use previous year's tax brackets and retirement limit to calculate next year's brackets and limit
         if (year != currentYear) {
@@ -235,7 +236,7 @@ async function simulateScenario(scenario) {
             state.retirementLimits = Math.round(state.retirementLimits * (1 + inflationRate));
         }
         
-        
+        //reset curr year values
         state.curYearIncome = 0;
         state.curYearSS = 0;
         state.curYearGains = 0;
@@ -244,7 +245,7 @@ async function simulateScenario(scenario) {
         //console.log(state.investments)
 
         // 2. Process Income Events
-        await processIncome(state, year, inflationRate);
+        await processIncome(state, year);
         //console.log(state.investments)
 
         // 3. Process RMD
@@ -261,19 +262,19 @@ async function simulateScenario(scenario) {
 
         // 6. Process Non-discretionary Expenses and Taxes
         await processNonDiscretionaryExpensesAndTax(state, scenario, year, currentYear);
-        console.log(state.investments)
+        //console.log(state.investments)
 
         // 7. Process Discretionary Expenses
         await processDiscretionaryExpenses(state, scenario, year);
         //console.log(state.investments)
 
         // 8. Process Investment Events
-        await processInvestEvents(state, scenario, year);
-        //console.log(state.investments)
+        await processInvestEvents(state, year);
+        console.log(state.investments)
 
         // 9. Process Rebalance Events
-        await processRebalanceEvents(state, scenario, year);
-        //console.log(state.investments)
+        await processRebalanceEvents(state, year);
+        console.log(state.investments)
 
         // Store current year values for next year's tax calculation
         state.prevYearIncome = state.curYearIncome;
@@ -354,7 +355,7 @@ async function getEventDuration(event) {
     }
 }
 
-async function processIncome(state, year, inflationRate) {
+async function processIncome(state, year) {
     console.log('\nProcessing income events...');
 
     // Filter income events from state.events
@@ -409,7 +410,7 @@ async function processIncome(state, year, inflationRate) {
 
         // Apply inflation adjustment if enabled
         if (event.is_inflation_adjusted) {
-            event.amount *= (1 + inflationRate);
+            event.amount *= (1 + state.inflationRate);
         }
 
         // Round to 2 decimal places
@@ -449,7 +450,7 @@ async function processRMD(state, scenario, year) {
     for (const investmentId of rmdStrategy) {
         if (rmdAmount <= 0) break;
 
-        const sourceInv = preTaxInvestments.find(inv => inv.id === investmentId);
+        const sourceInv = preTaxInvestments.find(inv => inv.special_id === investmentId);
         if (!sourceInv || sourceInv.value <= 0) continue;
 
         // Calculate transfer amount
@@ -597,7 +598,7 @@ async function processRothConversion(state, scenario, year) {
     for (const investmentId of rothStrategy) {
         if (remainingConversion <= 0) break;
 
-        const sourceInv = preTaxInvestments.find(inv => inv.id === investmentId);
+        const sourceInv = preTaxInvestments.find(inv => inv.special_id === investmentId);
         if (!sourceInv || sourceInv.value <= 0) continue;
 
         // Calculate transfer amount
@@ -739,6 +740,11 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
                 event.amount *= (1 + sampleUniform(event.expected_change_lower, event.expected_change_upper));  // Percentage change using uniform distribution
             }
         }
+
+        // Apply inflation adjustment if needed
+        if (event.inflation_adjusted) {
+            event.amount *= (1 + state.inflationRate);
+        }
     });
 
 
@@ -761,7 +767,7 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
         for (const investmentId of scenario.expense_withdrawl_strategy) {
             if (remainingWithdrawal <= 0) break;
 
-            const investment = state.investments.find(inv => inv.id === Number(investmentId));
+            const investment = state.investments.find(inv => inv.special_id === investmentId);
             if (!investment || investment.value <= 0) continue;
 
             // Calculate amount to sell
@@ -831,9 +837,9 @@ async function processDiscretionaryExpenses(state, scenario, year) {
 
     // Get discretionary expenses for current year and order by spending strategy
     const discExpenses = scenario.spending_strategy
-        .map(expenseId => {
+        .map(name => {
             const event = state.events.find(e => 
-                e.id === expenseId && 
+                e.name === name && 
                 e.type === 'expense' && 
                 e.is_discretionary &&
                 year >= e.start_year_value && 
@@ -869,7 +875,7 @@ async function processDiscretionaryExpenses(state, scenario, year) {
 
             // Apply inflation adjustment if needed
             if (event.inflation_adjusted) {
-                event.amount *= (1 + sampleInflationRate(scenario));
+                event.amount *= (1 + state.inflationRate);
             }
             
             return {
@@ -891,25 +897,19 @@ async function processDiscretionaryExpenses(state, scenario, year) {
     if (maxSpendable <= 0) return;
 
     // Process each discretionary expense in order of spending strategy
-    for (const { event, amount } of discExpenses) {
+    const totalAmount = discExpenses.reduce((total, { amount }) => {return total + amount}, 0);
 
-        // Determine how much of the expense we can afford
-        let affordableAmount = Math.min(amount, maxSpendable);
+    // Determine how much of the expense we can afford
+    let affordableAmount = Math.min(totalAmount, maxSpendable);
 
-        // Try to pay from cash first
-        const cashPayment = Math.min(affordableAmount, cashInvestment.value);
-        cashInvestment.value -= cashPayment;
-        affordableAmount -= cashPayment;
+    // Try to pay from cash first
+    const cashPayment = Math.min(affordableAmount, cashInvestment.value);
+    cashInvestment.value -= cashPayment;
+    affordableAmount -= cashPayment;
 
-        // If we need more, withdraw from investments
-        if (affordableAmount > 0) {
-            await withdrawForExpense(state, scenario, affordableAmount, userAge);
-        }
-
-        // If we couldn't pay the full amount, stop processing expenses
-        if (affordableAmount <= 0) {
-            break;
-        }
+    // If we need more, withdraw from investments
+    if (affordableAmount > 0) {
+        affordableAmount = await withdrawForExpense(state, scenario, affordableAmount, userAge);
     }
 }
 
@@ -917,7 +917,7 @@ async function withdrawForExpense(state, scenario, amount, userAge) {
     for (const investmentId of scenario.expense_withdrawl_strategy) {
         if (amount <= 0) break;
 
-        const investment = state.investments.find(inv => inv.id === investmentId);
+        const investment = state.investments.find(inv => inv.special_id === investmentId);
         if (!investment || investment.value <= 0) continue;
 
         // Calculate and perform withdrawal
@@ -949,6 +949,7 @@ async function withdrawForExpense(state, scenario, amount, userAge) {
         investment.value -= sellAmount;
         amount -= sellAmount;
     }
+    return amount;
 }
 
 // Add helper function for calculating glide path allocations
@@ -974,7 +975,7 @@ for (const [investmentId, startPct] of Object.entries(event.asset_allocation)) {
     return result;
 }
 
-async function processInvestEvents(state, scenario, year) {
+async function processInvestEvents(state, year) {
     console.log('\nProcessing investment events...');
     // Find cash investment
     const cashInvestment = state.investments.find(inv => inv.special_id === 'cash');
@@ -995,9 +996,7 @@ async function processInvestEvents(state, scenario, year) {
         if (excessCash <= 0) break;
 
         // Calculate inflation-adjusted contribution limit
-        const baseLimit = state.retirementLimits || 0;
-        const inflationRate = sampleInflationRate(scenario);
-        const inflationAdjustedLimit = baseLimit * Math.pow(1 + inflationRate, year - event.start_year_value);
+        const baseLimit = state.retirementLimits;
 
         // Get current allocations based on glide path (defaults to fixed if not enabled)
         const currentAllocations = calculateGlidePathAllocations(event, year);
@@ -1009,7 +1008,7 @@ async function processInvestEvents(state, scenario, year) {
         };
 
         Object.entries(currentAllocations).forEach(([investmentId, percentage]) => {
-            const investment = state.investments.find(inv => inv.id === investmentId);
+            const investment = state.investments.find(inv => inv.special_id === investmentId);
             if (!investment) return;
             if (investment.tax_status === 'after-tax') {
                 investmentsByTaxStatus['after-tax'].push({ investment, allocation: percentage });
@@ -1039,9 +1038,9 @@ async function processInvestEvents(state, scenario, year) {
 
         // Adjust if after-tax total exceeds limit
         const finalPurchases = new Map();
-        if (afterTaxTotal > inflationAdjustedLimit) {
-            const scaleDown = inflationAdjustedLimit / afterTaxTotal;
-            const excessAmount = afterTaxTotal - inflationAdjustedLimit;
+        if (afterTaxTotal > baseLimit) {
+            const scaleDown = baseLimit / afterTaxTotal;
+            const excessAmount = afterTaxTotal - baseLimit;
             
             // Scale down after-tax investments
             investmentsByTaxStatus['after-tax'].forEach(({ investment }) => {
@@ -1085,6 +1084,7 @@ async function processInvestEvents(state, scenario, year) {
 
 async function processRebalanceEvents(state, year) {
     console.log('\nProcessing rebalance events...');
+
     // Get rebalance events for current year
     const rebalanceEvents = state.events.filter(event => 
         event.type === 'rebalance' &&
@@ -1101,9 +1101,9 @@ async function processRebalanceEvents(state, year) {
         const currentInvestments = new Map();
 
         Object.entries(currentAllocations).forEach(([investmentId, percentage]) => {
-            const investment = state.investments.find(inv => inv.id === investmentId);
+            const investment = state.investments.find(inv => inv.special_id === investmentId);
             if (!investment) return;
-            currentInvestments.set(investment.id, investment);
+            currentInvestments.set(investment.special_id, investment);
             totalValue += investment.value;
         });
 
@@ -1116,7 +1116,7 @@ async function processRebalanceEvents(state, year) {
             if (!investment) return;
             const targetValue = (totalValue * percentage);
             const adjustment = targetValue - investment.value;
-            adjustments.set(investment.id, adjustment);
+            adjustments.set(investment.special_id, adjustment);
         });
 
         // Process sales first (negative adjustments)
@@ -1137,6 +1137,7 @@ async function processRebalanceEvents(state, year) {
                 
                 // Update cost basis
                 investment.purchase_price *= (1 - sellFraction);
+                investment.purchase_price = Math.round(investment.purchase_price * 100) / 100;
             }
 
             // Execute sale

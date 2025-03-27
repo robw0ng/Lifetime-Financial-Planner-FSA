@@ -251,12 +251,12 @@ async function createTestScenario() {
 
     const spendingStrategy = ["vacation", "streaming services"];  // List of discretionary expenses
     const expenseWithdrawalStrategy = [
-        SP_non_retirement.id,
-        bond_non_retirement.id,
-        SP_aftertax.id
+        SP_non_retirement.special_id,
+        bond_non_retirement.special_id,
+        SP_aftertax.special_id
     ];  // List of investments for expense withdrawals
-    const RMDStrategy = [SP_pretax.id];  // Pre-tax investments for RMDs
-    const RothConversionStrategy = [SP_pretax.id];
+    const RMDStrategy = [SP_pretax.special_id];  // Pre-tax investments for RMDs
+    const RothConversionStrategy = [SP_pretax.special_id];
 
     scenario.spending_strategy = spendingStrategy;
     scenario.expense_withdrawl_strategy = expenseWithdrawalStrategy;
