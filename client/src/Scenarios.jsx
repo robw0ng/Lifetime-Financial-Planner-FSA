@@ -87,25 +87,13 @@ function BasicInformation({ scenario }) {
                 <p className={styles.info_item}>Name:</p>
                 <p className={styles.info_value}>{scenario.name}</p>
             </div>
-            {/* <div className={styles.info_row}>
-                <p className={styles.info_item}>Description:</p>
-                <p className={styles.info_value}>{scenario.description}</p>
-            </div> */}
             <div className={styles.info_row}>
                 <p className={styles.info_item}>Marital Status:</p>
                 <p className={styles.info_value}>{scenario.isMarried ? "Married" : "Single"}</p>
             </div>
             <div className={styles.info_row}>
-                <p className={styles.info_item}>Spouse Life Expectancy:</p>
-                <p className={styles.info_value}>{scenario.lifeExpectancySpouse}</p>
-            </div>
-            <div className={styles.info_row}>
                 <p className={styles.info_item}>Birth Year:</p>
                 <p className={styles.info_value}>{scenario.birthYear}</p>
-            </div>
-            <div className={styles.info_row}>
-                <p className={styles.info_item}>Life Expectancy:</p>
-                <p className={styles.info_value}>{scenario.lifeExpectancy}</p>
             </div>
             <div className={styles.info_row}>
                 <p className={styles.info_item}>State:</p>
@@ -256,7 +244,6 @@ export function ScenarioList() {
 
     const {scenarios, setScenarios} = useData();
     let scenariosList = scenarios;
-    // console.log(scenariosList);
 
     if (scenariosList.length <= 0) {
         scenariosList = [{ name: 'No scenarios available...', id: null }];

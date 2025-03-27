@@ -1,5 +1,4 @@
 import "./EventSeries.css"
-import "./Investments.css"
 import { Link } from "react-router-dom";
 import { useSelected } from "./SelectedContext";
 import { useData } from "./DataContext";
@@ -92,8 +91,8 @@ function EventSeriesList() {
     };
   
     return (
-      <div className="investmentListContainer">
-        <div className="investmentList">
+      <div className="event-series-container">
+        <div className="event-series-inner-container">
           <h2 className="title">Event Series:</h2>
           <div className="header">
             <span className="investment-span">Name</span>
@@ -163,6 +162,7 @@ function EventSeriesList() {
   
     return (
       <section className="event-series-info-container">
+        <div className="event-series-info-inner">
         <h2>Event Series Info</h2>
   
         <div className="info-row">
@@ -248,6 +248,7 @@ function EventSeriesList() {
             )}
           </>
         )}
+      </div>
       </section>
     );
   }
@@ -273,7 +274,7 @@ function ScenarioList() {
     }
 
     return (
-        <section className="scenarioListContainer">
+        <section className="eventseries-scenarioListContainer">
             <div className="scenario-list">
                 <div className="title">
                     <h2 className="title">Scenarios:</h2>
