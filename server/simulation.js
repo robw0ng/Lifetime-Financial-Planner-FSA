@@ -201,7 +201,7 @@ async function simulateScenario(scenario) {
     }
 
     //need to change back to endYear***
-    for (let year = currentYear; year < currentYear+1; year++) {
+    for (let year = currentYear; year < endYear; year++) {
         console.log(`\n=== Processing Year ${year} ===`);
         
         //check for mortality
@@ -242,7 +242,7 @@ async function simulateScenario(scenario) {
         // Use previous year's tax brackets and retirement limit to calculate next year's brackets and limit
         if (year != currentYear) {
             updateTaxBrackets(state, state.inflationRate);
-            state.retirementLimits = Math.round(state.retirementLimits * (1 + state.inflationRate));
+            state.retirementLimits = Math.round(state.retirementLimits * (1 + state.inflationRate) * 100) / 100;
         }
         
         //reset curr year values
@@ -251,41 +251,55 @@ async function simulateScenario(scenario) {
         state.curYearGains = 0;
         state.curYearEarlyWithdrawals = 0;
 
-        //console.log(state.investments)
+        console.log(state.investments)
 
         // 2. Process Income Events
         await processIncome(state, year);
-        //console.log(state.investments)
+        console.log(state.investments)
 
         // 3. Process RMD
         await processRMD(state, scenario, year);
-        //console.log(state.investments)
+        console.log(state.investments)
 
         // 4. Update Investment Values
         await processInvestmentUpdates(state);
-        //console.log(state.investments)
+        console.log(state.investments)
 
         // 5. Process Roth Conversion
         if (scenario.is_roth_optimizer_enabled && year >= scenario.roth_start_year && year <= scenario.roth_end_year) {
             await processRothConversion(state, scenario, year);
         }
-        //console.log(state.investments)
+        console.log(state.investments)
 
         // 6. Process Non-discretionary Expenses and Taxes
         await processNonDiscretionaryExpensesAndTax(state, scenario, year, currentYear);
-        //console.log(state.investments)
+        console.log(state.investments)
 
         // 7. Process Discretionary Expenses
         await processDiscretionaryExpenses(state, scenario, year);
-        //console.log(state.investments)
+        console.log(state.investments)
 
         // 8. Process Investment Events
         await processInvestEvents(state, year);
-        //console.log(state.investments)
+        console.log(state.investments)
 
         // 9. Process Rebalance Events
         await processRebalanceEvents(state, year);
-        //console.log(state.investments)
+        console.log(state.investments)
+
+        //round all investment and eventseries values to nearest cent
+        for (const investment of state.investments) {
+            investment.value = Math.round(investment.value * 100) / 100;
+            investment.purchase_price = Math.round(investment.purchase_price * 100) / 100;
+        }
+        for (const event of state.events) {
+            if (event.amount) {
+                event.amount = Math.round(event.amount * 100) / 100;
+            }
+        }
+        console.log("Rounding investment and eventseries values")
+        console.log(state.investments)
+        console.log(state.events)
 
         // Store current year values for next year's tax calculation
         state.prevYearIncome = state.curYearIncome;
@@ -423,9 +437,6 @@ async function processIncome(state, year) {
         if (event.is_inflation_adjusted) {
             event.amount *= (1 + state.inflationRate);
         }
-
-        // Round to 2 decimal places
-        event.amount = Math.round(event.amount * 100) / 100;
     }
     
 }
@@ -451,6 +462,7 @@ async function processRMD(state, scenario, year) {
     //first RMD for year of user age 73 paid in age 74. always pay previous year's RMD
     const RMDtable = await loadRMDTable();
     const distributionPeriod = RMDtable.get(userAge-1)
+    console.log("fetch RMD table")
 
     // Calculate RMD amount
     let rmdAmount = Math.round(totalPreTaxValue / distributionPeriod * 100) / 100;
@@ -572,9 +584,6 @@ async function processInvestmentUpdates(state) {
         const avgValue = (startValue + investment.value) / 2;
         const expenses = avgValue * (investmentType.expense_ratio);
         investment.value -= expenses;
-
-        // Round to 2 decimal places
-        investment.value = Math.round(investment.value * 100) / 100;
     }
 }
 
@@ -806,7 +815,6 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
                 
                 // Update cost basis
                 investment.purchase_price *= (1 - sellFraction);
-                investment.purchase_price = Math.round(investment.purchase_price * 100) / 100;
             }
 
             // Update income for pre-tax withdrawals
@@ -822,7 +830,6 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
 
             // Update investment value
             investment.value -= sellAmount;
-            investment.value = Math.round(investment.value * 100) / 100;
         }
     }
 }
@@ -1161,7 +1168,6 @@ async function processRebalanceEvents(state, year) {
                 
                 // Update cost basis
                 investment.purchase_price *= (1 - sellFraction);
-                investment.purchase_price = Math.round(investment.purchase_price * 100) / 100;
             }
 
             // Execute sale
