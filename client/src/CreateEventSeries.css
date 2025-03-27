@@ -92,3 +92,7 @@
 .create-event-series-container input[type="radio"] {
   margin-right: 4px;
 }
+
+fieldset{
+  color: #fff;
+}

@@ -10,279 +10,281 @@ export const DataProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { selectedScenario, setSelectedScenario, selectedInvestment, setSelectedInvestment } = useSelected();
 
-  const mockScenarios = [
-    {
-      id: "1",
-      name: "Unemployed",
-      isMarried: false,
-      birthYear: 1990,
-      birthYearSpouse: null,
-      lifeExpectancy: 85,
-      lifeExpectancySpouse: null,
-      inflationAssumption: 2.5,
-      preTaxContributionLimit: 19000,
-      afterTaxContributionLimit: 6000,
-      sharingSettings: "Private",
-      financialGoal: 1000000,
-      stateOfResidence: "NY",
-      rothConversionOptimizerEnabled: true,
-      rothConversionOptimizerStartYear: 2025,
-      rothConversionOptimizerEndYear: 2030,
-      investments: new Set([
-        {
-          id: "1",
-          type: {
-            name: "Stocks",
-            description: "",
-            expected_annual_return: "",
-            expense_ratio: "",
-            expected_annual_income: "",
-            taxability: "",
-          },
-          account: "PTR",
-          value: 15000,
-        },
-      ]),
-      events: new Set([
-        {
-          id: "ev1",
-          name: "Part-Time Job Income",
-          description: "Supplemental work during unemployment",
-          type: "income",
-          startYear: { value: 2024, type: "fixed" },
-          duration: { value: 2, type: "fixed" },
-          initialAmount: 12000,
-          expectedChange: { value: "2%", type: "fixed" },
-          inflationAdjusted: true,
-          userPercentage: 100,
-          isSocialSecurity: false,
-        },
-        {
-          id: "ev2",
-          name: "Rent",
-          description: "Monthly housing cost",
-          type: "expense",
-          startYear: { value: 2024, type: "fixed" },
-          duration: { value: 10, type: "fixed" },
-          initialAmount: 18000,
-          expectedChange: { value: "3%", type: "fixed" },
-          inflationAdjusted: false,
-          userPercentage: 100,
-          isDiscretionary: false,
-        },
-        {
-          id: "ev3",
-          name: "Conservative Investing Strategy",
-          description: "Basic 60/40 investment allocation",
-          type: "invest",
-          startYear: { value: 2025, type: "fixed" },
-          duration: { value: 30, type: "fixed" },
-          allocationType: "fixed",
-          allocation: {
-            "Stocks": 60,
-            "Bonds": 40,
-          },
-          maxCash: 5000,
-        },
-      ]),
-      spendingStrategy: [],
-      rmdStrategy: [],
-      rothConversionStrategy: [],
-      expenseWithdrawalStrategy: [],
-    },
+  // const mockScenarios = [
+  //   {
+  //     id: "1",
+  //     name: "Unemployed",
+  //     isMarried: false,
+  //     birthYear: 1990,
+  //     birthYearSpouse: null,
+  //     lifeExpectancy: 85,
+  //     lifeExpectancySpouse: null,
+  //     inflationAssumption: 2.5,
+  //     preTaxContributionLimit: 19000,
+  //     afterTaxContributionLimit: 6000,
+  //     sharingSettings: "Private",
+  //     financialGoal: 1000000,
+  //     stateOfResidence: "NY",
+  //     rothConversionOptimizerEnabled: true,
+  //     rothConversionOptimizerStartYear: 2025,
+  //     rothConversionOptimizerEndYear: 2030,
+  //     investments: new Set([
+  //       {
+  //         id: "1",
+  //         type: {
+  //           name: "Stocks",
+  //           description: "",
+  //           expected_annual_return: "",
+  //           expense_ratio: "",
+  //           expected_annual_income: "",
+  //           taxability: "",
+  //         },
+  //         account: "PTR",
+  //         value: 15000,
+  //       },
+  //     ]),
+  //     events: new Set([
+  //       {
+  //         id: "ev1",
+  //         name: "Part-Time Job Income",
+  //         description: "Supplemental work during unemployment",
+  //         type: "income",
+  //         startYear: { value: 2024, type: "fixed" },
+  //         duration: { value: 2, type: "fixed" },
+  //         initialAmount: 12000,
+  //         expectedChange: { value: "2%", type: "fixed" },
+  //         inflationAdjusted: true,
+  //         userPercentage: 100,
+  //         isSocialSecurity: false,
+  //       },
+  //       {
+  //         id: "ev2",
+  //         name: "Rent",
+  //         description: "Monthly housing cost",
+  //         type: "expense",
+  //         startYear: { value: 2024, type: "fixed" },
+  //         duration: { value: 10, type: "fixed" },
+  //         initialAmount: 18000,
+  //         expectedChange: { value: "3%", type: "fixed" },
+  //         inflationAdjusted: false,
+  //         userPercentage: 100,
+  //         isDiscretionary: false,
+  //       },
+  //       {
+  //         id: "ev3",
+  //         name: "Conservative Investing Strategy",
+  //         description: "Basic 60/40 investment allocation",
+  //         type: "invest",
+  //         startYear: { value: 2025, type: "fixed" },
+  //         duration: { value: 30, type: "fixed" },
+  //         allocationType: "fixed",
+  //         allocation: {
+  //           "Stocks": 60,
+  //           "Bonds": 40,
+  //         },
+  //         maxCash: 5000,
+  //       },
+  //     ]),
+  //     spendingStrategy: [],
+  //     rmdStrategy: [],
+  //     rothConversionStrategy: [],
+  //     expenseWithdrawalStrategy: [],
+  //   },
   
-    {
-      id: "2",
-      name: "Gaming",
-      isMarried: true,
-      birthYear: 1995,
-      birthYearSpouse: 1997,
-      lifeExpectancy: 80,
-      lifeExpectancySpouse: 78,
-      inflationAssumption: 3.0,
-      preTaxContributionLimit: 18000,
-      afterTaxContributionLimit: 5000,
-      sharingSettings: "Public",
-      financialGoal: 2000000,
-      stateOfResidence: "CA",
-      rothConversionOptimizerEnabled: false,
-      rothConversionOptimizerStartYear: null,
-      rothConversionOptimizerEndYear: null,
-      investments: new Set(),
-      events: new Set([
-        {
-          id: "ev4",
-          name: "YouTube Income",
-          type: "income",
-          startYear: { value: 2023, type: "fixed" },
-          duration: { value: 5, type: "normal" },
-          initialAmount: 50000,
-          expectedChange: { value: "N(5%, 2%)", type: "normal" },
-          inflationAdjusted: true,
-          userPercentage: 60,
-          isSocialSecurity: false,
-        },
-        {
-          id: "ev5",
-          name: "Lifestyle Expenses",
-          type: "expense",
-          startYear: { value: 2023, type: "fixed" },
-          duration: { value: 40, type: "fixed" },
-          initialAmount: 30000,
-          expectedChange: { value: "1%", type: "fixed" },
-          inflationAdjusted: true,
-          userPercentage: 50,
-          isDiscretionary: true,
-        },
-        {
-          id: "ev6",
-          name: "Rebalancing Strategy",
-          type: "rebalance",
-          startYear: { value: 2024, type: "fixed" },
-          duration: { value: 35, type: "fixed" },
-          allocationType: "glide",
-          allocation: {
-            initial: {
-              "Stocks": 70,
-              "Bonds": 30,
-            },
-            final: {
-              "Stocks": 50,
-              "Bonds": 50,
-            },
-          },
-        },
-      ]),
-      spendingStrategy: [
-        {
-          id: "ev101",
-          name: "Lifestyle Expenses",
-          type: "expense",
-          startYear: { value: 2023, type: "fixed" },
-          duration: { value: 40, type: "fixed" },
-          initialAmount: 30000,
-          expectedChange: { value: "1%", type: "fixed" },
-          inflationAdjusted: true,
-          userPercentage: 50,
-          isDiscretionary: true,
-        },
-        {
-          id: "ev102",
-          name: "Vacation Travel",
-          type: "expense",
-          startYear: { value: 2025, type: "fixed" },
-          duration: { value: 15, type: "fixed" },
-          initialAmount: 12000,
-          expectedChange: { value: "3%", type: "fixed" },
-          inflationAdjusted: true,
-          userPercentage: 100,
-          isDiscretionary: true,
-        },
-        {
-          id: "ev103",
-          name: "Dining Out",
-          type: "expense",
-          startYear: { value: 2024, type: "fixed" },
-          duration: { value: 35, type: "fixed" },
-          initialAmount: 6000,
-          expectedChange: { value: "2%", type: "fixed" },
-          inflationAdjusted: false,
-          userPercentage: 70,
-          isDiscretionary: true,
-        },
-        {
-          id: "ev104",
-          name: "Entertainment Subscriptions",
-          type: "expense",
-          startYear: { value: 2023, type: "fixed" },
-          duration: { value: 30, type: "fixed" },
-          initialAmount: 1500,
-          expectedChange: { value: "$50", type: "fixed" },
-          inflationAdjusted: false,
-          userPercentage: 90,
-          isDiscretionary: true,
-        },
-        {
-          id: "ev105",
-          name: "Seasonal Shopping",
-          type: "expense",
-          startYear: { value: 2026, type: "fixed" },
-          duration: { value: 20, type: "fixed" },
-          initialAmount: 5000,
-          expectedChange: { value: "1.5%", type: "fixed" },
-          inflationAdjusted: true,
-          userPercentage: 60,
-          isDiscretionary: true,
-        },
-        {
-          id: "ev106",
-          name: "Hobbies and Gear",
-          type: "expense",
-          startYear: { value: 2024, type: "fixed" },
-          duration: { value: 25, type: "fixed" },
-          initialAmount: 8000,
-          expectedChange: { value: "2.5%", type: "fixed" },
-          inflationAdjusted: true,
-          userPercentage: 75,
-          isDiscretionary: true,
-        },
-      ],
+  //   {
+  //     id: "2",
+  //     name: "Gaming",
+  //     isMarried: true,
+  //     birthYear: 1995,
+  //     birthYearSpouse: 1997,
+  //     lifeExpectancy: 80,
+  //     lifeExpectancySpouse: 78,
+  //     inflationAssumption: 3.0,
+  //     preTaxContributionLimit: 18000,
+  //     afterTaxContributionLimit: 5000,
+  //     sharingSettings: "Public",
+  //     financialGoal: 2000000,
+  //     stateOfResidence: "CA",
+  //     rothConversionOptimizerEnabled: false,
+  //     rothConversionOptimizerStartYear: null,
+  //     rothConversionOptimizerEndYear: null,
+  //     investments: new Set(),
+  //     events: new Set([
+  //       {
+  //         id: "ev4",
+  //         name: "YouTube Income",
+  //         type: "income",
+  //         startYear: { value: 2023, type: "fixed" },
+  //         duration: { value: 5, type: "normal" },
+  //         initialAmount: 50000,
+  //         expectedChange: { value: "N(5%, 2%)", type: "normal" },
+  //         inflationAdjusted: true,
+  //         userPercentage: 60,
+  //         isSocialSecurity: false,
+  //       },
+  //       {
+  //         id: "ev5",
+  //         name: "Lifestyle Expenses",
+  //         type: "expense",
+  //         startYear: { value: 2023, type: "fixed" },
+  //         duration: { value: 40, type: "fixed" },
+  //         initialAmount: 30000,
+  //         expectedChange: { value: "1%", type: "fixed" },
+  //         inflationAdjusted: true,
+  //         userPercentage: 50,
+  //         isDiscretionary: true,
+  //       },
+  //       {
+  //         id: "ev6",
+  //         name: "Rebalancing Strategy",
+  //         type: "rebalance",
+  //         startYear: { value: 2024, type: "fixed" },
+  //         duration: { value: 35, type: "fixed" },
+  //         allocationType: "glide",
+  //         allocation: {
+  //           initial: {
+  //             "Stocks": 70,
+  //             "Bonds": 30,
+  //           },
+  //           final: {
+  //             "Stocks": 50,
+  //             "Bonds": 50,
+  //           },
+  //         },
+  //       },
+  //     ]),
+  //     spendingStrategy: [
+  //       {
+  //         id: "ev101",
+  //         name: "Lifestyle Expenses",
+  //         type: "expense",
+  //         startYear: { value: 2023, type: "fixed" },
+  //         duration: { value: 40, type: "fixed" },
+  //         initialAmount: 30000,
+  //         expectedChange: { value: "1%", type: "fixed" },
+  //         inflationAdjusted: true,
+  //         userPercentage: 50,
+  //         isDiscretionary: true,
+  //       },
+  //       {
+  //         id: "ev102",
+  //         name: "Vacation Travel",
+  //         type: "expense",
+  //         startYear: { value: 2025, type: "fixed" },
+  //         duration: { value: 15, type: "fixed" },
+  //         initialAmount: 12000,
+  //         expectedChange: { value: "3%", type: "fixed" },
+  //         inflationAdjusted: true,
+  //         userPercentage: 100,
+  //         isDiscretionary: true,
+  //       },
+  //       {
+  //         id: "ev103",
+  //         name: "Dining Out",
+  //         type: "expense",
+  //         startYear: { value: 2024, type: "fixed" },
+  //         duration: { value: 35, type: "fixed" },
+  //         initialAmount: 6000,
+  //         expectedChange: { value: "2%", type: "fixed" },
+  //         inflationAdjusted: false,
+  //         userPercentage: 70,
+  //         isDiscretionary: true,
+  //       },
+  //       {
+  //         id: "ev104",
+  //         name: "Entertainment Subscriptions",
+  //         type: "expense",
+  //         startYear: { value: 2023, type: "fixed" },
+  //         duration: { value: 30, type: "fixed" },
+  //         initialAmount: 1500,
+  //         expectedChange: { value: "$50", type: "fixed" },
+  //         inflationAdjusted: false,
+  //         userPercentage: 90,
+  //         isDiscretionary: true,
+  //       },
+  //       {
+  //         id: "ev105",
+  //         name: "Seasonal Shopping",
+  //         type: "expense",
+  //         startYear: { value: 2026, type: "fixed" },
+  //         duration: { value: 20, type: "fixed" },
+  //         initialAmount: 5000,
+  //         expectedChange: { value: "1.5%", type: "fixed" },
+  //         inflationAdjusted: true,
+  //         userPercentage: 60,
+  //         isDiscretionary: true,
+  //       },
+  //       {
+  //         id: "ev106",
+  //         name: "Hobbies and Gear",
+  //         type: "expense",
+  //         startYear: { value: 2024, type: "fixed" },
+  //         duration: { value: 25, type: "fixed" },
+  //         initialAmount: 8000,
+  //         expectedChange: { value: "2.5%", type: "fixed" },
+  //         inflationAdjusted: true,
+  //         userPercentage: 75,
+  //         isDiscretionary: true,
+  //       },
+  //     ],
       
-      rmdStrategy: [
-        {
-          id: "inv3", // Real Estate Fund
-          type: { name: "Real Estate Fund" },
-          account: "PTR",
-          value: 50000,
-        },
-        {
-          id: "inv1", // S&P 500
-          type: { name: "S&P 500" },
-          account: "PTR",
-          value: 60000,
-        },
-      ],
-      rothConversionStrategy: [
-        {
-          id: "inv1", // S&P 500
-          type: { name: "S&P 500" },
-          account: "PTR",
-          value: 60000,
-        },
-        {
-          id: "inv3", // Real Estate Fund
-          type: { name: "Real Estate Fund" },
-          account: "PTR",
-          value: 50000,
-        },
-      ],
-      expenseWithdrawalStrategy: [
-        {
-          id: "inv4", // Cash
-          type: { name: "Cash" },
-          account: "NR",
-          value: 10000,
-        },
-        {
-          id: "inv2", // Municipal Bonds
-          type: { name: "Municipal Bonds" },
-          account: "NR",
-          value: 20000,
-        },
-        {
-          id: "inv5", // Crypto Index
-          type: { name: "Crypto Index" },
-          account: "ATR",
-          value: 15000,
-        },
-      ],
-    },
-  ];
+  //     rmdStrategy: [
+  //       {
+  //         id: "inv3", // Real Estate Fund
+  //         type: { name: "Real Estate Fund" },
+  //         account: "PTR",
+  //         value: 50000,
+  //       },
+  //       {
+  //         id: "inv1", // S&P 500
+  //         type: { name: "S&P 500" },
+  //         account: "PTR",
+  //         value: 60000,
+  //       },
+  //     ],
+  //     rothConversionStrategy: [
+  //       {
+  //         id: "inv1", // S&P 500
+  //         type: { name: "S&P 500" },
+  //         account: "PTR",
+  //         value: 60000,
+  //       },
+  //       {
+  //         id: "inv3", // Real Estate Fund
+  //         type: { name: "Real Estate Fund" },
+  //         account: "PTR",
+  //         value: 50000,
+  //       },
+  //     ],
+  //     expenseWithdrawalStrategy: [
+  //       {
+  //         id: "inv4", // Cash
+  //         type: { name: "Cash" },
+  //         account: "NR",
+  //         value: 10000,
+  //       },
+  //       {
+  //         id: "inv2", // Municipal Bonds
+  //         type: { name: "Municipal Bonds" },
+  //         account: "NR",
+  //         value: 20000,
+  //       },
+  //       {
+  //         id: "inv5", // Crypto Index
+  //         type: { name: "Crypto Index" },
+  //         account: "ATR",
+  //         value: 15000,
+  //       },
+  //     ],
+  //   },
+  // ];
   
+  const localScenarios = []
+
   const fetchScenarios = async () => {
     try {
       setLoading(true);
-      setScenarios(mockScenarios);
+      setScenarios(localScenarios);
       
     } catch (error) {
       console.error('Error fetching scenarios:', error);
@@ -316,6 +318,8 @@ export const DataProvider = ({ children }) => {
         // ✅ If no user email → Directly add to context
         setScenarios((prev) => [...prev, { ...newScenario, id: `${Date.now()}` }]);
       }
+
+      console.log(newScenario);
     } catch (error) {
       console.error('Error creating scenario:', error);
     }
@@ -438,144 +442,162 @@ export const DataProvider = ({ children }) => {
             const updatedInvestments = new Set(scenario.investments);
             updatedInvestments.add(newInvestmentWithId);
   
+            // Determine updated strategies
+            const updatedExpenseWithdrawalStrategy = [
+              ...scenario.expenseWithdrawalStrategy,
+              newInvestmentWithId,
+            ];
+  
+            const updatedRothConversionStrategy =
+              newInvestmentWithId.account === "PTR"
+                ? [...scenario.rothConversionStrategy, newInvestmentWithId]
+                : [...scenario.rothConversionStrategy];
+  
+            const updatedRmdStrategy =
+              newInvestmentWithId.account === "PTR"
+                ? [...scenario.rmdStrategy, newInvestmentWithId]
+                : [...scenario.rmdStrategy];
+  
             const updatedScenario = {
               ...scenario,
               investments: updatedInvestments,
+              expenseWithdrawalStrategy: updatedExpenseWithdrawalStrategy,
+              rothConversionStrategy: updatedRothConversionStrategy,
+              rmdStrategy: updatedRmdStrategy,
             };
   
-            // ✅ Store for later
             updatedScenarioToSelect = updatedScenario;
-  
             return updatedScenario;
           }
           return scenario;
         })
       );
   
-      // ✅ Safe to call AFTER state update is queued
       if (selectedScenario?.id === scenarioId) {
         setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
         setTimeout(() => setSelectedInvestment(newInvestmentWithId), 0);
       }
   
-      // TODO: Send to backend later
+      // TODO: Sync with backend in production
     } catch (error) {
-      console.error('Error creating investment:', error);
+      console.error("Error creating investment:", error);
     }
   };
-
-  const editInvestment = async (scenarioId, editedInvestment) => {
-    try {
-      let updatedScenarioToSelect = null;
   
+
+  const editInvestment = async (scenarioId, updatedInvestment) => {
+    try {
       setScenarios((prevScenarios) =>
         prevScenarios.map((scenario) => {
-          if (scenario.id === scenarioId) {
-            const updatedInvestments = new Set(
-              Array.from(scenario.investments).map((inv) =>
-                inv.id === editedInvestment.id ? editedInvestment : inv
-              )
-            );
-            
-            const updatedScenario = {
-              ...scenario,
-              investments: updatedInvestments,
-            };
+          if (scenario.id !== scenarioId) return scenario;
   
-            updatedScenarioToSelect = updatedScenario;
-            return updatedScenario;
+          const updatedInvestments = new Set();
+          let found = false;
+  
+          scenario.investments.forEach((inv) => {
+            if (inv.id === updatedInvestment.id) {
+              updatedInvestments.add(updatedInvestment);
+              found = true;
+            } else {
+              updatedInvestments.add(inv);
+            }
+          });
+  
+          if (!found) updatedInvestments.add(updatedInvestment); // fallback in case not found
+  
+          const isPTR = updatedInvestment.account === "PTR";
+  
+          const updatedScenario = {
+            ...scenario,
+            investments: updatedInvestments,
+            expenseWithdrawalStrategy: [
+              ...Array.from(updatedInvestments),
+            ],
+            rothConversionStrategy: isPTR
+              ? [...Array.from(updatedInvestments).filter((inv) => inv.account === "PTR")]
+              : [...scenario.rothConversionStrategy.filter((inv) => inv.id !== updatedInvestment.id)],
+            rmdStrategy: isPTR
+              ? [...Array.from(updatedInvestments).filter((inv) => inv.account === "PTR")]
+              : [...scenario.rmdStrategy.filter((inv) => inv.id !== updatedInvestment.id)],
+          };
+  
+          if (selectedScenario?.id === scenarioId) {
+            setTimeout(() => setSelectedScenario(updatedScenario), 0);
           }
-          return scenario;
+  
+          return updatedScenario;
         })
       );
   
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
-        setTimeout(() => setSelectedInvestment(editedInvestment), 0);
-      }
+      // TODO: Sync with backend
     } catch (error) {
-      console.error('Error editing investment:', error);
+      console.error("Error editing investment:", error);
     }
   };
+  
 
   const duplicateInvestment = async (scenarioId, investmentId) => {
     try {
-      let updatedScenarioToSelect = null;
-
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id === scenarioId) {
-            const investmentsArray = Array.from(scenario.investments);
-            const investmentToDuplicate = investmentsArray.find(inv => inv.id === investmentId);
-            if (!investmentToDuplicate) return scenario;
-
-              const duplicatedInvestment = {
-              ...investmentToDuplicate,
-              id: `${Date.now()}`,
-              type: { 
-                ...investmentToDuplicate.type, 
-                name: `${investmentToDuplicate.type.name} (Copy)` 
-              },
-              };
-
-            const updatedInvestments = new Set(scenario.investments);
-            updatedInvestments.add(duplicatedInvestment);
-
-            const updatedScenario = {
-              ...scenario,
-              investments: updatedInvestments,
-            };
-
-            updatedScenarioToSelect = updatedScenario;
-            return updatedScenario;
-          }
-          return scenario;
-        })
-      );
-
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
-      }
-
-      // TODO: Sync with backend if needed
+      const investmentToDuplicate = scenarios
+        .find((s) => s.id === scenarioId)
+        ?.investments
+        ? Array.from(scenarios.find((s) => s.id === scenarioId).investments)
+            .find((inv) => inv.id === investmentId)
+        : null;
+  
+      if (!investmentToDuplicate) return;
+  
+      const duplicated = {
+        ...investmentToDuplicate,
+        id: `${Date.now()}`,
+        name: `${investmentToDuplicate.type.name} (Copy)`
+      };
+  
+      await createInvestment(scenarioId, duplicated); // handles strategy update
+  
     } catch (error) {
-      console.error('Error duplicating investment:', error);
+      console.error("Error duplicating investment:", error);
     }
   };
-
+  
   const deleteInvestment = async (scenarioId, investmentId) => {
     try {
-      let updatedScenarioToSelect = null;
-
       setScenarios((prevScenarios) =>
         prevScenarios.map((scenario) => {
-          if (scenario.id === scenarioId) {
-            const updatedInvestments = new Set(
-              Array.from(scenario.investments).filter(inv => inv.id !== investmentId)
-            );
-
-            const updatedScenario = {
-              ...scenario,
-              investments: updatedInvestments,
-            };
-
-            updatedScenarioToSelect = updatedScenario;
-            return updatedScenario;
+          if (scenario.id !== scenarioId) return scenario;
+  
+          const updatedInvestments = new Set(
+            Array.from(scenario.investments).filter((inv) => inv.id !== investmentId)
+          );
+  
+          const updatedScenario = {
+            ...scenario,
+            investments: updatedInvestments,
+            expenseWithdrawalStrategy: scenario.expenseWithdrawalStrategy.filter(
+              (inv) => inv.id !== investmentId
+            ),
+            rothConversionStrategy: scenario.rothConversionStrategy.filter(
+              (inv) => inv.id !== investmentId
+            ),
+            rmdStrategy: scenario.rmdStrategy.filter(
+              (inv) => inv.id !== investmentId
+            ),
+          };
+  
+          if (selectedScenario?.id === scenarioId) {
+            setTimeout(() => setSelectedScenario(updatedScenario), 0);
           }
-          return scenario;
+  
+          return updatedScenario;
         })
       );
-
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
-      }
-
-      // TODO: Sync with backend if needed
+  
+      // TODO: Sync with backend
     } catch (error) {
-      console.error('Error deleting investment:', error);
+      console.error("Error deleting investment:", error);
     }
   };
-
+  
   const createEventSeries = async (scenarioId, newEventSeries) => {
     try {
       const newEventWithId = { ...newEventSeries, id: `${Date.now()}` };
@@ -584,6 +606,7 @@ export const DataProvider = ({ children }) => {
   
       setScenarios((prevScenarios) =>
         prevScenarios.map((scenario) => {
+          console.log(scenario);
           if (scenario.id === scenarioId) {
             const updatedEvents = new Set(scenario.events);
             updatedEvents.add(newEventWithId);
