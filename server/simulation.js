@@ -106,8 +106,8 @@ async function simulateScenario(scenario) {
     const spouse_life_expectancy = scenario.is_married ?
         (scenario.spouse_life_expectancy_type === "fixed" ? scenario.spouse_life_expectancy_value : sampleNormal(scenario.spouse_life_expectancy_mean, scenario.spouse_life_expectancy_std_dev)) : 0;
 
-    const userEndYear = currentYear + life_expectancy;
-    const spouseEndYear = currentYear + spouse_life_expectancy;
+    const userEndYear = scenario.birth_year + life_expectancy;
+    const spouseEndYear = scenario.spouse_birth_year + Math.round(spouse_life_expectancy);
     const endYear = Math.max(userEndYear, spouseEndYear);
     
     // Load tax brackets
@@ -200,24 +200,31 @@ async function simulateScenario(scenario) {
         }
     }
 
-    //need to change back to endYear
-    for (let year = currentYear; year <= currentYear; year++) {
+    //need to change back to endYear***
+    for (let year = currentYear; year < currentYear+1; year++) {
         console.log(`\n=== Processing Year ${year} ===`);
         
         //check for mortality
         if (state.is_married && (year >= userEndYear || year >= spouseEndYear)) {
-            if (year > userEndYear) {
+            if (year >= userEndYear) {
                 console.log(`User passed away in year ${year}`);
             }
-            if (year > spouseEndYear) {
+            if (year >= spouseEndYear) {
                 console.log(`Spouse passed away in year ${year}`);
             }
             state.is_married = false;
 
             //the percentages of income and expense transactions associated with the deceased spouse are omitted from transaction amounts for future years
             const incomeOrExpenseEvents = state.events.filter(event => event.type === 'income' || event.type === 'expense');
+            
+            console.log("Income and expense events before death.")
+            console.log(incomeOrExpenseEvents)
+            
             for (const event of incomeOrExpenseEvents) {
-                if (year > userEndYear) {
+                if (!event.amount) {
+                    event.amount = event.initial_amount;
+                }
+                if (year >= userEndYear) {
                     event.amount *= (1 - event.user_percentage);
                     event.user_percentage = 0;
                 } else {
@@ -225,6 +232,8 @@ async function simulateScenario(scenario) {
                     event.user_percentage = 1;
                 }
             }
+            console.log("Income and expense events after death.")
+            console.log(incomeOrExpenseEvents)
         }
         // 1. Preliminaries
         //get the inflation assumption for the year
@@ -232,8 +241,8 @@ async function simulateScenario(scenario) {
         
         // Use previous year's tax brackets and retirement limit to calculate next year's brackets and limit
         if (year != currentYear) {
-            updateTaxBrackets(state, inflationRate);
-            state.retirementLimits = Math.round(state.retirementLimits * (1 + inflationRate));
+            updateTaxBrackets(state, state.inflationRate);
+            state.retirementLimits = Math.round(state.retirementLimits * (1 + state.inflationRate));
         }
         
         //reset curr year values
@@ -246,13 +255,11 @@ async function simulateScenario(scenario) {
 
         // 2. Process Income Events
         await processIncome(state, year);
-        console.log(state.investments)
-
-        year = 2059
+        //console.log(state.investments)
 
         // 3. Process RMD
         await processRMD(state, scenario, year);
-        console.log(state.investments)
+        //console.log(state.investments)
 
         // 4. Update Investment Values
         await processInvestmentUpdates(state);
@@ -444,7 +451,6 @@ async function processRMD(state, scenario, year) {
     //first RMD for year of user age 73 paid in age 74. always pay previous year's RMD
     const RMDtable = await loadRMDTable();
     const distributionPeriod = RMDtable.get(userAge-1)
-    console.log(distributionPeriod)
 
     // Calculate RMD amount
     let rmdAmount = Math.round(totalPreTaxValue / distributionPeriod * 100) / 100;
