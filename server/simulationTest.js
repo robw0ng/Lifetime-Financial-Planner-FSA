@@ -52,7 +52,7 @@ async function createTestScenario() {
         name: "S&P 500",
         description: "S&P 500 index fund",
         expected_change_type: "fixed",
-        expected_change_value: 0,
+        expected_change_value: 0.01,
         expense_ratio: 0.001,
         expected_income_type: "normal",
         expected_income_mean: 0.01,
