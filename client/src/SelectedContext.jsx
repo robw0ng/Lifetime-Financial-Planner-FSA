@@ -6,33 +6,11 @@ const SelectedContext = createContext();
 // Create a provider component
 export const SelectedProvider = ({ children }) => {
 
-    // const nullScenario = {
-    //     id: "0",
-    //     name: "NA",
-    //     isMarried: false,
-    //     birthYear: -1, // -1 to represent unset state
-    //     birthYearSpouse: -1, // Optional, so left as -1 when not set
-    //     lifeExpectancy: -1,
-    //     lifeExpectancySpouse: -1, // Optional
-    //     inflationAssumption: -1.0,
-    //     preTaxContributionLimit: -1.0,
-    //     afterTaxContributionLimit: -1.0,
-    //     sharingSettings: "NA",
-    //     financialGoal: -1.0,
-    //     stateOfResidence: "NA",
-    //     investments: new Set(), // Empty set for no investments
-    //     events: new Set(), // Empty set for no events
-    //     spendingStrategy: [], // Empty list for no strategy
-    //     rmdStrategy: [], // Empty list for no RMD strategy
-    //     rothConversionStrategy: [], // Empty list for no conversion strategy
-    //     expenseWithdrawalStrategy: [], // Empty list for no withdrawal strategy
-    //     rothConversionOptimizerEnabled: false,
-    //     rothConversionOptimizerStartYear: -1,
-    //     rothConversionOptimizerEndYear: -1,
-    // };
-
     const [selectedScenario, setSelectedScenario] = useState(null);
     const [selectedInvestment, setSelectedInvestment] = useState(null);
+    const [selectedEventSeries, setSelectedEventSeries] = useState(null);
+    const [selectedStrategy, setSelectedStrategy] = useState(null);
+    const [selectedStrategyItem, setSelectedStrategyItem] = useState(null);
 
     const deselectScenario = () => {
         setSelectedScenario(null);
@@ -43,8 +21,36 @@ export const SelectedProvider = ({ children }) => {
         setSelectedInvestment(null);
     }
 
+    const deselectEventSeries = () =>{
+        setSelectedEventSeries(null);
+    }
+
+    const deselectStrategy = () => {
+        setSelectedStrategy(null);
+        setSelectedStrategyItem(null)
+    }
+
+    const deselectStrategyItem = () => {
+        setSelectedStrategyItem(null)
+    }
+
     return (
-        <SelectedContext.Provider value={{ selectedScenario, setSelectedScenario, selectedInvestment, setSelectedInvestment, deselectInvestment, deselectScenario }}>
+        <SelectedContext.Provider value={{ selectedScenario, 
+        setSelectedScenario, 
+        selectedInvestment, 
+        setSelectedInvestment, 
+        deselectInvestment, 
+        deselectScenario,
+        selectedEventSeries,
+        setSelectedEventSeries,
+        deselectEventSeries,
+        selectedStrategy,
+        setSelectedStrategy,
+        deselectStrategy,
+        selectedStrategyItem,
+        setSelectedStrategyItem,
+        deselectStrategyItem
+        }}>
             {children}
         </SelectedContext.Provider>
     );
