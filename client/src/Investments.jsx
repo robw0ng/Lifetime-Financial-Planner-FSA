@@ -25,7 +25,7 @@ function ScenarioList() {
     }
 
     return (
-        <section className="scenarioListContainer">
+        <section className="investment-scenarioListContainer">
             <div className="scenario-list">
                 <div className="title">
                     <h2 className="title">Scenarios:</h2>
