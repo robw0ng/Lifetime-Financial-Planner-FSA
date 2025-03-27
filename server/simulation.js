@@ -47,7 +47,7 @@ async function loadTaxBrackets(type = 'federal', state = null) {
 
         if (type === 'state') {
             return data.map(bracket => ({
-                rate: bracket['additional_rate'],
+                rate: bracket['additional_rate'] !== null ? bracket['additional_rate'] : 0,
                 filingStatus: bracket['filing_status'],
                 from: bracket['excess_over'],
                 to: bracket.range[1] === null ? Infinity : bracket.range[1],
