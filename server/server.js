@@ -26,8 +26,8 @@ app.use(
 		cookie: {
 			httpOnly: true,
 			maxAge: 10 * 60 * 1000,
-			sameSite: "none",     // ✅ required for cross-origin cookies
-			secure: true,         // ✅ required for Heroku HTTPS	  
+			sameSite: "lax",     // ✅ required for cross-origin cookies
+			secure: false,         // ✅ required for Heroku HTTPS	  
 		},
 	})
 );
