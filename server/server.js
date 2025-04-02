@@ -27,7 +27,8 @@ app.use(
 			httpOnly: true,
 			secure: false,        // ✅ local dev
 			sameSite: "none",     // ✅ allows cross-origin
-			maxAge: 10 * 60 * 1000
+			maxAge: 10 * 60 * 1000,
+			proxy: true,
 		  }
 	})
 );
