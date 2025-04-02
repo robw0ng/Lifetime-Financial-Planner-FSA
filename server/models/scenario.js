@@ -9,9 +9,9 @@ module.exports = (sequelize, DataTypes) => {
 		 */
 		static associate(models) {
 			Scenario.belongsTo(models.User, { foreignKey: "user_id" });
-			Scenario.hasMany(models.InvestmentType, { foreignKey: "scenario_id", as: "InvestmentTypes", });
-			Scenario.hasMany(models.Investment, { foreignKey: "scenario_id", as: "Investments", });
-			Scenario.hasMany(models.EventSeries, { foreignKey: "scenario_id", as: "EventSeries" });
+			Scenario.hasMany(models.InvestmentType, { foreignKey: "scenario_id", as: "InvestmentTypes", onDelete:"CASCADE", hooks: true,});
+			Scenario.hasMany(models.Investment, { foreignKey: "scenario_id", as: "Investments", onDelete:"CASCADE", hooks: true,});
+			Scenario.hasMany(models.EventSeries, { foreignKey: "scenario_id", as: "EventSeries", onDelete:"CASCADE", hooks: true,});
 		}
 	}
 	Scenario.init(
