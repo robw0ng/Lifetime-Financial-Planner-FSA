@@ -134,7 +134,7 @@ router.post("/", async (req, res) => {
 			],
 		});
 		
-		res.status(201).json({ scenario: fullScenario });
+		res.status(201).json({ scenario: populatedScenario });
 	} catch (err) {
 		res.status(400).json(err.message);
 		console.log(err.message);
