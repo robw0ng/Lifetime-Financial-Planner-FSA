@@ -128,9 +128,9 @@ router.post("/", async (req, res) => {
 		const fullScenario = await Scenario.findOne({
 			where: { id: newScenario.id },
 			include: [
-			{ model: Investment, as: "Investments" },
-			{ model: InvestmentType, as: "InvestmentTypes" },
-			{ model: EventSeries, as: "EventSeries" },
+			{ model: Investment, as: "investments" },
+			{ model: InvestmentType, as: "investmentTypes" },
+			{ model: EventSeries, as: "events" },
 			],
 		});
 		
