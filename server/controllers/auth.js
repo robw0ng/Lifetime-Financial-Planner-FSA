@@ -22,11 +22,26 @@ router.post("/", async (req, res) => {
 			where: { email },
 			defaults: { name },
 		});
+		
 		console.log("Session before login:", req.session);
-		req.session.user = { id: user.id, email: user.email, name: user.name };
+		req.session.user = {
+			id: user.id,
+			email: user.email,
+			name: user.name,
+			picture: payload.picture,
+		};
+
 		console.log("Session after login:", req.session);
 
-		res.status(201).json({ user: { id: user.id, email: user.email, name: user.name }, newUser: registered });
+		res.status(201).json({ 
+			user: { 
+				id: user.id, 
+				email: user.email, 
+				name: user.name,
+				picture: payload.picture,
+			}, 
+			newUser: registered 
+		});
 	} catch (err) {
 		res.status(401).json(err.message);
 		console.log(err.message);

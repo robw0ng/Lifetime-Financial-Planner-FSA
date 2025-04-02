@@ -13,7 +13,7 @@ const db = require("./models");
 const app = express();
 app.use(
 	cors({
-		origin: "http://localhost:5173",
+		origin: "https://lifetime-financial-planner-a805aa154150.herokuapp.com/",
 		credentials: true,
 	})
 );

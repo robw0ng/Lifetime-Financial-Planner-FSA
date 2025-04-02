@@ -17,18 +17,47 @@ const LoginPage = () => {
     navigate('/'); // Redirect to home page after login
   };
 
-  const handleSuccess = (credentialResponse) => {
-    const token = credentialResponse.credential;
-    const userInfo = JSON.parse(atob(token.split('.')[1]));
+  // const handleSuccess = (credentialResponse) => {
+  //   const token = credentialResponse.credential;
+  //   const userInfo = JSON.parse(atob(token.split('.')[1]));
     
-    console.log('User Info:', userInfo);
-    console.log('Token: ', token)
-    // Save user info in context
-    login(userInfo);
+  //   console.log('User Info:', userInfo);
+  //   console.log('Token: ', token)
+  //   // Save user info in context
+  //   login(userInfo);
 
-    // Redirect to home page after login
-    navigate('/');
-  };
+  //   // Redirect to home page after login
+  //   navigate('/');
+  // };
+  const handleSuccess = async (credentialResponse) => {
+		try {
+			const token = credentialResponse.credential;
+			// const response = await fetch("http://localhost:8000/auth", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ token }),
+				credentials: "include",
+			});
+
+			const data = await response.json();
+			if (response.status == 201) {
+				const userInfo = data.user;
+				console.log("User Authenticated:", userInfo);
+				console.log("User Token: ", token);
+				// Save user info in context
+				login(userInfo);
+				// Redirect to home page after login
+				navigate("/");
+			} else {
+				console.log("Authentication failure:", data);
+			}
+		} catch (err) {
+			console.log("Error during Google login:", err.message);
+		}
+	};
 
   const handleError = () => {
     console.error('Login Failed');
