@@ -147,12 +147,14 @@ router.put("/edit/:id", async (req, res) => {
 	if (!user) {
 		return res.status(401).json("User not authenticated");
 	}
-
 	const id = req.params.id;
 	const fieldsToUpdate = req.body;
+	console.log("fieldsToUpdate in edit", fieldsToUpdate)
+
 	delete fieldsToUpdate.Investments;
 	delete fieldsToUpdate.InvestmentTypes;
 	delete fieldsToUpdate.EventSeries;	
+	console.log("fieldsToUpdate in edit post delete", fieldsToUpdate)
 
 	try {
 		const scenario = await Scenario.findOne({ where: { id, user_id: user.id } });
