@@ -149,12 +149,6 @@ router.put("/edit/:id", async (req, res) => {
 	}
 	const id = req.params.id;
 	const fieldsToUpdate = req.body;
-	console.log("fieldsToUpdate in edit", fieldsToUpdate)
-
-	delete fieldsToUpdate.Investments;
-	delete fieldsToUpdate.InvestmentTypes;
-	delete fieldsToUpdate.EventSeries;	
-	console.log("fieldsToUpdate in edit post delete", fieldsToUpdate)
 
 	try {
 		const scenario = await Scenario.findOne({ where: { id, user_id: user.id } });
@@ -163,7 +157,15 @@ router.put("/edit/:id", async (req, res) => {
 		}
 
 		await scenario.update(fieldsToUpdate);
-		res.status(200).json({ scenario });
+		const populatedScenario = await Scenario.findOne({
+			where: { id: scenario.id },
+			include: [
+				{ model: Investment, as: "Investments" },
+				{ model: InvestmentType, as: "InvestmentTypes" },
+				{ model: EventSeries, as: "EventSeries" },
+			],
+		});
+		res.status(200).json({ scenario: populatedScenario });
 	} catch (err) {
 		res.status(400).json(err.message);
 		console.log(err.message);
