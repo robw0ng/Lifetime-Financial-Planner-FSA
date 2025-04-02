@@ -51,3 +51,8 @@ app.use("/events", eventController);
 app.listen(PORT, () => {
 	console.log(`Server started on port ${PORT}`);
 });
+
+app.get("/testdb", async (req, res) => {
+	const users = await db.User.findAll();
+	res.json(users);
+  });
