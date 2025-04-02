@@ -76,7 +76,7 @@ function InvestmentList() {
   let investmentsArray = [];
 
   if (selectedScenario) {
-    investmentsArray = Array.from(selectedScenario.investments);
+    investmentsArray = Array.from(selectedScenario.Investments);
   }
 
   if (investmentsArray.length === 0) {

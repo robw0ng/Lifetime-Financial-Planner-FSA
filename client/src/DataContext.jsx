@@ -5,9 +5,9 @@ import { useSelected } from './SelectedContext';
 const DataContext = createContext();
 
 export const DataProvider = ({ children }) => {
-  const { user } = useAuth(); // ✅ Use email from AuthContext
-  const [scenarios, setScenarios] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user, logout } = useAuth(); // ✅ Use email from AuthContext
+  const [ scenarios, setScenarios ] = useState([]);
+  const [ loading, setLoading ] = useState(true);
   const { selectedScenario, setSelectedScenario, selectedInvestment, setSelectedInvestment } = useSelected();
   
   const fetchScenarios = async () => {
@@ -17,7 +17,12 @@ export const DataProvider = ({ children }) => {
         method: "GET",
         credentials: "include",
       });
-      console.log("response from fetch", res);
+
+      if (res.status === 401) {
+        logout();
+        throw new Error("Unauthorized");
+      }
+
       if (!res.ok) {
         throw new Error("Failed to fetch scenarios");
       }
@@ -42,6 +47,11 @@ export const DataProvider = ({ children }) => {
           credentials: "include",
           body: JSON.stringify(newScenario),
         });
+
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }    
     
         if (!res.ok) {
           const errorText = await res.text();
@@ -50,8 +60,8 @@ export const DataProvider = ({ children }) => {
     
         const { scenario: createdScenario } = await res.json();
     
-        setScenarios((prev) => [...prev, createdScenario]);
-    
+        // setScenarios((prev) => [...prev, createdScenario]);
+        fetchScenarios();
         return createdScenario;
       }
       else{
@@ -68,22 +78,28 @@ export const DataProvider = ({ children }) => {
   const editScenario = async (editedScenario) => {
 		try {
 			if (user?.email) {
-				const response = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/edit/${editedScenario.id}`, {
+				const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/edit/${editedScenario.id}`, {
 					method: "PUT",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify(editedScenario),
 					credentials: "include",
 				});
 
-				if (response.status !== 200) {
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
+
+				if (res.status !== 200) {
 					throw new Error("Failed to edit scenario");
 				}
 
-				const data = await response.json();
+				const data = await res.json();
 				const updatedScenario = data.scenario;
-				setScenarios((prev) =>
-					prev.map((scenario) => (scenario.id === updatedScenario.id ? updatedScenario : scenario))
-				);
+				// setScenarios((prev) =>
+				// 	prev.map((scenario) => (scenario.id === updatedScenario.id ? updatedScenario : scenario))
+				// );
+        fetchScenarios();
         return updatedScenario;
 			} else {
 				setScenarios((prev) =>
@@ -105,17 +121,23 @@ export const DataProvider = ({ children }) => {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
         });
-  
+
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }    
+
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(`Failed to delete scenario: ${errorText}`);
         }
   
         console.log("Scenario deleted from backend");
+        // setScenarios((prev) => prev.filter((scenario) => scenario.id !== scenarioId));
+        fetchScenarios();
+      } else {
+        setScenarios((prev) => prev.filter((scenario) => scenario.id !== scenarioId));
       }
-  
-      // Remove the scenario from local state (applies to both logged-in and guest users)
-      setScenarios((prev) => prev.filter((scenario) => scenario.id !== scenarioId));
     } catch (error) {
       console.error("Error deleting scenario:", error);
     }
@@ -138,15 +160,21 @@ export const DataProvider = ({ children }) => {
             credentials: "include",
           }
         );
-  
-        if (!res.ok) {
+
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }          
+
+        if (!res.ok){
           const errorText = await res.text();
           throw new Error(`Failed to duplicate scenario: ${errorText}`);
         }
   
         const { scenario: duplicatedScenario } = await res.json();
   
-        setScenarios((prev) => [...prev, duplicatedScenario]);
+        // setScenarios((prev) => [...prev, duplicatedScenario]);
+        fetchScenarios();
         return duplicatedScenario;
       } else {
         // Guest user fallback
@@ -165,7 +193,6 @@ export const DataProvider = ({ children }) => {
     }
   };
   
-
   const createInvestment = async (scenarioId, newInvestment) => {
     try {
       // Generate a unique ID for the new investment
