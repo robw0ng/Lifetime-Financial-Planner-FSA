@@ -25,10 +25,10 @@ app.use(
 		saveUninitialized: false,
 		cookie: {
 			httpOnly: true,
-			maxAge: 10 * 60 * 1000,
-			sameSite: "lax",     // ✅ required for cross-origin cookies
-			secure: false,         // ✅ required for Heroku HTTPS	  
-		},
+			secure: false,        // ✅ local dev
+			sameSite: "none",     // ✅ allows cross-origin
+			maxAge: 10 * 60 * 1000
+		  }
 	})
 );
 app.use(express.json());
