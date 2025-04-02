@@ -13,10 +13,11 @@ const db = require("./models");
 const app = express();
 app.use(
 	cors({
-		origin: "https://lifetime-financial-planner-a805aa154150.herokuapp.com/",
-		credentials: true,
+	  origin: ["http://localhost:5173", "https://lifetime-financial-planner-a805aa154150.herokuapp.com"],
+	  credentials: true,
 	})
 );
+  
 app.use(
 	session({
 		secret: process.env.SESSION_SECRET,
