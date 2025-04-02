@@ -1,0 +1,189 @@
+- additional_rate: 0.04
+  base_tax: null
+  excess_over: 0
+  filing_status: Married filing jointly and qualifying
+  range:
+  - 0
+  - 17150
+- additional_rate: 0.045
+  base_tax: 686.0
+  excess_over: 17150
+  filing_status: Married filing jointly and qualifying
+  range:
+  - 17150
+  - 23600
+- additional_rate: 0.0525
+  base_tax: 976.0
+  excess_over: 23600
+  filing_status: Married filing jointly and qualifying
+  range:
+  - 23600
+  - 27900
+- additional_rate: 0.0585
+  base_tax: 1202.0
+  excess_over: 27900
+  filing_status: Married filing jointly and qualifying
+  range:
+  - 27900
+  - 161550
+- additional_rate: 0.0625
+  base_tax: 9021.0
+  excess_over: 161550
+  filing_status: Married filing jointly and qualifying
+  range:
+  - 161550
+  - 323200
+- additional_rate: 0.0685
+  base_tax: 19124.0
+  excess_over: 323200
+  filing_status: Married filing jointly and qualifying
+  range:
+  - 323200
+  - 2155350
+- additional_rate: 0.0965
+  base_tax: 144626.0
+  excess_over: 2155350
+  filing_status: Married filing jointly and qualifying
+  range:
+  - 2155350
+  - 5000000
+- additional_rate: 0.103
+  base_tax: 419135.0
+  excess_over: 5000000
+  filing_status: Married filing jointly and qualifying
+  range:
+  - 5000000
+  - 25000000
+- additional_rate: 0.109
+  base_tax: 2479135.0
+  excess_over: 25000000
+  filing_status: Married filing jointly and qualifying
+  range:
+  - 25000000
+  - null
+- additional_rate: 0.04
+  base_tax: null
+  excess_over: 0
+  filing_status: Single and married filing separately
+  range:
+  - 0
+  - 8500
+- additional_rate: 0.045
+  base_tax: 340.0
+  excess_over: 8500
+  filing_status: Single and married filing separately
+  range:
+  - 8500
+  - 11700
+- additional_rate: 0.0525
+  base_tax: 484.0
+  excess_over: 11700
+  filing_status: Single and married filing separately
+  range:
+  - 11700
+  - 13900
+- additional_rate: 0.0585
+  base_tax: 600.0
+  excess_over: 13900
+  filing_status: Single and married filing separately
+  range:
+  - 13900
+  - 80650
+- additional_rate: 0.0625
+  base_tax: 4504.0
+  excess_over: 80650
+  filing_status: Single and married filing separately
+  range:
+  - 80650
+  - 215400
+- additional_rate: 0.0685
+  base_tax: 12926.0
+  excess_over: 215400
+  filing_status: Single and married filing separately
+  range:
+  - 215400
+  - 1077550
+- additional_rate: 0.0965
+  base_tax: 71984.0
+  excess_over: 1077550
+  filing_status: Single and married filing separately
+  range:
+  - 1077550
+  - 5000000
+- additional_rate: 0.103
+  base_tax: 450500.0
+  excess_over: 5000000
+  filing_status: Single and married filing separately
+  range:
+  - 5000000
+  - 25000000
+- additional_rate: 0.109
+  base_tax: 2510500.0
+  excess_over: 25000000
+  filing_status: Single and married filing separately
+  range:
+  - 25000000
+  - null
+- additional_rate: 0.04
+  base_tax: null
+  excess_over: 0
+  filing_status: Head of household
+  range:
+  - 0
+  - 12800
+- additional_rate: 0.045
+  base_tax: 512.0
+  excess_over: 12800
+  filing_status: Head of household
+  range:
+  - 12800
+  - 17650
+- additional_rate: 0.0525
+  base_tax: 730.0
+  excess_over: 17650
+  filing_status: Head of household
+  range:
+  - 17650
+  - 20900
+- additional_rate: 0.0585
+  base_tax: 901.0
+  excess_over: 20900
+  filing_status: Head of household
+  range:
+  - 20900
+  - 107650
+- additional_rate: 0.0625
+  base_tax: 5976.0
+  excess_over: 107650
+  filing_status: Head of household
+  range:
+  - 107650
+  - 269300
+- additional_rate: 0.0685
+  base_tax: 16079.0
+  excess_over: 269300
+  filing_status: Head of household
+  range:
+  - 269300
+  - 1616450
+- additional_rate: 0.0965
+  base_tax: 108359.0
+  excess_over: 1616450
+  filing_status: Head of household
+  range:
+  - 1616450
+  - 5000000
+- additional_rate: 0.103
+  base_tax: 434871.0
+  excess_over: 5000000
+  filing_status: Head of household
+  range:
+  - 5000000
+  - 25000000
+- additional_rate: 0.109
+  base_tax: 2494871.0
+  excess_over: 25000000
+  filing_status: Head of household
+  range:
+  - 25000000
+  - null

@@ -282,15 +282,16 @@ async function runTest() {
         scenario = await Scenario.findOne({
             where: { name: "Retirement Planning Scenario" },
             include: [
-                { model: Investment },
-                { model: InvestmentType },
+                { model: Investment, as: "Investments" },
+                { model: InvestmentType, as: "InvestmentTypes" },
                 { model: EventSeries,
                     include: [
                         { model: IncomeEventSeries },
                         { model: ExpenseEventSeries },
                         { model: InvestEventSeries },
                         { model: RebalanceEventSeries }
-                    ]
+                    ],
+                    as: "EventSeries"
                 },
             ],
         });
