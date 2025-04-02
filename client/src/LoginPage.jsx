@@ -2,9 +2,10 @@ import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import styles from "./LoginPage.module.css"
+import { useEffect } from 'react';
 
 const LoginPage = () => {
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
 
   const continueAsGuest = () => {
@@ -17,22 +18,9 @@ const LoginPage = () => {
     navigate('/'); // Redirect to home page after login
   };
 
-  // const handleSuccess = (credentialResponse) => {
-  //   const token = credentialResponse.credential;
-  //   const userInfo = JSON.parse(atob(token.split('.')[1]));
-    
-  //   console.log('User Info:', userInfo);
-  //   console.log('Token: ', token)
-  //   // Save user info in context
-  //   login(userInfo);
-
-  //   // Redirect to home page after login
-  //   navigate('/');
-  // };
   const handleSuccess = async (credentialResponse) => {
 		try {
 			const token = credentialResponse.credential;
-			// const response = await fetch("http://localhost:8000/auth", {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth`, {
 				method: "POST",
 				headers: {
@@ -62,6 +50,12 @@ const LoginPage = () => {
   const handleError = () => {
     console.error('Login Failed');
   };
+
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   return (
     <div>

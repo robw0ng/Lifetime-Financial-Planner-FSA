@@ -104,13 +104,13 @@ function BasicInformation({ scenario }) {
   if (!scenario) {
     scenario = {
       name: "",
-      isMarried: null,
-      lifeExpectancySpouse: "",
-      birthYear: "",
-      lifeExpectancy: "",
-      stateOfResidence: "",
-      financialGoal: "",
-      inflationAssumption: "",
+      is_married: null,
+      spouse_life_expectancy_value: "",
+      birth_year: "",
+      life_expectancy_value: "",
+      state_of_residence: "",
+      financial_goal: "",
+      inflation_assumption_value: "",
     };
   }
 
@@ -126,33 +126,33 @@ function BasicInformation({ scenario }) {
           <div className={styles["basic-info-row"]}>
             <p className={styles["basic-info-item"]}>Marital Status:</p>
             <p className={styles["basic-info-value"]}>
-              {scenario.isMarried === null
+              {scenario.is_married === null
                 ? ""
-                : scenario.isMarried
+                : scenario.is_married
                 ? "Married"
                 : "Single"}
             </p>
           </div>
           <div className={styles["basic-info-row"]}>
             <p className={styles["basic-info-item"]}>Birth Year:</p>
-            <p className={styles["basic-info-value"]}>{scenario.birthYear}</p>
+            <p className={styles["basic-info-value"]}>{scenario.birth_year}</p>
           </div>
           <div className={styles["basic-info-row"]}>
             <p className={styles["basic-info-item"]}>State:</p>
             <p className={styles["basic-info-value"]}>
-              {scenario.stateOfResidence}
+              {scenario.state_of_residence}
             </p>
           </div>
           <div className={styles["basic-info-row"]}>
             <p className={styles["basic-info-item"]}>Financial Goal:</p>
             <p className={styles["basic-info-value"]}>
-              {scenario.financialGoal}
+              {scenario.financial_goal}
             </p>
           </div>
           <div className={styles["basic-info-row"]}>
             <p className={styles["basic-info-item"]}>Inflation Assumption:</p>
             <p className={styles["basic-info-value"]}>
-              {scenario.inflationAssumptionValue}
+              {scenario.inflation_assumption_value}
             </p>
           </div>
         </div>
@@ -167,7 +167,7 @@ function InvestmentList({ scenario }) {
   const { setSelectedInvestment } = useSelected();
 
   if (scenario) {
-    investmentsArray = Array.from(scenario.investments);
+    investmentsArray = Array.from(scenario.Investments);
   }
 
   if (investmentsArray.length == 0) {
@@ -244,16 +244,12 @@ function InvestmentList({ scenario }) {
 function Settings({ scenario }) {
   if (!scenario) {
     scenario = {
-      preTaxContributionLimit: "",
-      afterTaxContributionLimit: "",
-      rothConversionOptimizerEnabled: null,
-      rothConversionOptimizerStartYear: "",
-      rothConversionOptimizerEndYear: "",
+      after_tax_contribution_limit: "",
+      is_roth_optimizer_enabled: null,
+      roth_start_year: "",
+      roth_end_year: "",
     };
   }
-
-  let start = scenario.rothConversionOptimizerStartYear;
-  let end = scenario.rothConversionOptimizerEndYear;
 
   return (
     <section
@@ -264,28 +260,20 @@ function Settings({ scenario }) {
       >
         <h2>Settings and Limits:</h2>
         <div className={styles["settings"]}>
-          {/* <div className={styles["basic-info-row"]}>
-            <p className={styles["basic-info-item"]}>
-              Pre-Tax Contribution Limit:
-            </p>
-            <p className={styles["basic-info-value"]}>
-              {scenario.preTaxContributionLimit}
-            </p>
-          </div> */}
           <div className={styles["basic-info-row"]}>
             <p className={styles["basic-info-item"]}>
               After-Tax Contribution Limit:
             </p>
             <p className={styles["basic-info-value"]}>
-              {scenario.afterTaxContributionLimit}
+              {scenario.after_tax_contribution_limit}
             </p>
           </div>
           <div className={styles["basic-info-row"]}>
             <p className={styles["basic-info-item"]}>Roth Optimizer Enabled:</p>
             <p className={styles["basic-info-value"]}>
-              {scenario.isRothOptimizerEnabled === null
+              {scenario.is_roth_optimizer_enabled === null
                 ? ""
-                : scenario.isRothOptimizerEnabled
+                : scenario.is_roth_optimizer_enabled
                 ? "Yes"
                 : "No"}
             </p>
@@ -295,13 +283,13 @@ function Settings({ scenario }) {
               Roth Optimizer Start Year:
             </p>
             <p className={styles["basic-info-value"]}>
-              {scenario.rothStartYear}
+              {scenario.roth_start_year}
             </p>
           </div>
           <div className={styles["basic-info-row"]}>
             <p className={styles["basic-info-item"]}>Roth Optimizer End Year:</p>
             <p className={styles["basic-info-value"]}>
-              {scenario.rothEndYear}
+              {scenario.roth_end_year}
             </p>
           </div>
         </div>
@@ -333,7 +321,7 @@ export function ScenarioList() {
     }
   }
 
-  const { scenarios, setScenarios } = useData();
+  const { scenarios } = useData();
   let scenariosList = scenarios;
 
   if (scenariosList.length <= 0) {

@@ -53,60 +53,57 @@ export default function CreateScenario() {
 		// Initialize empty data structures
 		const newScenario = {
 			name: formData.name,
-			isMarried: formData.isMarried,
-			birthYear: Number(formData.birthYear),
-			birthYearSpouse: formData.isMarried ? Number(formData.birthYearSpouse) : null,
+			is_married: formData.isMarried,
+			birth_year: Number(formData.birthYear),
+			spouse_birth_year: formData.isMarried ? Number(formData.birthYearSpouse) : null,
 			// Life Expectancy for user:
-			lifeExpectancyType: formData.lifeExpectancyType,
-			lifeExpectancyValue:
+			life_expectancy_type: formData.lifeExpectancyType,
+			life_expectancy_value:
 				formData.lifeExpectancyType === "fixed" ? Number(formData.lifeExpectancyValue) : null,
-      lifeExpectancyMean: formData.lifeExpectancyType === "normal" ? Number(formData.lifeExpectancyMean) : null,
-			lifeExpectancyStdDev:
+			life_expectancy_mean: formData.lifeExpectancyType === "normal" ? Number(formData.lifeExpectancyMean) : null,
+			life_expectancy_std_dev:
 				formData.lifeExpectancyType === "normal" ? Number(formData.lifeExpectancyStdDev) : null,
 			// Life Expectancy for spouse:
-			spouseLifeExpectancyType: formData.isMarried ? formData.spouseLifeExpectancyType : null,
-			spouseLifeExpectancyType:
+			spouse_life_expectancy_type: formData.isMarried ? formData.spouseLifeExpectancyType : null,
+			spouse_life_expectancy_value:
 				formData.isMarried && formData.spouseLifeExpectancyType === "fixed"
 					? Number(formData.spouseLifeExpectancyValue)
 					: null,
-      spouseLifeExpectancyMean:
+			spouse_life_expectancy_mean:
 				formData.isMarried && formData.spouseLifeExpectancyType === "normal"
 					? Number(formData.spouseLifeExpectancyMean)
 					: null,
-      spouseLifeExpectancyStdDev:
+			spouse_life_expectancy_std_dev:
 				formData.isMarried && formData.spouseLifeExpectancyType === "normal"
 					? Number(formData.spouseLifeExpectancyStdDev)
 					: null,
 			// Inflation Assumption:
-			inflationAssumptionType: formData.inflationAssumptionType,
-			inflationAssumptionValue:
+			inflation_assumption_type: formData.inflationAssumptionType,
+			inflation_assumption_value:
 				formData.inflationAssumptionType === "fixed" ? Number(formData.inflationAssumptionValue) : null,
-      inflationAssumptionMean:
+			inflation_assumption_mean:
 				formData.inflationAssumptionType === "normal" ? Number(formData.inflationAssumptionMean) : null,
-      inflationAssumptionStdDev:
+			inflation_assumption_std_dev:
 				formData.inflationAssumptionType === "normal" ? Number(formData.inflationAssumptionStdDev) : null,
-      inflationAssumptionUpper:
+			inflation_assumption_upper:
 				formData.inflationAssumptionType === "uniform" ? Number(formData.inflationAssumptionUpper) : null,
-      inflationAssumptionLower:
+			inflation_assumption_lower:
 				formData.inflationAssumptionType === "uniform" ? Number(formData.inflationAssumptionLower) : null,
-      afterTaxContributionLimit: Number(formData.afterTaxContributionLimit),
-			isRothOptimizerEnabled: formData.isRothOptimizerEnabled,
-			rothStartYear: formData.isRothOptimizerEnabled ? Number(formData.rothStartYear) : null,
-			rothEndYear: formData.isRothOptimizerEnabled ? Number(formData.rothEndYear) : null,
-			financialGoal: Number(formData.financialGoal),
-			stateOfResidence: formData.stateOfResidence,
+			after_tax_contribution_limit: Number(formData.afterTaxContributionLimit),
+			is_roth_optimizer_enabled: formData.isRothOptimizerEnabled,
+			roth_start_year: formData.isRothOptimizerEnabled ? Number(formData.rothStartYear) : null,
+			roth_end_year: formData.isRothOptimizerEnabled ? Number(formData.rothEndYear) : null,
+			financial_goal: Number(formData.financialGoal),
+			state_of_residence: formData.stateOfResidence,
 			// empty datastructures
-			spendingStrategy: [],
-			expenseWithdrawalStrategy: [],
-			rmdStrategy: [],
-			rothConversionStrategy: [],
-			investmentTypes: new Set(),
-			investments: new Set(),
-			events: new Set(),
+			// spendingStrategy: [],
+			// expenseWithdrawalStrategy: [],
+			// rmdStrategy: [],
+			// rothConversionStrategy: [],
+			// investmentTypes: new Set(),
+			// investments: new Set(),
+			// events: new Set(),
 		};
-		// TODO: Send data to API endpoint
-		// send the data to the end point. get the newly created as the response.
-		// then use setSelectedScenario on the new obj
 		try {
 			const createdScenario = await createScenario(newScenario);
 			setSelectedScenario(createdScenario);

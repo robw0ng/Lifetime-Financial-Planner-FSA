@@ -12,75 +12,65 @@ export default function EditScenario() {
   // Define formData with all fields from CreateScenario.jsx
   const [formData, setFormData] = useState({
     name: "",
-    isMarried: false,
-    birthYear: "",
-    birthYearSpouse: "",
-    lifeExpectancyType: "fixed",
-    lifeExpectancyValue: "",
-    lifeExpectancyMean: "",
-    lifeExpectancyStdDev: "",
-    spouseLifeExpectancyType: "",
-    spouseLifeExpectancyValue: "",
-    spouseLifeExpectancyMean: "",
-    spouseLifeExpectancyStdDev: "",
-    inflationAssumptionType: "fixed",
-    inflationAssumptionValue: "",
-    inflationAssumptionMean: "",
-    inflationAssumptionStdDev: "",
-    inflationAssumptionUpper: "",
-    inflationAssumptionLower: "",
-    afterTaxContributionLimit: "",
-    isRothOptimizerEnabled: false,
-    rothStartYear: "",
-    rothEndYear: "",
-    financialGoal: "",
-    stateOfResidence: "",
-    sharingSettings: "",
+    is_married: false,
+    birth_year: "",
+    birth_year_spouse: "",
+    life_expectancy_type: "fixed",
+    life_expectancy_value: "",
+    life_expectancy_mean: "",
+    life_expectancy_std_dev: "",
+    spouse_life_expectancy_type: "",
+    spouse_life_expectancy_value: "",
+    spouse_life_expectancy_mean: "",
+    spouse_life_expectancy_std_dev: "",
+    inflation_assumption_type: "fixed",
+    inflation_assumption_value: "",
+    inflation_assumption_mean: "",
+    inflation_assumption_std_dev: "",
+    inflation_assumption_upper: "",
+    inflation_assumption_lower: "",
+    after_tax_contribution_limit: "",
+    is_roth_optimizer_enabled: false,
+    roth_start_year: "",
+    roth_end_year: "",
+    financial_goal: "",
+    state_of_residence: "",
+    // sharing_settings: "",
   });
 
   const scenarioToEdit = scenarios.find(
     (scenario) => Number(scenario.id) === Number(id)
   );
 
-  console.log("scenario to edit", scenarioToEdit);
-
   // Load existing scenario data into form
   useEffect(() => {
     if (scenarioToEdit) {
       setFormData({
         name: scenarioToEdit.name,
-        isMarried: scenarioToEdit.isMarried,
-        birthYear: scenarioToEdit.birthYear || "",
-        birthYearSpouse: scenarioToEdit.birthYearSpouse || "",
-        lifeExpectancyType: scenarioToEdit.lifeExpectancyType || "fixed",
-        lifeExpectancyValue: scenarioToEdit.lifeExpectancyValue || "",
-        lifeExpectancyMean: scenarioToEdit.lifeExpectancyMean || "",
-        lifeExpectancyStdDev: scenarioToEdit.lifeExpectancyStdDev || "",
-        spouseLifeExpectancyType:
-          scenarioToEdit.spouseLifeExpectancyType || "",
-        spouseLifeExpectancyValue:
-          scenarioToEdit.spouseLifeExpectancyValue || "",
-        spouseLifeExpectancyMean: scenarioToEdit.spouseLifeExpectancyMean || "",
-        spouseLifeExpectancyStdDev:
-          scenarioToEdit.spouseLifeExpectancyStdDev || "",
-        inflationAssumptionType:
-          scenarioToEdit.inflationAssumptionType || "fixed",
-        inflationAssumptionValue:
-          scenarioToEdit.inflationAssumptionValue || "",
-        inflationAssumptionMean: scenarioToEdit.inflationAssumptionMean || "",
-        inflationAssumptionStdDev:
-          scenarioToEdit.inflationAssumptionStdDev || "",
-        inflationAssumptionUpper: scenarioToEdit.inflationAssumptionUpper || "",
-        inflationAssumptionLower: scenarioToEdit.inflationAssumptionLower || "",
-        afterTaxContributionLimit:
-          scenarioToEdit.afterTaxContributionLimit || "",
-        isRothOptimizerEnabled:
-          scenarioToEdit.isRothOptimizerEnabled || false,
-        rothStartYear: scenarioToEdit.rothStartYear || "",
-        rothEndYear: scenarioToEdit.rothEndYear || "",
-        financialGoal: scenarioToEdit.financialGoal || "",
-        stateOfResidence: scenarioToEdit.stateOfResidence || "",
-        sharingSettings: scenarioToEdit.sharingSettings || "",
+        is_married: scenarioToEdit.is_married,
+        birth_year: scenarioToEdit.birth_year || "",
+        birth_year_spouse: scenarioToEdit.spouse_birth_year || "",
+        life_expectancy_type: scenarioToEdit.life_expectancy_type || "fixed",
+        life_expectancy_value: scenarioToEdit.life_expectancy_value || "",
+        life_expectancy_mean: scenarioToEdit.life_expectancy_mean || "",
+        life_expectancy_std_dev: scenarioToEdit.life_expectancy_std_dev || "",
+        spouse_life_expectancy_type: scenarioToEdit.spouse_life_expectancy_type || "",
+        spouse_life_expectancy_value: scenarioToEdit.spouse_life_expectancy_value || "",
+        spouse_life_expectancy_mean: scenarioToEdit.spouse_life_expectancy_mean || "",
+        spouse_life_expectancy_std_dev: scenarioToEdit.spouse_life_expectancy_std_dev || "",
+        inflation_assumption_type: scenarioToEdit.inflation_assumption_type || "fixed",
+        inflation_assumption_value: scenarioToEdit.inflation_assumption_value || "",
+        inflation_assumption_mean: scenarioToEdit.inflation_assumption_mean || "",
+        inflation_assumption_std_dev: scenarioToEdit.inflation_assumption_std_dev || "",
+        inflation_assumption_upper: scenarioToEdit.inflation_assumption_upper || "",
+        inflation_assumption_lower: scenarioToEdit.inflation_assumption_lower || "",
+        after_tax_contribution_limit: scenarioToEdit.after_tax_contribution_limit || "",
+        is_roth_optimizer_enabled: scenarioToEdit.is_roth_optimizer_enabled || false,
+        roth_start_year: scenarioToEdit.roth_start_year || "",
+        roth_end_year: scenarioToEdit.roth_end_year || "",
+        financial_goal: scenarioToEdit.financial_goal || "",
+        state_of_residence: scenarioToEdit.state_of_residence || "",
+        // sharing_settings: scenarioToEdit.sharingSettings || "",
       });
     }
   }, [id, scenarios]);
@@ -98,9 +88,61 @@ export default function EditScenario() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      let editedScenario = { ...scenarioToEdit, ...formData };
+      // let editedScenario = { ...scenarioToEdit, ...formData };
+      const sanitize = (val) => (val === "" ? null : Number(val));
 
+      // fallback helper
+      const get = (key) => formData[key] !== undefined ? formData[key] : scenarioToEdit[key];
+      
+      const editedScenario = {
+        id: scenarioToEdit.id,
+        name: get("name"),
+        is_married: get("is_married"),
+        birth_year: sanitize(get("birth_year")),
+        spouse_birth_year: get("is_married") ? sanitize(get("birth_year_spouse")) : null,
+      
+        life_expectancy_type: get("life_expectancy_type"),
+        life_expectancy_value: get("life_expectancy_type") === "fixed" ? sanitize(get("life_expectancy_value")) : null,
+        life_expectancy_mean: get("life_expectancy_type") === "normal" ? sanitize(get("life_expectancy_mean")) : null,
+        life_expectancy_std_dev: get("life_expectancy_type") === "normal" ? sanitize(get("life_expectancy_std_dev")) : null,
+      
+        spouse_life_expectancy_type: get("is_married") ? get("spouse_life_expectancy_type") : null,
+        spouse_life_expectancy_value:
+          get("is_married") && get("spouse_life_expectancy_type") === "fixed"
+            ? sanitize(get("spouse_life_expectancy_value"))
+            : null,
+        spouse_life_expectancy_mean:
+          get("is_married") && get("spouse_life_expectancy_type") === "normal"
+            ? sanitize(get("spouse_life_expectancy_mean"))
+            : null,
+        spouse_life_expectancy_std_dev:
+          get("is_married") && get("spouse_life_expectancy_type") === "normal"
+            ? sanitize(get("spouse_life_expectancy_std_dev"))
+            : null,
+      
+        inflation_assumption_type: get("inflation_assumption_type"),
+        inflation_assumption_value:
+          get("inflation_assumption_type") === "fixed" ? sanitize(get("inflation_assumption_value")) : null,
+        inflation_assumption_mean:
+          get("inflation_assumption_type") === "normal" ? sanitize(get("inflation_assumption_mean")) : null,
+        inflation_assumption_std_dev:
+          get("inflation_assumption_type") === "normal" ? sanitize(get("inflation_assumption_std_dev")) : null,
+        inflation_assumption_upper:
+          get("inflation_assumption_type") === "uniform" ? sanitize(get("inflation_assumption_upper")) : null,
+        inflation_assumption_lower:
+          get("inflation_assumption_type") === "uniform" ? sanitize(get("inflation_assumption_lower")) : null,
+      
+        after_tax_contribution_limit: sanitize(get("after_tax_contribution_limit")),
+        is_roth_optimizer_enabled: get("is_roth_optimizer_enabled"),
+        roth_start_year: get("is_roth_optimizer_enabled") ? sanitize(get("roth_start_year")) : null,
+        roth_end_year: get("is_roth_optimizer_enabled") ? sanitize(get("roth_end_year")) : null,
+      
+        financial_goal: sanitize(get("financial_goal")),
+        state_of_residence: get("state_of_residence"),
+      };
+      
       const modifiedScenario = await editScenario(editedScenario);
+      console.log("modifiedScenario", modifiedScenario);
       setSelectedScenario(modifiedScenario);
       navigate("/scenarios");
     } catch (error) {
@@ -129,8 +171,8 @@ export default function EditScenario() {
           <label>Marital Status:</label>
           <input
             type="checkbox"
-            name="isMarried"
-            checked={formData.isMarried}
+            name="is_married"
+            checked={formData.is_married}
             onChange={handleChange}
           />
           Married
@@ -140,19 +182,19 @@ export default function EditScenario() {
           <label>Birth Year:</label>
           <input
             type="number"
-            name="birthYear"
-            value={formData.birthYear}
+            name="birth_year"
+            value={formData.birth_year}
             onChange={handleChange}
           />
         </div>
 
-        {formData.isMarried && (
+        {formData.is_married && (
           <div className="form-group">
             <label>Spouse Birth Year:</label>
             <input
               type="number"
-              name="birthYearSpouse"
-              value={formData.birthYearSpouse}
+              name="birth_year_spouse"
+              value={formData.birth_year_spouse}
               onChange={handleChange}
             />
           </div>
@@ -162,8 +204,8 @@ export default function EditScenario() {
         <div className="form-group">
           <label>Life Expectancy Type:</label>
           <select
-            name="lifeExpectancyType"
-            value={formData.lifeExpectancyType}
+            name="life_expectancy_type"
+            value={formData.life_expectancy_type}
             onChange={handleChange}
           >
             <option value="fixed">Fixed</option>
@@ -171,26 +213,26 @@ export default function EditScenario() {
           </select>
         </div>
 
-        {formData.lifeExpectancyType === "fixed" && (
+        {formData.life_expectancy_type === "fixed" && (
           <div className="form-group">
             <label>Life Expectancy Value:</label>
             <input
               type="number"
-              name="lifeExpectancyValue"
-              value={formData.lifeExpectancyValue}
+              name="life_expectancy_value"
+              value={formData.life_expectancy_value}
               onChange={handleChange}
             />
           </div>
         )}
 
-        {formData.lifeExpectancyType === "normal" && (
+        {formData.life_expectancy_type === "normal" && (
           <>
             <div className="form-group">
               <label>Life Expectancy Mean:</label>
               <input
                 type="number"
-                name="lifeExpectancyMean"
-                value={formData.lifeExpectancyMean}
+                name="life_expectancy_mean"
+                value={formData.life_expectancy_mean}
                 onChange={handleChange}
               />
             </div>
@@ -198,8 +240,8 @@ export default function EditScenario() {
               <label>Life Expectancy Std Dev:</label>
               <input
                 type="number"
-                name="lifeExpectancyStdDev"
-                value={formData.lifeExpectancyStdDev}
+                name="life_expectancy_std_dev"
+                value={formData.life_expectancy_std_dev}
                 onChange={handleChange}
               />
             </div>
@@ -210,8 +252,8 @@ export default function EditScenario() {
         <div className="form-group">
           <label>Inflation Assumption Type:</label>
           <select
-            name="inflationAssumptionType"
-            value={formData.inflationAssumptionType}
+            name="inflation_assumption_type"
+            value={formData.inflation_assumption_type}
             onChange={handleChange}
           >
             <option value="fixed">Fixed</option>
@@ -220,28 +262,28 @@ export default function EditScenario() {
           </select>
         </div>
 
-        {formData.inflationAssumptionType === "fixed" && (
+        {formData.inflation_assumption_type === "fixed" && (
           <div className="form-group">
             <label>Inflation Assumption Value:</label>
             <input
               type="number"
               step="any"
-              name="inflationAssumptionValue"
-              value={formData.inflationAssumptionValue}
+              name="inflation_assumption_value"
+              value={formData.inflation_assumption_value}
               onChange={handleChange}
             />
           </div>
         )}
 
-        {formData.inflationAssumptionType === "normal" && (
+        {formData.inflation_assumption_type === "normal" && (
           <>
             <div className="form-group">
               <label>Inflation Assumption Mean:</label>
               <input
                 type="number"
                 step="any"
-                name="inflationAssumptionMean"
-                value={formData.inflationAssumptionMean}
+                name="inflation_assumption_mean"
+                value={formData.inflation_assumption_mean}
                 onChange={handleChange}
               />
             </div>
@@ -250,23 +292,23 @@ export default function EditScenario() {
               <input
                 type="number"
                 step="any"
-                name="inflationAssumptionStdDev"
-                value={formData.inflationAssumptionStdDev}
+                name="inflation_assumption_std_dev"
+                value={formData.inflation_assumption_std_dev}
                 onChange={handleChange}
               />
             </div>
           </>
         )}
 
-        {formData.inflationAssumptionType === "uniform" && (
+        {formData.inflation_assumption_type === "uniform" && (
           <>
             <div className="form-group">
               <label>Inflation Assumption Upper:</label>
               <input
                 type="number"
                 step="any"
-                name="inflationAssumptionUpper"
-                value={formData.inflationAssumptionUpper}
+                name="inflation_assumption_upper"
+                value={formData.inflation_assumption_upper}
                 onChange={handleChange}
               />
             </div>
@@ -275,8 +317,8 @@ export default function EditScenario() {
               <input
                 type="number"
                 step="any"
-                name="inflationAssumptionLower"
-                value={formData.inflationAssumptionLower}
+                name="inflation_assumption_lower"
+                value={formData.inflation_assumption_lower}
                 onChange={handleChange}
               />
             </div>
@@ -288,20 +330,20 @@ export default function EditScenario() {
           <label>Is Roth Optimizer Enabled?</label>
           <input
             type="checkbox"
-            name="isRothOptimizerEnabled"
-            checked={formData.isRothOptimizerEnabled}
+            name="is_roth_optimizer_enabled"
+            checked={formData.is_roth_optimizer_enabled}
             onChange={handleChange}
           />
         </div>
 
-        {formData.isRothOptimizerEnabled && (
+        {formData.is_roth_optimizer_enabled && (
           <>
             <div className="form-group">
               <label>Roth Start Year:</label>
               <input
                 type="number"
-                name="rothStartYear"
-                value={formData.rothStartYear}
+                name="roth_start_year"
+                value={formData.roth_start_year}
                 onChange={handleChange}
               />
             </div>
@@ -309,8 +351,8 @@ export default function EditScenario() {
               <label>Roth End Year:</label>
               <input
                 type="number"
-                name="rothEndYear"
-                value={formData.rothEndYear}
+                name="roth_end_year"
+                value={formData.roth_end_year}
                 onChange={handleChange}
               />
             </div>
@@ -322,8 +364,8 @@ export default function EditScenario() {
           <label>After-Tax Contribution Limit:</label>
           <input
             type="number"
-            name="afterTaxContributionLimit"
-            value={formData.afterTaxContributionLimit}
+            name="after_tax_contribution_limit"
+            value={formData.after_tax_contribution_limit}
             onChange={handleChange}
           />
         </div>
@@ -332,8 +374,8 @@ export default function EditScenario() {
           <label>Financial Goal:</label>
           <input
             type="number"
-            name="financialGoal"
-            value={formData.financialGoal}
+            name="financial_goal"
+            value={formData.financial_goal}
             onChange={handleChange}
           />
         </div>
@@ -342,8 +384,8 @@ export default function EditScenario() {
           <label>State of Residence:</label>
           <input
             type="text"
-            name="stateOfResidence"
-            value={formData.stateOfResidence}
+            name="state_of_residence"
+            value={formData.state_of_residence}
             onChange={handleChange}
           />
         </div>
