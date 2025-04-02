@@ -1,0 +1,129 @@
+.strategies{
+    display: flex;
+    flex-direction: row;
+    /* align-items: center; */
+    justify-content: center;
+    gap: 10px;
+}
+
+.column{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 90vh;
+}
+
+.outer-container{
+    display: flex;
+    justify-content: center;
+    background-color: #2c2e35;
+    border-radius: 10px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+}
+
+.inner-container{
+    display:flex;
+    align-items: center;
+    flex-direction: column;
+    background-color: #4d515e;
+    border-radius: 10px;
+    margin: 10px;
+    width: 100%;
+    flex: 1;
+}
+
+/* Scenario List */
+.scenario-list-container{
+    width: 16vw;
+}
+
+.scenario-list-title{
+    width: 100%;
+}
+
+.scenario-name{
+    font-size: 1.5em;
+    font-weight: bold;
+    text-align: center;
+}
+
+.scenario-item-list{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 10px;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    max-height: 500px;
+}
+
+.scenario-item{
+    background-color: #2c2e35;
+    border-radius: 10px;
+    width: 100%;
+    font-size: 1.5em;
+    text-align: center;
+    cursor: pointer;
+}
+
+.scenario-item:hover {
+    background-color: #373c51;
+}
+
+.selected {
+    background-color: #6577b8 !important;
+}
+
+/* Strategy Lists */
+
+.strategies-list-container{
+    width: 15vw;
+}
+
+.strategy-list-header{
+    display: flex;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.strategy-item {
+    display: flex;
+    border-radius: 10px;
+    background-color: #2c2e35;
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    color: white;
+    /* cursor: pointer; */
+    box-sizing: border-box; /* Ensures padding doesn’t affect width */
+}
+
+
+.strategy-span{
+    width: 33%;
+}
+
+.move-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  
+.move-button {
+    font-size: 1rem;
+    padding: 2px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.move-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}

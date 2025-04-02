@@ -1,0 +1,139 @@
+.navigationBar {
+  background-color: #6eb5d0;
+  border-radius: 5px;
+  padding: 10px 0px 10px 0px;
+  overflow: hidden;
+  position: sticky; /* Changed from sticky to fixed */
+  display: block;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 1000;
+}
+
+.navigationBar a{
+  color: inherit;
+}
+
+.container {
+  gap: 20px;
+  display: flex;
+  flex-direction: row;
+}
+
+.brandColumn {
+  flex-direction: column;
+  width: 26%;
+  margin-left: 0;
+  line-height: normal;
+  display: flex;
+}
+
+.brandTitle {
+  color: #000;
+  align-self: stretch;
+  margin-top: auto;
+  margin-bottom: auto;
+  font-family:
+    Inter,
+    -apple-system,
+    Roboto,
+    Helvetica,
+    sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+}
+
+.buttonContainer {
+  color: #000;
+  flex-wrap: wrap;
+  flex-grow: 1;
+  align-items: stretch;
+  gap: 3px;
+  font-family:
+    Inter,
+    -apple-system,
+    Roboto,
+    Helvetica,
+    sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  display: flex;
+}
+
+.navButton {
+  white-space: nowrap;
+  border: 1px solid #000;
+  border-radius: 5px;
+  padding: 18px 27px;
+  overflow: hidden;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  width: 5vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navButton:hover{
+  background-color: #8aadc6;
+}
+
+.active {
+  background-color: #aedafa;
+}
+
+.profileColumn {
+  flex-direction: column;
+  width: 19%;
+  display: flex;
+}
+
+.profileContainer {
+  color: #000;
+  align-self: stretch;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-top: auto;
+  margin-bottom: auto;
+  font-family:
+    Inter,
+    -apple-system,
+    Roboto,
+    Helvetica,
+    sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  display: flex;
+}
+
+.avatar {
+  aspect-ratio: 1;
+  object-fit: contain;
+  object-position: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 21px;
+}
+
+.username {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.signOutButton {
+  text-align: center;
+  background-color: #c8d7dd;
+  border: 1px solid #000;
+  border-radius: 5px;
+  align-self: start;
+  padding: 9px 19px;
+  overflow: hidden;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
