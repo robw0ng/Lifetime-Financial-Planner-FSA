@@ -8,11 +8,34 @@ module.exports = (sequelize, DataTypes) => {
 		 * The `models/index` file will call this method automatically.
 		 */
 		static associate(models) {
-			EventSeries.belongsTo(models.Scenario, { foreignKey: "scenario_id", as: "Scenario",});
-			EventSeries.hasOne(models.IncomeEventSeries, { foreignKey: "id" });
-			EventSeries.hasOne(models.ExpenseEventSeries, { foreignKey: "id" });
-			EventSeries.hasOne(models.InvestEventSeries, { foreignKey: "id" });
-			EventSeries.hasOne(models.RebalanceEventSeries, { foreignKey: "id" });
+			EventSeries.belongsTo(models.Scenario, {
+				foreignKey: "scenario_id",
+				as: "Scenario",
+			});
+			EventSeries.hasOne(models.IncomeEventSeries, {
+				foreignKey: "id",
+				as: "IncomeEventSeries",
+				onDelete: "CASCADE",
+				hooks: true,
+			});
+			EventSeries.hasOne(models.ExpenseEventSeries, {
+				foreignKey: "id",
+				as: "ExpenseEventSeries",
+				onDelete: "CASCADE",
+				hooks: true,
+			});
+			EventSeries.hasOne(models.InvestEventSeries, {
+				foreignKey: "id",
+				as: "InvestEventSeries",
+				onDelete: "CASCADE",
+				hooks: true,
+			});
+			EventSeries.hasOne(models.RebalanceEventSeries, {
+				foreignKey: "id",
+				as: "RebalanceEventSeries",
+				onDelete: "CASCADE",
+				hooks: true,
+			});
 		}
 	}
 	EventSeries.init(
