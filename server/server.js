@@ -6,7 +6,7 @@ const passport = require("passport");
 const path = require("path");
 const { Sequelize } = require("sequelize");
 const PORT = process.env.PORT || 8000;
-const db = require("../models");
+const db = require("./models");
 
 // TODO: any extra db config or init script
 // middleware
