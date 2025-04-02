@@ -249,7 +249,7 @@ router.post("/duplicate/:id", async (req, res) => {
 		],
 	  });
   
-	  res.status(201).json({ scenario: { fullScenario }});
+	  res.status(201).json({ scenario: fullScenario });
 	} catch (err) {
 	  console.error("Duplicate failed:", err.message);
 	  res.status(400).json(err.message);
