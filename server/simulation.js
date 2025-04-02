@@ -1,7 +1,8 @@
-const { Investment, InvestmentType, EventSeries } = require("./models");
 const fs = require('fs');
 const yaml = require('js-yaml');
 const path = require('path');
+const { exec } = require('child_process');
+const util = require('util');
 
 // Constants
 const RMD_AGE = 74;
@@ -30,7 +31,7 @@ async function loadTaxBrackets(type = 'federal', state = null) {
 
     try {
         //file is 1 level up from server directory
-        const filePath = path.join(__dirname, "..", filename);
+        const filePath = path.join(__dirname, "scrapers", filename);
         if (!fs.existsSync(filePath)) {
             if (type === 'state') return null; // State tax might not exist
             throw new Error(`Tax file not found: ${filename}`);
@@ -76,12 +77,22 @@ async function loadTaxBrackets(type = 'federal', state = null) {
     }
 }
 
+const execPromise = util.promisify(exec);
+
 async function loadRMDTable() {
     try {
-        const filePath = path.join(__dirname, '..', 'uniform_lifetime_table.yaml');
+        const scriptPath = path.join(__dirname, 'scrapers', 'scrapeIRS.py');
+        const filePath = path.join(__dirname, 'scrapers', 'uniform_lifetime_table.yaml');
+        
+        // Execute the Python script to scrape RMD tables
+        console.log('Running scrapeIRS.py...');
+        await execPromise(`python ${scriptPath}`);
+
+        // Ensure the file exists after scraping
         if (!fs.existsSync(filePath)) {
-            throw new Error('RMD table not found');
+            throw new Error('RMD table not found after scraping.');
         }
+
         const data = yaml.load(fs.readFileSync(filePath, 'utf8'));
         
         // Convert to map for faster lookup, skip header row
@@ -101,7 +112,7 @@ async function loadRMDTable() {
 async function simulateScenario(scenario) {
     console.log('\n=== Starting Financial Simulation ===');
     console.log(`Scenario: ${scenario.name}`);
-    const currentYear = new Date().getFullYear();
+    const currentYear = 2060
     const life_expectancy = scenario.life_expectancy_type === "fixed" ? scenario.life_expectancy_value : sampleNormal(scenario.life_expectancy_mean, scenario.life_expectancy_std_dev);
     const spouse_life_expectancy = scenario.is_married ?
         (scenario.spouse_life_expectancy_type === "fixed" ? scenario.spouse_life_expectancy_value : sampleNormal(scenario.spouse_life_expectancy_mean, scenario.spouse_life_expectancy_std_dev)) : 0;
@@ -282,7 +293,7 @@ async function simulateScenario(scenario) {
             }
         }
 
-        console.log(state.investments)
+        //console.log(state.investments)
 
         // Store current year values for next year's tax calculation
         state.prevYearIncome = state.curYearIncome;
@@ -436,6 +447,8 @@ async function processRMD(state, scenario, year) {
         inv.tax_status === 'pre-tax' && inv.value > 0
     );
 
+    console.log(preTaxInvestments)
+
     if (preTaxInvestments.length === 0) return;
 
     // Calculate total pre-tax value from previous year
@@ -445,7 +458,7 @@ async function processRMD(state, scenario, year) {
     //first RMD for year of user age 73 paid in age 74. always pay previous year's RMD
     const RMDtable = await loadRMDTable();
     const distributionPeriod = RMDtable.get(userAge-1)
-    console.log("fetch RMD table")
+    console.log("scrape and fetch RMD table")
 
     // Calculate RMD amount
     let rmdAmount = Math.round(totalPreTaxValue / distributionPeriod * 100) / 100;
