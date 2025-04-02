@@ -39,13 +39,13 @@ app.use(passport.session());
 const scenarioController = require("./controllers/scenario");
 const authController = require("./controllers/auth");
 const eventController = require("./controllers/eventseries");
-const investmentController = require("./controllers/investment");
-const investmentTypeController = require("./controllers/investmenttype");
+// const investmentController = require("./controllers/investment");
+// const investmentTypeController = require("./controllers/investmenttype");
 app.use("/scenarios", scenarioController);
 app.use("/auth", authController);
 app.use("/events", eventController);
-app.use("/investments", investmentController);
-app.use("/investmenttypes", investmentTypeController);
+// app.use("/investments", investmentController);
+// app.use("/investmenttypes", investmentTypeController);
 
 // listening
 app.listen(PORT, () => {

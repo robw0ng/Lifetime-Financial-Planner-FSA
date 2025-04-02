@@ -335,7 +335,7 @@ router.post("/duplicate/:scenarioId/:id", async (req, res) => {
 		const duplicatedEventSeries = await EventSeries.create({
 			...eventSeries.get(),
 			id: undefined, // Ensure new event series gets a unique ID
-			name: `${eventseries.name} (Copy)`,
+			name: `${eventSeries.name} (Copy)`,
 		});
 
 		// duplicate corresponding Event Series Type
