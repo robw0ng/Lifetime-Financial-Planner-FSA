@@ -16,7 +16,11 @@ router.get("/", async (req, res) => {
 	try {
 		const allScenarios = await Scenario.findAll({
 			where: { user_id: user.id },
-			include: [{ model: Investment }, { model: InvestmentType }, { model: EventSeries }],
+			include: [
+				{ model: Investment, as: "Investments" },         // ✅ use alias
+				{ model: InvestmentType, as: "InvestmentTypes" }, // ✅ use alias
+				{ model: EventSeries, as: "EventSeries" },        // ✅ use alias			
+			],
 		});
 		res.status(200).json(allScenarios);
 	} catch (err) {
