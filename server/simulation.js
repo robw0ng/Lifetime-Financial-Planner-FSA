@@ -112,7 +112,7 @@ async function loadRMDTable() {
 async function simulateScenario(scenario) {
     console.log('\n=== Starting Financial Simulation ===');
     console.log(`Scenario: ${scenario.name}`);
-    const currentYear = 2060
+    const currentYear = new Date().getFullYear();
     const life_expectancy = scenario.life_expectancy_type === "fixed" ? scenario.life_expectancy_value : sampleNormal(scenario.life_expectancy_mean, scenario.life_expectancy_std_dev);
     const spouse_life_expectancy = scenario.is_married ?
         (scenario.spouse_life_expectancy_type === "fixed" ? scenario.spouse_life_expectancy_value : sampleNormal(scenario.spouse_life_expectancy_mean, scenario.spouse_life_expectancy_std_dev)) : 0;
@@ -154,6 +154,24 @@ async function simulateScenario(scenario) {
         is_married: scenario.is_married,
         inflationRate: 0,
     };
+
+    // return value of simulation (to be used for chart generating)
+    // an array containing objects representing the data for each year
+    const returnData = []
+
+    // sample object to add to returnData each year
+    const yearData = {
+        year: currentYear,
+        investments: [],
+        eventSeries: [],
+        totalIncome: 0,
+        totalExpenses: 0,
+        federalTax: 0,
+        stateTax: 0,
+        capitalGainsTax: 0,
+        earlyWithDrawalTax: 0,
+        discretionaryExpensesPaid: 0
+    }
     
     // Get all investments, eventseries, investmenttypes and store in state
     console.log('\nLoading scenario data into state...');
@@ -293,7 +311,7 @@ async function simulateScenario(scenario) {
             }
         }
 
-        //console.log(state.investments)
+        console.log(state.investments)
 
         // Store current year values for next year's tax calculation
         state.prevYearIncome = state.curYearIncome;
@@ -302,6 +320,7 @@ async function simulateScenario(scenario) {
         state.prevYearEarlyWithdrawals = state.curYearEarlyWithdrawals;
 
     }
+    return returnData
 }
 
 function updateTaxBrackets(state, inflationRate) {
@@ -446,8 +465,6 @@ async function processRMD(state, scenario, year) {
     const preTaxInvestments = state.investments.filter(inv => 
         inv.tax_status === 'pre-tax' && inv.value > 0
     );
-
-    console.log(preTaxInvestments)
 
     if (preTaxInvestments.length === 0) return;
 
