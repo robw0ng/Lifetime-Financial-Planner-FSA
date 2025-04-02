@@ -198,7 +198,10 @@ router.delete("/delete/:id", async (req, res) => {
 router.post("/duplicate/:id", async (req, res) => {
 	const { user } = req.session;
 	const id = req.params.id;
-  
+	if (!user) {
+		return res.status(401).json("User not authenticated");
+	}
+
 	try {
 	  const scenario = await Scenario.findOne({
 		where: { id, user_id: user.id },
