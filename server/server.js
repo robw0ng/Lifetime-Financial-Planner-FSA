@@ -17,21 +17,24 @@ app.use(
 	  credentials: true,
 	})
 );
-  
+
+app.set("trust proxy", 1); // 🔥 tells Express to trust Heroku's proxy
+
 app.use(
-	session({
-		secret: process.env.SESSION_SECRET,
-		resave: false,
-		saveUninitialized: false,
-		cookie: {
-			httpOnly: true,
-			secure: false,        // ✅ local dev
-			sameSite: "none",     // ✅ allows cross-origin
-			maxAge: 10 * 60 * 1000,
-			proxy: true,
-		  }
-	})
+  session({
+    name: "connect.sid",
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: true,     // 🔥 required for cross-origin cookies
+      sameSite: "none", // 🔥 allows sharing cookie to frontend on localhost or Netlify
+      maxAge: 10 * 60 * 1000,
+    },
+  })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(passport.initialize());
