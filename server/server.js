@@ -13,26 +13,26 @@ const db = require("./models");
 const app = express();
 app.use(
 	cors({
-	  origin: ["http://localhost:5173", "https://lifetime-financial-planner-a805aa154150.herokuapp.com"],
-	  credentials: true,
+		origin: ["http://localhost:5173", "https://lifetime-financial-planner-a805aa154150.herokuapp.com"],
+		credentials: true,
 	})
 );
 
 app.set("trust proxy", 1); // 🔥 tells Express to trust Heroku's proxy
 
 app.use(
-  session({
-    name: "connect.sid",
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: true,     // 🔥 required for cross-origin cookies
-      sameSite: "none", // 🔥 allows sharing cookie to frontend on localhost or Netlify
-      maxAge: 10 * 60 * 1000,
-    },
-  })
+	session({
+		name: "connect.sid",
+		secret: process.env.SESSION_SECRET,
+		resave: false,
+		saveUninitialized: false,
+		cookie: {
+			httpOnly: true,
+			secure: true, // 🔥 required for cross-origin cookies
+			sameSite: "none", // 🔥 allows sharing cookie to frontend on localhost or Heroku
+			maxAge: 10 * 60 * 1000,
+		},
+	})
 );
 
 app.use(express.json());
@@ -55,9 +55,10 @@ app.use("/events", eventController);
 // listening
 app.listen(PORT, () => {
 	console.log(`Server started on port ${PORT}`);
+	console.log("testing");
 });
 
 app.get("/testdb", async (req, res) => {
 	const users = await db.User.findAll();
 	res.json(users);
-  });
+});
