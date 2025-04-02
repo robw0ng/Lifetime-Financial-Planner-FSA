@@ -150,6 +150,10 @@ router.put("/edit/:id", async (req, res) => {
 
 	const id = req.params.id;
 	const fieldsToUpdate = req.body;
+	delete fieldsToUpdate.Investments;
+	delete fieldsToUpdate.InvestmentTypes;
+	delete fieldsToUpdate.EventSeries;	
+
 	try {
 		const scenario = await Scenario.findOne({ where: { id, user_id: user.id } });
 		if (!scenario) {
