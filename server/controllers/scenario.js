@@ -124,7 +124,17 @@ router.post("/", async (req, res) => {
 			// Associate with authenticated user
 			user_id: user.id,
 		});
-		res.status(201).json({ scenario: newScenario });
+
+		const fullScenario = await Scenario.findOne({
+			where: { id: newScenario.id },
+			include: [
+			{ model: Investment, as: "Investments" },
+			{ model: InvestmentType, as: "InvestmentTypes" },
+			{ model: EventSeries, as: "EventSeries" },
+			],
+		});
+		
+		res.status(201).json({ scenario: fullScenario });
 	} catch (err) {
 		res.status(400).json(err.message);
 		console.log(err.message);
