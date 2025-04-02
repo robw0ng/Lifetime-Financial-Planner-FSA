@@ -28,6 +28,8 @@ app.use(
 			secure: false,
 			maxAge: 10 * 60 * 1000,
 			sameSite: "lax",
+			sameSite: "none",     // ✅ required for cross-origin cookies
+			secure: true,         // ✅ required for Heroku HTTPS	  
 		},
 	})
 );
