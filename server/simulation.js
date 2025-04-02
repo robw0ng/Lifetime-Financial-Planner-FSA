@@ -108,7 +108,8 @@ async function simulateScenario(scenario) {
 
     const userEndYear = scenario.birth_year + life_expectancy;
     const spouseEndYear = scenario.spouse_birth_year + Math.round(spouse_life_expectancy);
-    const endYear = Math.max(userEndYear, spouseEndYear);
+    // end year is userEndYear now instead of max of user and spouse
+    const endYear = userEndYear;
     
     // Load tax brackets
     console.log('\nLoading tax information...');
@@ -200,18 +201,16 @@ async function simulateScenario(scenario) {
         }
     }
 
+    console.log("Initial Investments")
+    console.log(state.investments)
+
     //need to change back to endYear***
     for (let year = currentYear; year < endYear; year++) {
         console.log(`\n=== Processing Year ${year} ===`);
         
-        //check for mortality
-        if (state.is_married && (year >= userEndYear || year >= spouseEndYear)) {
-            if (year >= userEndYear) {
-                console.log(`User passed away in year ${year}`);
-            }
-            if (year >= spouseEndYear) {
-                console.log(`Spouse passed away in year ${year}`);
-            }
+        //check for mortality of spouse only
+        if (state.is_married && year >= spouseEndYear) {
+            console.log(`Spouse passed away in year ${year}`);
             state.is_married = false;
 
             //the percentages of income and expense transactions associated with the deceased spouse are omitted from transaction amounts for future years
@@ -224,13 +223,8 @@ async function simulateScenario(scenario) {
                 if (!event.amount) {
                     event.amount = event.initial_amount;
                 }
-                if (year >= userEndYear) {
-                    event.amount *= (1 - event.user_percentage);
-                    event.user_percentage = 0;
-                } else {
-                    event.amount *= event.user_percentage;
-                    event.user_percentage = 1;
-                }
+                event.amount *= event.user_percentage;
+                event.user_percentage = 1;
             }
             console.log("Income and expense events after death.")
             console.log(incomeOrExpenseEvents)
@@ -251,41 +245,31 @@ async function simulateScenario(scenario) {
         state.curYearGains = 0;
         state.curYearEarlyWithdrawals = 0;
 
-        console.log(state.investments)
-
         // 2. Process Income Events
         await processIncome(state, year);
-        console.log(state.investments)
 
         // 3. Process RMD
         await processRMD(state, scenario, year);
-        console.log(state.investments)
 
         // 4. Update Investment Values
         await processInvestmentUpdates(state);
-        console.log(state.investments)
 
         // 5. Process Roth Conversion
         if (scenario.is_roth_optimizer_enabled && year >= scenario.roth_start_year && year <= scenario.roth_end_year) {
             await processRothConversion(state, scenario, year);
         }
-        console.log(state.investments)
 
         // 6. Process Non-discretionary Expenses and Taxes
         await processNonDiscretionaryExpensesAndTax(state, scenario, year, currentYear);
-        console.log(state.investments)
 
         // 7. Process Discretionary Expenses
         await processDiscretionaryExpenses(state, scenario, year);
-        console.log(state.investments)
 
         // 8. Process Investment Events
         await processInvestEvents(state, year);
-        console.log(state.investments)
 
         // 9. Process Rebalance Events
         await processRebalanceEvents(state, year);
-        console.log(state.investments)
 
         //round all investment and eventseries values to nearest cent
         for (const investment of state.investments) {
@@ -297,9 +281,8 @@ async function simulateScenario(scenario) {
                 event.amount = Math.round(event.amount * 100) / 100;
             }
         }
-        console.log("Rounding investment and eventseries values")
+
         console.log(state.investments)
-        console.log(state.events)
 
         // Store current year values for next year's tax calculation
         state.prevYearIncome = state.curYearIncome;
@@ -677,7 +660,6 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
 
     //no tax before start year
     if (year > startYear) {
-        console.log('Processing taxes...')
         // Calculate previous year's federal taxable income
         const prevYearTaxableIncome = state.prevYearIncome - ((1-SS_TAXABLE_PORTION) * state.prevYearSS);
         // Calculate federal income tax
@@ -733,7 +715,6 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
         totalTax += federalIncomeTax + stateTax + capitalGainsTax + earlyWithdrawalTax;
     }
 
-    console.log('Processing non-discretionary expenses...')
     // Get non-discretionary expenses for current year
 
     //get the non-discretionary expenses for the current year and calculate the sum of amounts
