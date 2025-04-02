@@ -5,6 +5,16 @@ const { User } = db;
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// session loading
+router.get("/session", (req, res) => {
+	if (req.session.user) {
+		res.json({ user: req.session.user });
+	} else {
+		res.status(401).json({ error: "Not authenticated" });
+	}
+});
+
+
 // Validate  Google OAuth2 JWT + start session
 router.post("/", async (req, res) => {
 	const { token } = req.body;
@@ -22,7 +32,7 @@ router.post("/", async (req, res) => {
 			where: { email },
 			defaults: { name },
 		});
-		
+
 		console.log("Session before login:", req.session);
 		req.session.user = {
 			id: user.id,
