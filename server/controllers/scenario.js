@@ -196,24 +196,65 @@ router.delete("/delete/:id", async (req, res) => {
 
 // Duplicate existing scenario (using id)
 router.post("/duplicate/:id", async (req, res) => {
+	const { user } = req.session;
 	const id = req.params.id;
+  
 	try {
-		const scenario = await Scenario.findOne({ where: { id } });
-		if (!scenario) {
-			return res.status(404).json("Scenario not found");
-		}
-
-		const duplicatedScenario = await Scenario.create({
-			...scenario.get(),
-			id: undefined, // Ensure new scenario gets a unique ID
-			name: `${scenario.name} (Copy)`,
-		});
-
-		res.status(201).json({ scenario: duplicatedScenario });
+	  const scenario = await Scenario.findOne({
+		where: { id, user_id: user.id },
+		include: [
+		  { model: Investment, as: "Investments" },
+		  { model: InvestmentType, as: "InvestmentTypes" },
+		  { model: EventSeries, as: "EventSeries" },
+		],
+	  });
+  
+	  if (!scenario) {
+		return res.status(404).json("Scenario not found");
+	  }
+  
+	  // Step 1: Create duplicated scenario
+	  const duplicatedScenario = await Scenario.create({
+		...scenario.toJSON(),
+		id: undefined,
+		name: `${scenario.name} (Copy)`,
+		user_id: user.id,
+	  });
+  
+	  // Step 2: Duplicate child models
+	  const createCopies = async (Model, items, scenario_id, extra = {}) => {
+		return Promise.all(
+		  items.map((item) =>
+			Model.create({
+			  ...item.toJSON(),
+			  id: undefined,
+			  scenario_id,
+			  ...extra,
+			})
+		  )
+		);
+	  };
+  
+	  await createCopies(InvestmentType, scenario.InvestmentTypes, duplicatedScenario.id);
+	  await createCopies(Investment, scenario.Investments, duplicatedScenario.id);
+	  await createCopies(EventSeries, scenario.EventSeries, duplicatedScenario.id);
+  
+	  // Step 3: Return full duplicated scenario
+	  const fullScenario = await Scenario.findOne({
+		where: { id: duplicatedScenario.id },
+		include: [
+		  { model: Investment, as: "Investments" },
+		  { model: InvestmentType, as: "InvestmentTypes" },
+		  { model: EventSeries, as: "EventSeries" },
+		],
+	  });
+  
+	  res.status(201).json({ scenario: { fullScenario }});
 	} catch (err) {
-		res.status(400).json(err.message);
-		console.log(err.message);
+	  console.error("Duplicate failed:", err.message);
+	  res.status(400).json(err.message);
 	}
-});
+  });
+  
 
 module.exports = router;
