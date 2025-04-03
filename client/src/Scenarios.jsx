@@ -3,6 +3,7 @@ import styles from "./Scenarios.module.css";
 import { useSelected } from "./SelectedContext";
 import { useData } from "./DataContext";
 import { Link } from "react-router-dom";
+import { get_type_from_id } from "./Investments";
 
 function ScenarioActions({ scenario }) {
   const isScenarioSelected = scenario;
@@ -164,7 +165,7 @@ function BasicInformation({ scenario }) {
 function InvestmentList({ scenario }) {
   let investmentsArray = [];
 
-  const { setSelectedInvestment } = useSelected();
+  const { setSelectedInvestment, selectedScenario } = useSelected();
 
   if (scenario) {
     investmentsArray = Array.from(scenario.Investments);
@@ -212,19 +213,13 @@ function InvestmentList({ scenario }) {
             >
               {/* Investment Type */}
               <span className={styles["top-investment-span"]}>
-                {investment?.type?.name ?? "—"}
+                {get_type_from_id(investment.investment_type_id, selectedScenario)?.name ?? "—"}
               </span>
-  
-              {/* Show delimiter only if there's an account */}
-              {investment?.account && <span>:</span>}
   
               {/* Account Type */}
               <span className={styles["top-investment-span"]}>
-                {investment?.account ?? "—"}
+                {investment?.tax_status ?? "—"}
               </span>
-  
-              {/* Show delimiter only if there's an account */}
-              {investment?.account && <span>:</span>}
   
               {/* Investment Value */}
               <span className={styles["top-investment-span"]}>
