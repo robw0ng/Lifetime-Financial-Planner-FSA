@@ -17,6 +17,7 @@ function ScenarioList() {
       deselectScenario();
     } else if (scenario.id !== 0) {
       setSelectedScenario(scenario);
+      console.log(scenario);
       deselectInvestment();
     }
   }
@@ -57,11 +58,217 @@ function ScenarioList() {
   );
 }
 
+function InvestmentTypeList(){
+  const {
+    selectedScenario,
+    selectedInvestmentType,
+    setSelectedInvestmentType,
+    selectedInvestment,
+    deselectInvestmentType,
+    deselectInvestment
+  } = useSelected();
+
+  function selectInvestmentType(investmentType){
+    if (selectedInvestmentType && investmentType.id === selectedInvestmentType.id){
+      deselectInvestmentType();
+      deselectInvestment();
+    }
+    else if (investmentType?.id){
+      if(selectedInvestment && selectedInvestment.type !== investmentType){
+        deselectInvestment();
+      }
+
+      setSelectedInvestmentType(investmentType);
+    }
+  }
+
+  let investmentTypesArray = [];
+
+  if (selectedScenario) {
+    investmentTypesArray = selectedScenario.InvestmentTypes;
+  }
+
+  if (investmentTypesArray.length === 0){{
+    investmentTypesArray = [
+      {
+        id: null,
+        name: null,
+        description: null,
+        expected_change_type: null,
+        expected_change_value: null,
+        expected_change_mean: null,
+        expected_change_std_dev: null,
+        expense_ratio: null,
+        expected_income_type: null,
+        expected_income_value: null,
+        expected_income_mean: null,
+        expected_income_std_dev: null,
+        taxability: null,
+        scenario_id: null,
+      }
+    ]
+  }}
+
+  return (
+    <div
+      className={`${styles["outer-container"]} ${styles["investment-list-container"]}`}
+    >
+      <div
+        className={`${styles["inner-container"]} ${styles["investment-list"]}`}
+      >
+        <h2>Investment Types:</h2>
+        <div className={styles["investment-type-list-header"]}>
+          <span className={styles["investment-span"]}>Name</span>
+        </div>
+        <div className={styles["investment-item-list"]}>
+          {investmentTypesArray.map((investmentType, index) => (
+            <div
+              key={investmentType.id ?? index}
+              className={
+                selectedInvestmentType && investmentType.id === selectedInvestmentType.id
+                  ? `${styles["selected"]} ${styles["investment-type-item"]}`
+                  : styles["investment-type-item"]
+              }
+              onClick={
+                investmentType.id !== null
+                  ? () => selectInvestmentType(investmentType)
+                  : undefined
+              }
+            >
+              <span className={styles["investment-type-span"]}>
+                {investmentType?.name ?? "—"}
+              </span>
+  
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InvestmentTypeActions({ investmentType }) {
+  const { selectedScenario, deselectInvestmentType } = useSelected();
+  const { duplicateInvestmentType, deleteInvestmentType } = useData();
+
+  if (!investmentType) {
+    investmentType = {
+      id: null,
+      name: "None!",
+      description: null,
+      expected_change_type: null,
+      expected_change_value: null,
+      expected_change_mean: null,
+      expected_change_std_dev: null,
+      expense_ratio: null,
+      expected_income_type: null,
+      expected_income_value: null,
+      expected_income_mean: null,
+      expected_income_std_dev: null,
+      taxability: null,
+      scenario_id: null,
+    };
+  }
+
+  function handleDeleteButtonClick() {
+    if (investmentType.id !== null && selectedScenario?.id) {
+      const confirmDelete = window.confirm(
+        "Are you sure you want to delete this investment type?"
+      );
+      if (confirmDelete) {
+        deleteInvestmentType(selectedScenario.id, investmentType.id);
+        deselectInvestmentType();
+      }
+    }
+  }
+
+  async function handleDuplicateButtonClick() {
+    if (investmentType.id !== null && selectedScenario?.id) {
+      const duplicatedInvestment = await duplicateInvestmentType(selectedScenario.id, investmentType.id);
+      setSelectedInvestment(duplicatedInvestment);
+    }
+  }
+
+  return (
+    <section
+      className={`${styles["outer-container"]} ${styles["investment-actions-container"]}`}
+    >
+      <div
+        className={`${styles["inner-container"]} ${styles["investment-actions"]}`}
+      >
+        <div className={styles["investment-actions-content"]}>
+          <h2>Type Actions:</h2>
+          <div className={styles["button-container"]}>
+          {selectedScenario ? (
+            <Link to="/create-investment-type" className={styles["action-button"]}>
+              <button
+                className={`${styles["action-button"]} ${styles["create"]}`}
+              >
+                Create
+              </button>
+            </Link>
+          ) : (
+            <Link to="" className={styles["action-button"]}>
+              <button
+                className={`${styles["action-button"]} ${styles["create"]}`}
+              >
+                Create
+              </button>
+            </Link>
+          )}
+
+          <h3 className={styles["selected-header"]}>
+            <label>Selected:</label>
+            <label>{investmentType.name}</label>
+          </h3>
+
+          <button
+            className={`${styles["action-button"]} ${styles["duplicate"]}`}
+            onClick={handleDuplicateButtonClick}
+          >
+            Duplicate
+          </button>
+
+          {investmentType.id !== null ? (
+            <Link
+              to={`/edit-investment-type/${investmentType.id}`}
+              className={styles["action-button"]}
+            >
+              <button
+                className={`${styles["action-button"]} ${styles["edit"]}`}
+              >
+                Edit
+              </button>
+            </Link>
+          ) : (
+            <Link className={styles["action-button"]}>
+              <button
+                className={`${styles["action-button"]} ${styles["edit"]}`}
+              >
+                Edit
+              </button>
+            </Link>
+          )}
+
+          <button
+            className={`${styles["action-button"]} ${styles["delete"]}`}
+            onClick={handleDeleteButtonClick}
+          >
+            Delete
+          </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function InvestmentList() {
   const {
     selectedScenario,
     selectedInvestment,
     setSelectedInvestment,
+    setSelectedInvestmentType,
     deselectInvestment,
   } = useSelected();
 
@@ -70,6 +277,7 @@ function InvestmentList() {
       deselectInvestment();
     } else if (investment?.id) {
       setSelectedInvestment(investment);
+      setSelectedInvestmentType(investment.type)
     }
   }
 
@@ -147,23 +355,28 @@ function InvestmentList() {
   );
 }
 
-function InvestmentTypeInfo({ investment }) {
-  if (!investment || !investment.type) {
+function InvestmentTypeInfo() {
+  const { selectedInvestment, selectedInvestmentType } = useSelected();
+  let investment = selectedInvestment;
+  if (!investment) {
     investment = {
-      type: {
+      account: "",
+      value: ""
+    };
+  }
+
+
+  let type = selectedInvestmentType;
+  if (!type) {
+      type= {
         name: "",
         description: "",
         expectedChange: "",
         expenseRatio: "",
         expectedIncome: "",
         taxability: "",
-      },
-      taxStatus: "",
-      value: 0,
-    };
+      }
   }
-
-  const type = investment.type;
 
   return (
     <section className={styles["outer-container"]}>
@@ -245,65 +458,66 @@ function InvestmentActions({ investment }) {
         className={`${styles["inner-container"]} ${styles["investment-actions"]}`}
       >
         <div className={styles["investment-actions-content"]}>
-          <h2>Investment Actions:</h2>
+          <h2>Investment:</h2>
+          <div className={styles["button-container"]}>
+            {selectedScenario ? (
+              <Link to="/create-investment">
+                <button
+                  className={`${styles["action-button"]} ${styles["create"]}`}
+                >
+                  Create
+                </button>
+              </Link>
+            ) : (
+              <Link to="">
+                <button
+                  className={`${styles["action-button"]} ${styles["create"]}`}
+                >
+                  Create
+                </button>
+              </Link>
+            )}
 
-          {selectedScenario ? (
-            <Link to="/create-investment" className={styles["action-button"]}>
-              <button
-                className={`${styles["action-button"]} ${styles["create"]}`}
-              >
-                Create New Investment
-              </button>
-            </Link>
-          ) : (
-            <Link to="" className={styles["action-button"]}>
-              <button
-                className={`${styles["action-button"]} ${styles["create"]}`}
-              >
-                Create New Investment
-              </button>
-            </Link>
-          )}
+            <h3 className={styles["selected-header"]}>
+              <label>Selected:</label>
+              <label>{investment.type.name}</label>
+            </h3>
 
-          <h3 className={styles["selected-header"]}>
-            <label>Selected Investment:</label>
-            <label>{investment.type.name}</label>
-          </h3>
-
-          <button
-            className={`${styles["action-button"]} ${styles["duplicate"]}`}
-            onClick={handleDuplicateButtonClick}
-          >
-            Duplicate Investment
-          </button>
-
-          {investment.id !== null ? (
-            <Link
-              to={`/edit-investment/${investment.id}`}
-              className={styles["action-button"]}
+            <button
+              className={`${styles["action-button"]} ${styles["duplicate"]}`}
+              onClick={handleDuplicateButtonClick}
             >
-              <button
-                className={`${styles["action-button"]} ${styles["edit"]}`}
-              >
-                Edit Investment
-              </button>
-            </Link>
-          ) : (
-            <Link className={styles["action-button"]}>
-              <button
-                className={`${styles["action-button"]} ${styles["edit"]}`}
-              >
-                Edit Investment
-              </button>
-            </Link>
-          )}
+              Duplicate
+            </button>
 
-          <button
-            className={`${styles["action-button"]} ${styles["delete"]}`}
-            onClick={handleDeleteButtonClick}
-          >
-            Delete Investment
-          </button>
+            {investment.id !== null ? (
+              <Link
+                to={`/edit-investment/${investment.id}`}
+              
+              >
+                <button
+                  className={`${styles["action-button"]} ${styles["edit"]}`}
+                >
+                  Edit
+                </button>
+              </Link>
+            ) : (
+              <Link>
+                <button
+                  className={`${styles["action-button"]} ${styles["edit"]}`}
+                >
+                  Edit
+                </button>
+              </Link>
+            )}
+
+            <button
+              className={`${styles["action-button"]} ${styles["delete"]}`}
+              onClick={handleDeleteButtonClick}
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -323,19 +537,26 @@ function InvestmentGraph(){
 }
 
 export default function Investments() {
-  const { selectedInvestment } = useSelected();
+  const { selectedInvestment, selectedInvestmentType } = useSelected();
   return (
     <main className={styles["investments"]}>
       <section className={styles["column"]}>
-        <InvestmentActions investment={selectedInvestment} />
+        <section className={styles["row"]}>
+          <InvestmentTypeActions investmentType={selectedInvestmentType} />
+          <InvestmentActions investment={selectedInvestment} />
+        </section>
         <ScenarioList />
       </section>
+
+      <section className={styles["column"]}>
+        <InvestmentTypeList />
+      </section>
+
       <section className={styles["column"]}>
         <InvestmentList />
       </section>
-      <section className={styles["column"]}>
-        <InvestmentTypeInfo investment={selectedInvestment} />
-        <InvestmentGraph />
+      <section className={`${styles["column"]} ${styles["investment-type-details-column"]}`}>
+        <InvestmentTypeInfo />
       </section>
     </main>
   );

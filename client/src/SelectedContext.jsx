@@ -8,20 +8,27 @@ export const SelectedProvider = ({ children }) => {
 
     const [selectedScenario, setSelectedScenario] = useState(null);
     const [selectedInvestment, setSelectedInvestment] = useState(null);
+    const [selectedInvestmentType, setSelectedInvestmentType] = useState(null);
     const [selectedEventSeries, setSelectedEventSeries] = useState(null);
     const [selectedStrategy, setSelectedStrategy] = useState(null);
     const [selectedStrategyItem, setSelectedStrategyItem] = useState(null);
 
     const deselectScenario = () => {
         setSelectedScenario(null);
+        setSelectedInvestmentType(null);
         setSelectedInvestment(null);
         setSelectedEventSeries(null);
         setSelectedStrategy(null);
         setSelectedStrategyItem(null)
     };
 
+    const deselectInvestmentType = () => {
+        setSelectedInvestmentType(null);
+    }
+
     const deselectInvestment = () => {
         setSelectedInvestment(null);
+        // setSelectedInvestmentType(null);
     }
 
     const deselectEventSeries = () =>{
@@ -36,12 +43,12 @@ export const SelectedProvider = ({ children }) => {
     const deselectStrategyItem = () => {
         setSelectedStrategyItem(null)
     }
-    // deselects:
-    // deselectScenario
-    // deselectInvestment
     return (
-        <SelectedContext.Provider value={{ selectedScenario, 
+        <SelectedContext.Provider value={{ 
+        selectedScenario, 
         setSelectedScenario, 
+        selectedInvestmentType,
+        setSelectedInvestmentType,
         selectedInvestment, 
         setSelectedInvestment, 
         selectedEventSeries,
@@ -51,6 +58,7 @@ export const SelectedProvider = ({ children }) => {
         selectedStrategyItem,
         setSelectedStrategyItem,
         deselectScenario,
+        deselectInvestmentType,
         deselectInvestment, 
         deselectEventSeries,
         deselectStrategy,

@@ -15,6 +15,8 @@ import EditScenario from './EditScenario';
 import { DataProvider } from './DataContext';
 import CreateInvestment from './CreateInvestment';
 import EditInvestment from './EditInvestment';
+import CreateInvestmentType from './CreateInvestmentType';
+import EditInvestmentType from './EditInvestmentType';
 import CreateEventSeries from './CreateEventSeries';
 import EditEventSeries from './EditEventSeries';
 import Strategies from './Strategies';
@@ -45,9 +47,12 @@ const AppContent = () => {
 
         <Route path="/create-investment" element={<ProtectedRoute element={<CreateInvestment />} />} />
         <Route path="/edit-investment/:id" element={<ProtectedRoute element={<EditInvestment />} />} />
+        <Route path="/create-investment-type" element={<ProtectedRoute element={<CreateInvestmentType />} />} />
+        <Route path="/edit-investment-type/:id" element={<ProtectedRoute element={<EditInvestmentType />} />} />
 
         <Route path="/create-event-series" element={<ProtectedRoute element={<CreateEventSeries />} />} />
         <Route path="/edit-event-series/:id" element={<ProtectedRoute element={<EditEventSeries />} />} />
+
 
        
       </Routes>

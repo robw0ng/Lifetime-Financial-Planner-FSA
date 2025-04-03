@@ -193,168 +193,329 @@ export const DataProvider = ({ children }) => {
     }
   };
   
-  const createInvestment = async (scenarioId, newInvestment) => {
+  const createInvestmentType = async (scenarioId, newInvestmentType) => {
     try {
-      // Generate a unique ID for the new investment
-      const newInvestmentWithId = { ...newInvestment, id: `${Date.now()}` };
-  
+      const newTypeWithId = { ...newInvestmentType, id: `${Date.now()}` };
       let updatedScenarioToSelect = null;
   
       setScenarios((prevScenarios) =>
         prevScenarios.map((scenario) => {
-          if (scenario.id === scenarioId) {
-            // Clone the existing investments set and add the new investment
-            const updatedInvestments = new Set(scenario.Investments);
-            updatedInvestments.add(newInvestmentWithId);
+          if (scenario.id !== scenarioId) return scenario;
   
-            // Check if the new investment type already exists in investmentTypes
-            const updatedInvestmentTypes = new Set(scenario.investmentTypes);
-            const typeExists = Array.from(updatedInvestmentTypes).some(
-              (type) => type.name === newInvestmentWithId.type.name
-            );
+          const updatedTypes = [...scenario.InvestmentTypes, newTypeWithId];
   
-            // Add the new type to the investmentTypes set if it doesn't already exist
-            if (!typeExists) {
-              updatedInvestmentTypes.add(newInvestmentWithId.type);
-            }
+          const updatedScenario = {
+            ...scenario,
+            InvestmentTypes: updatedTypes,
+          };
   
-            // Determine updated strategies
-            const updatedExpenseWithdrawalStrategy = [
-              ...scenario.expenseWithdrawalStrategy,
-              newInvestmentWithId,
-            ];
-  
-            const updatedRothConversionStrategy =
-              newInvestmentWithId.account === "PTR"
-                ? [...scenario.rothConversionStrategy, newInvestmentWithId]
-                : [...scenario.rothConversionStrategy];
-  
-            const updatedRmdStrategy =
-              newInvestmentWithId.account === "PTR"
-                ? [...scenario.rmdStrategy, newInvestmentWithId]
-                : [...scenario.rmdStrategy];
-  
-            // Update scenario with the new investment and investmentTypes
-            const updatedScenario = {
-              ...scenario,
-              investments: updatedInvestments,
-              investmentTypes: updatedInvestmentTypes, // Updated with new type
-              expenseWithdrawalStrategy: updatedExpenseWithdrawalStrategy,
-              rothConversionStrategy: updatedRothConversionStrategy,
-              rmdStrategy: updatedRmdStrategy,
-            };
-  
-            updatedScenarioToSelect = updatedScenario;
-            return updatedScenario;
-          }
-          return scenario;
+          updatedScenarioToSelect = updatedScenario;
+          return updatedScenario;
         })
       );
   
-      // Update selected scenario and selected investment if applicable
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
+      console.log("scenarios after create type", scenarios)
+      return newTypeWithId;
+    } catch (error) {
+      console.error("Error creating investment type:", error);
+      return null;
+    }
+  };
+  
+  const editInvestmentType = async (scenarioId, updatedType) => {
+    try {
+      let updatedScenarioToSelect = null;
+  
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id !== scenarioId) return scenario;
+  
+          // Update the InvestmentTypes list
+          const updatedTypes = scenario.InvestmentTypes.map((type) =>
+            type.id === updatedType.id ? updatedType : type
+          );
+  
+          // Update investments that use this type
+          const updatedInvestments = new Set();
+          for (const inv of scenario.Investments) {
+            if (inv.type.id === updatedType.id) {
+              updatedInvestments.add({ ...inv, type: updatedType });
+            } else {
+              updatedInvestments.add(inv);
+            }
+          }
+  
+          const updatedScenario = {
+            ...scenario,
+            InvestmentTypes: updatedTypes,
+            Investments: updatedInvestments,
+          };
+  
+          updatedScenarioToSelect = updatedScenario;
+          return updatedScenario;
+        })
+      );
+  
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
+  
+      return updatedType;
+    } catch (error) {
+      console.error("Error editing investment type:", error);
+      return null;
+    }
+  };
+  
+  const duplicateInvestmentType = async (scenarioId, investmentTypeId) => {
+    try {
+      let duplicatedType = null;
+      let updatedScenarioToSelect = null;
+  
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id !== scenarioId) return scenario;
+  
+          const originalType = scenario.InvestmentTypes.find(
+            (type) => `${type.id}` === `${investmentTypeId}`
+          );
+  
+          if (!originalType) return scenario;
+  
+          duplicatedType = {
+            ...originalType,
+            id: `${Date.now()}`, // Unique ID
+            name: `${originalType.name} (Copy)`,
+          };
+  
+          const updatedTypes = [...scenario.InvestmentTypes, duplicatedType];
+  
+          const updatedScenario = {
+            ...scenario,
+            InvestmentTypes: updatedTypes,
+          };
+  
+          updatedScenarioToSelect = updatedScenario;
+          return updatedScenario;
+        })
+      );
+  
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
+  
+      return duplicatedType;
+    } catch (error) {
+      console.error("Error duplicating investment type:", error);
+      return null;
+    }
+  };  
+
+  const deleteInvestmentType = async (scenarioId, investmentTypeId) => {
+    try {
+      let updatedScenarioToSelect = null;
+  
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id !== scenarioId) return scenario;
+  
+          const updatedTypes = scenario.InvestmentTypes.filter(
+            (type) => `${type.id}` !== `${investmentTypeId}`
+          );
+  
+          const updatedInvestments = new Set(
+            Array.from(scenario.Investments).filter(
+              (inv) => `${inv.type.id}` !== `${investmentTypeId}`
+            )
+          );
+  
+          const updatedScenario = {
+            ...scenario,
+            InvestmentTypes: updatedTypes,
+            Investments: updatedInvestments,
+            expense_withdrawl_strategy: scenario.expense_withdrawl_strategy.filter(
+              (inv) => `${inv.type.id}` !== `${investmentTypeId}`
+            ),
+            roth_conversion_strategy: scenario.roth_conversion_strategy.filter(
+              (inv) => `${inv.type.id}` !== `${investmentTypeId}`
+            ),
+            rmd_strategy: scenario.rmd_strategy.filter(
+              (inv) => `${inv.type.id}` !== `${investmentTypeId}`
+            ),
+          };
+  
+          updatedScenarioToSelect = updatedScenario;
+          return updatedScenario;
+        })
+      );
+  
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
+  
+      return true;
+    } catch (error) {
+      console.error("Error deleting investment type:", error);
+      return false;
+    }
+  };
+
+  const createInvestment = async (scenarioId, newInvestment) => {
+    try {
+      const newInvestmentWithId = { ...newInvestment, id: `${Date.now()}` };
+      let updatedScenarioToSelect = null;
+  
+      setScenarios((prevScenarios) =>
+        prevScenarios.map((scenario) => {
+          if (scenario.id !== scenarioId) return scenario;
+  
+          // Add investment to the set
+          const updatedInvestments = new Set(scenario.Investments);
+          updatedInvestments.add(newInvestmentWithId);
+  
+          // Ensure investment type is tracked
+          const updatedInvestmentTypes = scenario.InvestmentTypes;
+          const typeExists = Array.from(updatedInvestmentTypes).some(
+            (type) => type.name === newInvestmentWithId.type.name
+          );
+          if (!typeExists) {
+            updatedInvestmentTypes.add(newInvestmentWithId.type);
+          }
+  
+          // Determine updated strategies
+          const updatedExpenseWithdrawalStrategy = [
+            ...scenario.expense_withdrawl_strategy,
+            newInvestmentWithId,
+          ];
+  
+          const updatedRothConversionStrategy =
+            newInvestmentWithId.account === "PTR"
+              ? [...scenario.roth_conversion_strategy, newInvestmentWithId]
+              : scenario.roth_conversion_strategy;
+  
+          const updatedRmdStrategy =
+            newInvestmentWithId.account === "PTR"
+              ? [...scenario.rmd_strategy, newInvestmentWithId]
+              : scenario.rmd_strategy;
+  
+          // Build updated scenario
+          const updatedScenario = {
+            ...scenario,
+            Investments: updatedInvestments,
+            InvestmentTypes: updatedInvestmentTypes,
+            expense_withdrawl_strategy: updatedExpenseWithdrawalStrategy,
+            roth_conversion_strategy: updatedRothConversionStrategy,
+            rmd_strategy: updatedRmdStrategy,
+          };
+  
+          updatedScenarioToSelect = updatedScenario;
+          return updatedScenario;
+        })
+      );
+  
+      // Update selection state
       if (selectedScenario?.id === scenarioId) {
         setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
         setTimeout(() => setSelectedInvestment(newInvestmentWithId), 0);
       }
   
-      // TODO: Sync with backend in production
+      return newInvestmentWithId;
     } catch (error) {
       console.error("Error creating investment:", error);
+      return null;
     }
   };
   
   const editInvestment = async (scenarioId, updatedInvestment) => {
     try {
+      let updatedScenarioToSelect = null;
+  
       setScenarios((prevScenarios) =>
         prevScenarios.map((scenario) => {
           if (scenario.id !== scenarioId) return scenario;
   
+          // Update investments
           const updatedInvestments = new Set();
-          let found = false;
-  
-          // Check if the investment already exists in the set, and update it if found
-          scenario.Investments.forEach((inv) => {
+          for (const inv of scenario.Investments) {
             if (inv.id === updatedInvestment.id) {
               updatedInvestments.add(updatedInvestment);
-              found = true;
             } else {
               updatedInvestments.add(inv);
             }
-          });
+          }
   
-          // Fallback in case investment was not found (unlikely, but added for safety)
-          if (!found) updatedInvestments.add(updatedInvestment);
-  
-          // Clone and update the investment types
-          const updatedInvestmentTypes = new Set(scenario.investmentTypes);
+          // Ensure type is tracked
+          const updatedInvestmentTypes = new Set(scenario.InvestmentTypes);
           const typeExists = Array.from(updatedInvestmentTypes).some(
             (type) => type.name === updatedInvestment.type.name
           );
-  
-          // Add new type to investmentTypes only if it doesn’t exist
           if (!typeExists) {
             updatedInvestmentTypes.add(updatedInvestment.type);
           }
   
-          // Determine if the investment is in a Pre-Tax Retirement account (PTR)
+          // Update strategies
           const isPTR = updatedInvestment.account === "PTR";
   
-          // Update strategies dynamically
+          const updatedExpenseStrategy = Array.from(updatedInvestments);
+          const updatedRothStrategy = isPTR
+            ? updatedExpenseStrategy.filter((inv) => inv.account === "PTR")
+            : scenario.roth_conversion_strategy.filter((inv) => inv.id !== updatedInvestment.id);
+          const updatedRmdStrategy = isPTR
+            ? updatedExpenseStrategy.filter((inv) => inv.account === "PTR")
+            : scenario.rmd_strategy.filter((inv) => inv.id !== updatedInvestment.id);
+  
           const updatedScenario = {
             ...scenario,
-            investments: updatedInvestments,
-            investmentTypes: updatedInvestmentTypes, // Include updated types
-            expenseWithdrawalStrategy: [...Array.from(updatedInvestments)],
-            rothConversionStrategy: isPTR
-              ? [...Array.from(updatedInvestments).filter((inv) => inv.account === "PTR")]
-              : [...scenario.rothConversionStrategy.filter((inv) => inv.id !== updatedInvestment.id)],
-            rmdStrategy: isPTR
-              ? [...Array.from(updatedInvestments).filter((inv) => inv.account === "PTR")]
-              : [...scenario.rmdStrategy.filter((inv) => inv.id !== updatedInvestment.id)],
+            Investments: updatedInvestments,
+            InvestmentTypes: updatedInvestmentTypes,
+            expense_withdrawl_strategy: updatedExpenseStrategy,
+            roth_conversion_strategy: updatedRothStrategy,
+            rmd_strategy: updatedRmdStrategy,
           };
   
-          // Update selected scenario if it’s the one being edited
-          if (selectedScenario?.id === scenarioId) {
-            setTimeout(() => setSelectedScenario(updatedScenario), 0);
-            setTimeout(() => setSelectedInvestment(updatedInvestment), 0);
-          }
-  
+          updatedScenarioToSelect = updatedScenario;
           return updatedScenario;
         })
       );
   
-      // TODO: Sync with backend
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        setTimeout(() => setSelectedInvestment(updatedInvestment), 0);
+      }
+  
+      return updatedInvestment;
     } catch (error) {
       console.error("Error editing investment:", error);
     }
   };
-  
+
   const duplicateInvestment = async (scenarioId, investmentId) => {
     try {
-      const investmentToDuplicate = scenarios
-        .find((s) => s.id === scenarioId)
-        ?.investments
-        ? Array.from(scenarios.find((s) => s.id === scenarioId).investments)
-            .find((inv) => inv.id === investmentId)
-        : null;
+      const scenario = scenarios.find((s) => s.id === scenarioId);
+      if (!scenario) return;
   
-      if (!investmentToDuplicate) return;
+      const original = Array.from(scenario.Investments).find((inv) => inv.id === investmentId);
+      if (!original) return;
   
       const duplicated = {
-        ...investmentToDuplicate,
+        ...original,
         id: `${Date.now()}`,
-        name: `${investmentToDuplicate.type.name} (Copy)`
+        name: `${original.type.name} (Copy)`, // optional
       };
   
-      await createInvestment(scenarioId, duplicated); // handles strategy update
-  
+      await createInvestment(scenarioId, duplicated);
     } catch (error) {
       console.error("Error duplicating investment:", error);
     }
-  };
-  
+  };  
+
   const deleteInvestment = async (scenarioId, investmentId) => {
     try {
+      let updatedScenarioToSelect = null;
+  
       setScenarios((prevScenarios) =>
         prevScenarios.map((scenario) => {
           if (scenario.id !== scenarioId) return scenario;
@@ -365,27 +526,26 @@ export const DataProvider = ({ children }) => {
   
           const updatedScenario = {
             ...scenario,
-            investments: updatedInvestments,
-            expenseWithdrawalStrategy: scenario.expenseWithdrawalStrategy.filter(
+            Investments: updatedInvestments,
+            expense_withdrawl_strategy: scenario.expense_withdrawl_strategy.filter(
               (inv) => inv.id !== investmentId
             ),
-            rothConversionStrategy: scenario.rothConversionStrategy.filter(
+            roth_conversion_strategy: scenario.roth_conversion_strategy.filter(
               (inv) => inv.id !== investmentId
             ),
-            rmdStrategy: scenario.rmdStrategy.filter(
+            rmd_strategy: scenario.rmd_strategy.filter(
               (inv) => inv.id !== investmentId
             ),
           };
   
-          if (selectedScenario?.id === scenarioId) {
-            setTimeout(() => setSelectedScenario(updatedScenario), 0);
-          }
-  
+          updatedScenarioToSelect = updatedScenario;
           return updatedScenario;
         })
       );
   
-      // TODO: Sync with backend
+      if (selectedScenario?.id === scenarioId) {
+        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+      }
     } catch (error) {
       console.error("Error deleting investment:", error);
     }
@@ -612,6 +772,10 @@ export const DataProvider = ({ children }) => {
     editScenario, 
     duplicateScenario, 
     deleteScenario,
+    createInvestmentType,
+    editInvestmentType,
+    duplicateInvestmentType,
+    deleteInvestmentType,
     createInvestment,
     editInvestment,
     duplicateInvestment,
