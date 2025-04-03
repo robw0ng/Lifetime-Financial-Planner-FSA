@@ -154,24 +154,6 @@ async function simulateScenario(scenario) {
         is_married: scenario.is_married,
         inflationRate: 0,
     };
-
-    // return value of simulation (to be used for chart generating)
-    // an array containing objects representing the data for each year
-    const returnData = []
-
-    // sample object to add to returnData each year
-    const yearData = {
-        year: currentYear,
-        investments: [],
-        eventSeries: [],
-        totalIncome: 0,
-        totalExpenses: 0,
-        federalTax: 0,
-        stateTax: 0,
-        capitalGainsTax: 0,
-        earlyWithDrawalTax: 0,
-        discretionaryExpensesPaid: 0
-    }
     
     // Get all investments, eventseries, investmenttypes and store in state
     console.log('\nLoading scenario data into state...');
@@ -233,8 +215,26 @@ async function simulateScenario(scenario) {
     console.log("Initial Investments")
     console.log(state.investments)
 
+    // return value of simulation (to be used for chart generating)
+    // an array containing objects representing the data for each year
+    const returnData = []
+
     //need to change back to endYear***
     for (let year = currentYear; year < endYear; year++) {
+        // sample object to add to returnData each year
+        const yearData = {
+            year: currentYear,
+            investments: [],
+            eventSeries: [],
+            totalIncome: 0,
+            totalExpenses: 0,
+            federalTax: 0,
+            stateTax: 0,
+            capitalGainsTax: 0,
+            earlyWithdrawalTax: 0,
+            discretionaryExpensesPaidPercentage: 0
+        }
+
         console.log(`\n=== Processing Year ${year} ===`);
         
         //check for mortality of spouse only
@@ -289,7 +289,7 @@ async function simulateScenario(scenario) {
         }
 
         // 6. Process Non-discretionary Expenses and Taxes
-        await processNonDiscretionaryExpensesAndTax(state, scenario, year, currentYear);
+        await processNonDiscretionaryExpensesAndTax(state, scenario, year, currentYear, yearData);
 
         // 7. Process Discretionary Expenses
         await processDiscretionaryExpenses(state, scenario, year);
@@ -312,6 +312,16 @@ async function simulateScenario(scenario) {
         }
 
         console.log(state.investments)
+        console.log(state.events)
+
+        //set some values for yearData
+        yearData.year = currentYear
+        yearData.investments = state.investments
+        yearData.eventSeries = state.events
+        yearData.totalIncome = state.curYearIncome
+
+        //push to return data
+        returnData.append(yearData)
 
         // Store current year values for next year's tax calculation
         state.prevYearIncome = state.curYearIncome;
@@ -682,7 +692,7 @@ async function processRothConversion(state, scenario, year) {
     }
 }
 
-async function processNonDiscretionaryExpensesAndTax(state, scenario, year, startYear) {
+async function processNonDiscretionaryExpensesAndTax(state, scenario, year, startYear, yearData) {
     console.log('\nProcessing non-discretionary expenses and taxes...');
     const userAge = year - scenario.birth_year;
 
@@ -741,6 +751,12 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
 
         // Calculate early withdrawal penalty (10% of early withdrawals)
         const earlyWithdrawalTax = state.prevYearEarlyWithdrawals * 0.1;
+
+        //add taxes to year data
+        yearData.federalTax = federalIncomeTax
+        yearData.stateTax = stateTax
+        yearData.capitalGainsTax = capitalGainsTax
+        yearData.earlyWithdrawalTax = earlyWithdrawalTax
 
         totalTax += federalIncomeTax + stateTax + capitalGainsTax + earlyWithdrawalTax;
     }
