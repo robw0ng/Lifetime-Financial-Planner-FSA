@@ -33,21 +33,17 @@ export default function EditInvestmentType() {
 
     if (!type) return;
 
-    // Determine return type (fixed or normal)
-    const returnIsDist = /^N\(([^,]+),([^)]+)\)$/.exec(type.expected_annual_return);
-    const incomeIsDist = /^N\(([^,]+),([^)]+)\)$/.exec(type.expected_annual_income);
-
     setFormData({
       name: type.name || "",
       description: type.description || "",
-      return_mode: returnIsDist ? "normal" : "fixed",
-      return_fixed: returnIsDist ? "" : type.expected_annual_return || "",
-      return_mean: returnIsDist ? returnIsDist[1] : "",
-      return_stddev: returnIsDist ? returnIsDist[2] : "",
-      income_mode: incomeIsDist ? "normal" : "fixed",
-      income_fixed: incomeIsDist ? "" : type.expected_annual_income || "",
-      income_mean: incomeIsDist ? incomeIsDist[1] : "",
-      income_stddev: incomeIsDist ? incomeIsDist[2] : "",
+      return_mode: type.expected_change_type,
+      return_fixed: type.expected_change_type === "fixed" ? type.expected_change_value : "",
+      return_mean: type.expected_change_type === "normal" ? type.expected_change_mean : "",
+      return_stddev: type.expected_change_type === "normal" ? type.expected_change_std_dev : "",
+      income_mode: type.expected_income_type,
+      income_fixed: type.expected_income_type === "fixed" ? type.expected_income_value : "",
+      income_mean: type.expected_income_type === "normal" ? type.expected_income_mean : "",
+      income_stddev: type.expected_income_type === "normal" ? type.expected_income_std_dev : "",
       expense_ratio: type.expense_ratio || "",
       taxability: type.taxability || "taxable",
     });
@@ -63,32 +59,40 @@ export default function EditInvestmentType() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    if (!selectedScenario?.id) {
+      console.error("No scenario selected.");
+      return;
+    }
+  
+    // Backend-compatible payload
     const updatedType = {
       id: id,
       name: formData.name,
-      description: formData.description,
-      expected_annual_return:
-        formData.return_mode === "fixed"
-          ? formData.return_fixed
-          : `N(${formData.return_mean},${formData.return_stddev})`,
-      expected_annual_income:
-        formData.income_mode === "fixed"
-          ? formData.income_fixed
-          : `N(${formData.income_mean},${formData.income_stddev})`,
-      expense_ratio: formData.expense_ratio,
+      description: formData.description || null,
+      expected_change_type: formData.return_mode,
+      expected_change_value: formData.return_mode === "fixed" ? Number(formData.return_fixed) : null,
+      expected_change_mean: formData.return_mode === "normal" ? Number(formData.return_mean) : null,
+      expected_change_std_dev: formData.return_mode === "normal" ? Number(formData.return_stddev) : null,
+      expected_income_type: formData.income_mode,
+      expected_income_value: formData.income_mode === "fixed" ? Number(formData.income_fixed) : null,
+      expected_income_mean: formData.income_mode === "normal" ? Number(formData.income_mean) : null,
+      expected_income_std_dev: formData.income_mode === "normal" ? Number(formData.income_stddev) : null,
+      expense_ratio: Number(formData.expense_ratio),
       taxability: formData.taxability,
     };
-
+  
     try {
-      const editedInvestmentType = await editInvestmentType(selectedScenario.id, updatedType);
-      setSelectedInvestmentType(editedInvestmentType);
+      const edited = await editInvestmentType(selectedScenario.id, updatedType);
+      console.log("edited investment returned", edited)
+      if (edited){
+        setSelectedInvestmentType(edited);
+      }
       navigate("/investments");
     } catch (err) {
       console.error("Failed to edit investment type:", err);
     }
   };
-
+  
   return (
     <main>
       <form onSubmit={handleSubmit} className="form-container">

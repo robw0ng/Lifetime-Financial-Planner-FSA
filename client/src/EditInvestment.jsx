@@ -3,13 +3,14 @@ import "./CreateScenario.css";
 import { useNavigate } from "react-router-dom";
 import { useData } from "./DataContext";
 import { useSelected } from "./SelectedContext";
+import { get_type_from_id } from "./Investments";
 
 export default function EditInvestment() {
-  const { selectedScenario, selectedInvestment } = useSelected();
+  const { selectedScenario, selectedInvestment, setSelectedInvestment, setSelectedInvestmentType } = useSelected();
   const { editInvestment } = useData();
   const navigate = useNavigate();
 
-  const investmentTypes = Array.from(selectedScenario.investmentTypes || []);
+  const investmentTypes = Array.from(selectedScenario.InvestmentTypes || []);
 
   const [formData, setFormData] = useState({
     id: "",
@@ -22,7 +23,7 @@ export default function EditInvestment() {
     if (selectedInvestment) {
       setFormData({
         id: selectedInvestment.id,
-        selectedType: selectedInvestment.type.name,
+        selectedType: get_type_from_id(selectedInvestment.investment_type_id, selectedScenario).name,
         value: selectedInvestment.value || "",
         account: selectedInvestment.account || "taxable",
       });
@@ -57,7 +58,11 @@ export default function EditInvestment() {
     };
 
     try {
-      await editInvestment(selectedScenario.id, updatedInvestment);
+      const editedInvestment = await editInvestment(selectedScenario.id, updatedInvestment);
+      if (editedInvestment){
+        setSelectedInvestment(editedInvestment);
+        setSelectedInvestmentType(get_type_from_id(editedInvestment.investment_type_id, selectedScenario))  
+      }
       navigate("/investments");
     } catch (error) {
       console.error("Failed to update investment:", error);

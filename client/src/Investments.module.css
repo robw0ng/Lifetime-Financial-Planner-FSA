@@ -167,6 +167,9 @@
     width: 100%;
 }
 
+.investment-type-list-header span{
+    font-weight: bold;
+}
 
 .investment-list-header{
     display: flex;
@@ -236,6 +239,12 @@
 }
 
 /* Investment Details */
+.investment-basic-info{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .investment-info{
     display: flex;
     flex-direction: column;

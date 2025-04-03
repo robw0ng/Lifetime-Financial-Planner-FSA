@@ -1,6 +1,24 @@
 import { useSelected } from "./SelectedContext";
 import { useData } from "./DataContext";
 import styles from "./Strategies.module.css";
+import { get_type_from_id } from "./Investments";
+
+function get_investment_from_special_id(investment_special_id, selectedScenario){
+  if (selectedScenario === null || (selectedScenario && selectedScenario.Investments === null)){
+    return null;
+  }
+
+  const investment_obj =  selectedScenario.Investments.find(
+    (investment) => investment.special_id === investment_special_id
+  );
+
+  return investment_obj;
+}
+
+function get_type_from_special_id(investment_special_id, selectedScenario){
+  const investment_obj = get_investment_from_special_id(investment_special_id, selectedScenario);
+  return get_type_from_id(investment_obj.investment_type_id, selectedScenario);
+}
 
 function ScenarioList() {
   const {
@@ -15,6 +33,7 @@ function ScenarioList() {
       deselectScenario();
     } else if (scenario.id !== 0) {
       setSelectedScenario(scenario);
+      console.log(scenario);
     }
   }
   let scenariosList = scenarios;
@@ -107,12 +126,12 @@ function StrategyList({ title, strategyKey, strategyItems }) {
               {item?.type && <span>:</span>}
 
               <span className={styles["strategy-span"]}>
-                {item.type?.name || item.name}
+                {get_type_from_special_id(item, selectedScenario)?.name || item.name}
               </span>
 
               {item?.type && <span>:</span>}
               <span className={styles["strategy-span"]}>
-                ${item.value?.toLocaleString() ?? "—"}
+                ${get_investment_from_special_id(item, selectedScenario).value?.toLocaleString() ?? "—"}
               </span>
             </div>
           ))
@@ -134,32 +153,32 @@ export default function Strategies() {
       <section className={`${styles['column']} ${styles["spending"]}`}>
         <StrategyList
           title="Spending"
-          strategyKey="spendingStrategy"
-          strategyItems={selectedScenario?.spendingStrategy || []}
+          strategyKey="spending_strategy"
+          strategyItems={selectedScenario?.spending_strategy || []}
         />
       </section>
 
       <section className={`${styles['column']} ${styles["expense"]}`}>
         <StrategyList
           title="Expense Withdrawal"
-          strategyKey="expenseWithdrawalStrategy"
-          strategyItems={selectedScenario?.expenseWithdrawalStrategy || []}
+          strategyKey="expense_withdrawl_strategy"
+          strategyItems={selectedScenario?.expense_withdrawl_strategy || []}
         />
       </section>
 
       <section className={`${styles['column']} ${styles["roth"]}`}>
         <StrategyList
           title="Roth Conversion"
-          strategyKey="rothConversionStrategy"
-          strategyItems={selectedScenario?.rothConversionStrategy || []}
+          strategyKey="roth_conversion_strategy"
+          strategyItems={selectedScenario?.roth_conversion_strategy || []}
         />
       </section>
 
       <section className={`${styles['column']} ${styles["rmd"]}`}>
         <StrategyList
           title="RMD"
-          strategyKey="rmdStrategy"
-          strategyItems={selectedScenario?.rmdStrategy || []}
+          strategyKey="rmd_strategy"
+          strategyItems={selectedScenario?.rmd_strategy || []}
         />
       </section>
     </main>

@@ -3,16 +3,17 @@ import "./CreateScenario.css";
 import { useNavigate } from "react-router-dom";
 import { useData } from "./DataContext";
 import { useSelected } from "./SelectedContext";
+import { get_type_from_id } from "./Investments";
 
 export default function CreateInvestment() {
-  const { selectedScenario } = useSelected();
+  const { selectedScenario, selectedInvestmentType, setSelectedInvestment, setSelectedInvestmentType} = useSelected();
   const { createInvestment } = useData();
   const navigate = useNavigate();
 
   const investmentTypes = Array.from(selectedScenario.InvestmentTypes || []);
 
   const [formData, setFormData] = useState({
-    selectedType: "",
+    selectedType: selectedInvestmentType?.name || "",
     value: "",
     account: "taxable",
   });
@@ -38,13 +39,17 @@ export default function CreateInvestment() {
     }
 
     const newInvestment = {
-      type: selectedTypeData,
+      type: selectedTypeData.id,
       value: parseFloat(formData.value),
       account: formData.account,
     };
 
     try {
-      await createInvestment(selectedScenario.id, newInvestment);
+      const created_investment = await createInvestment(selectedScenario.id, newInvestment);
+      if (created_investment){
+        setSelectedInvestment(created_investment);
+        setSelectedInvestmentType(get_type_from_id(created_investment.investment_type_id, selectedScenario))  
+      }
       navigate("/investments");
     } catch (error) {
       console.error("Failed to create investment:", error);

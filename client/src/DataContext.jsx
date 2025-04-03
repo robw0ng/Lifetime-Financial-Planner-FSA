@@ -29,6 +29,12 @@ export const DataProvider = ({ children }) => {
   
       const data = await res.json();
       setScenarios(data);
+      if (selectedScenario) {
+        const updatedSelectedScenario = data.find((scenario) => scenario.id === selectedScenario.id);
+        if (updatedSelectedScenario) {
+          setSelectedScenario(updatedSelectedScenario);
+        }
+      }
     } catch (error) {
       console.error("Error fetching scenarios:", error);
     } finally {
@@ -60,7 +66,6 @@ export const DataProvider = ({ children }) => {
     
         const { scenario: createdScenario } = await res.json();
     
-        // setScenarios((prev) => [...prev, createdScenario]);
         fetchScenarios();
         return createdScenario;
       }
@@ -96,9 +101,6 @@ export const DataProvider = ({ children }) => {
 
 				const data = await res.json();
 				const updatedScenario = data.scenario;
-				// setScenarios((prev) =>
-				// 	prev.map((scenario) => (scenario.id === updatedScenario.id ? updatedScenario : scenario))
-				// );
         fetchScenarios();
         return updatedScenario;
 			} else {
@@ -133,7 +135,6 @@ export const DataProvider = ({ children }) => {
         }
   
         console.log("Scenario deleted from backend");
-        // setScenarios((prev) => prev.filter((scenario) => scenario.id !== scenarioId));
         fetchScenarios();
       } else {
         setScenarios((prev) => prev.filter((scenario) => scenario.id !== scenarioId));
@@ -173,7 +174,6 @@ export const DataProvider = ({ children }) => {
   
         const { scenario: duplicatedScenario } = await res.json();
   
-        // setScenarios((prev) => [...prev, duplicatedScenario]);
         fetchScenarios();
         return duplicatedScenario;
       } else {
@@ -195,302 +195,438 @@ export const DataProvider = ({ children }) => {
   
   const createInvestmentType = async (scenarioId, newInvestmentType) => {
     try {
-      const newTypeWithId = { ...newInvestmentType, id: `${Date.now()}` };
-      let updatedScenarioToSelect = null;
+      if (user?.email) {
+        // Authenticated user: send to backend
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/investmenttypes/${scenarioId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(newInvestmentType),
+        });
   
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id !== scenarioId) return scenario;
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
   
-          const updatedTypes = [...scenario.InvestmentTypes, newTypeWithId];
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Failed to create investment type: ${errorText}`);
+        }
   
-          const updatedScenario = {
-            ...scenario,
-            InvestmentTypes: updatedTypes,
-          };
+        const { investmentType: createdType } = await res.json();
+        fetchScenarios();
+        return createdType;
+      } else {
+        // Guest mode: create local type
+        const newTypeWithId = { ...newInvestmentType, id: `${Date.now()}`, Investments: [] };
   
-          updatedScenarioToSelect = updatedScenario;
-          return updatedScenario;
-        })
-      );
+        setScenarios((prevScenarios) =>
+          prevScenarios.map((s) =>
+            s.id === scenarioId
+              ? { ...s, InvestmentTypes: [...s.InvestmentTypes, newTypeWithId] }
+              : s
+          )
+        );
   
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        return newTypeWithId;
       }
-      console.log("scenarios after create type", scenarios)
-      return newTypeWithId;
-    } catch (error) {
-      console.error("Error creating investment type:", error);
+    } catch (err) {
+      console.error("Error creating investment type:", err);
       return null;
     }
   };
-  
+
   const editInvestmentType = async (scenarioId, updatedType) => {
     try {
-      let updatedScenarioToSelect = null;
-  
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id !== scenarioId) return scenario;
-  
-          // Update the InvestmentTypes list
-          const updatedTypes = scenario.InvestmentTypes.map((type) =>
-            type.id === updatedType.id ? updatedType : type
-          );
-  
-          // Update investments that use this type
-          const updatedInvestments = new Set();
-          for (const inv of scenario.Investments) {
-            if (inv.type.id === updatedType.id) {
-              updatedInvestments.add({ ...inv, type: updatedType });
-            } else {
-              updatedInvestments.add(inv);
-            }
+      if (user?.email) {
+        // Authenticated user: send update to backend
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/investmenttypes/edit/${scenarioId}/${updatedType.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(updatedType),
           }
+        );
   
-          const updatedScenario = {
-            ...scenario,
-            InvestmentTypes: updatedTypes,
-            Investments: updatedInvestments,
-          };
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
   
-          updatedScenarioToSelect = updatedScenario;
-          return updatedScenario;
-        })
-      );
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Failed to edit investment type: ${errorText}`);
+        }
   
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        const { investmentType: updated } = await res.json();
+  
+        fetchScenarios();
+        return updated;
+      } else {
+        // Guest mode: update locally only
+        let updatedScenarioToSelect = null;
+  
+        setScenarios((prevScenarios) =>
+          prevScenarios.map((scenario) => {
+            if (scenario.id !== scenarioId) return scenario;
+  
+            const updatedTypes = scenario.InvestmentTypes.map((type) =>
+              type.id === updatedType.id ? updatedType : type
+            );
+  
+            const updatedInvestments = new Set(
+              Array.from(scenario.Investments).map((inv) =>
+                inv.type.id === updatedType.id ? { ...inv, type: updatedType } : inv
+              )
+            );
+  
+            updatedScenarioToSelect = {
+              ...scenario,
+              InvestmentTypes: updatedTypes,
+              Investments: updatedInvestments,
+            };
+  
+            return updatedScenarioToSelect;
+          })
+        );
+  
+        if (selectedScenario?.id === scenarioId) {
+          setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        }
+  
+        return updatedType;
       }
-  
-      return updatedType;
-    } catch (error) {
-      console.error("Error editing investment type:", error);
+    } catch (err) {
+      console.error("Error editing investment type:", err);
       return null;
     }
   };
-  
+
   const duplicateInvestmentType = async (scenarioId, investmentTypeId) => {
     try {
-      let duplicatedType = null;
-      let updatedScenarioToSelect = null;
+      if (user?.email) {
+        // Logged-in user: use backend route
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/investmenttypes/duplicate/${scenarioId}/${investmentTypeId}`,
+          {
+            method: "POST",
+            credentials: "include",
+          }
+        );
   
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id !== scenarioId) return scenario;
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
   
-          const originalType = scenario.InvestmentTypes.find(
-            (type) => `${type.id}` === `${investmentTypeId}`
-          );
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Failed to duplicate investment type: ${errorText}`);
+        }
   
-          if (!originalType) return scenario;
+        const { investmentType: duplicated } = await res.json();
   
-          duplicatedType = {
-            ...originalType,
-            id: `${Date.now()}`, // Unique ID
-            name: `${originalType.name} (Copy)`,
-          };
+        fetchScenarios();
   
-          const updatedTypes = [...scenario.InvestmentTypes, duplicatedType];
+        return duplicated;
+      } else {
+        // Guest mode: duplicate locally
+        let duplicatedType = null;
+        let updatedScenarioToSelect = null;
   
-          const updatedScenario = {
-            ...scenario,
-            InvestmentTypes: updatedTypes,
-          };
+        setScenarios((prevScenarios) =>
+          prevScenarios.map((scenario) => {
+            if (scenario.id !== scenarioId) return scenario;
   
-          updatedScenarioToSelect = updatedScenario;
-          return updatedScenario;
-        })
-      );
+            const originalType = scenario.InvestmentTypes.find(
+              (type) => `${type.id}` === `${investmentTypeId}`
+            );
   
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+            if (!originalType) return scenario;
+  
+            duplicatedType = {
+              ...originalType,
+              id: `${Date.now()}`, // New ID for guest
+              name: `${originalType.name} (Copy)`,
+              Investments: [], // default
+            };
+  
+            const updatedScenario = {
+              ...scenario,
+              InvestmentTypes: [...scenario.InvestmentTypes, duplicatedType],
+            };
+  
+            updatedScenarioToSelect = updatedScenario;
+            return updatedScenario;
+          })
+        );
+  
+        if (selectedScenario?.id === scenarioId) {
+          setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        }
+  
+        return duplicatedType;
       }
-  
-      return duplicatedType;
     } catch (error) {
       console.error("Error duplicating investment type:", error);
       return null;
     }
-  };  
-
+  };
+  
   const deleteInvestmentType = async (scenarioId, investmentTypeId) => {
     try {
-      let updatedScenarioToSelect = null;
+      if (user?.email) {
+        // Logged-in user: delete via backend
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/investmenttypes/delete/${scenarioId}/${investmentTypeId}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          }
+        );
   
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id !== scenarioId) return scenario;
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
   
-          const updatedTypes = scenario.InvestmentTypes.filter(
-            (type) => `${type.id}` !== `${investmentTypeId}`
-          );
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Failed to delete investment type: ${errorText}`);
+        }
   
-          const updatedInvestments = new Set(
-            Array.from(scenario.Investments).filter(
-              (inv) => `${inv.type.id}` !== `${investmentTypeId}`
-            )
-          );
+        fetchScenarios();
+        return true;
+      } else {
+        // Guest mode: delete locally only
+        let updatedScenarioToSelect = null;
   
-          const updatedScenario = {
-            ...scenario,
-            InvestmentTypes: updatedTypes,
-            Investments: updatedInvestments,
-            expense_withdrawl_strategy: scenario.expense_withdrawl_strategy.filter(
-              (inv) => `${inv.type.id}` !== `${investmentTypeId}`
-            ),
-            roth_conversion_strategy: scenario.roth_conversion_strategy.filter(
-              (inv) => `${inv.type.id}` !== `${investmentTypeId}`
-            ),
-            rmd_strategy: scenario.rmd_strategy.filter(
-              (inv) => `${inv.type.id}` !== `${investmentTypeId}`
-            ),
-          };
+        setScenarios((prevScenarios) =>
+          prevScenarios.map((scenario) => {
+            if (scenario.id !== scenarioId) return scenario;
   
-          updatedScenarioToSelect = updatedScenario;
-          return updatedScenario;
-        })
-      );
+            const updatedTypes = scenario.InvestmentTypes.filter(
+              (type) => `${type.id}` !== `${investmentTypeId}`
+            );
   
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+            const updatedInvestments = new Set(
+              Array.from(scenario.Investments).filter(
+                (inv) => `${inv.type.id}` !== `${investmentTypeId}`
+              )
+            );
+  
+            updatedScenarioToSelect = {
+              ...scenario,
+              InvestmentTypes: updatedTypes,
+              Investments: updatedInvestments,
+              expense_withdrawl_strategy: scenario.expense_withdrawl_strategy.filter(
+                (inv) => `${inv.type.id}` !== `${investmentTypeId}`
+              ),
+              roth_conversion_strategy: scenario.roth_conversion_strategy.filter(
+                (inv) => `${inv.type.id}` !== `${investmentTypeId}`
+              ),
+              rmd_strategy: scenario.rmd_strategy.filter(
+                (inv) => `${inv.type.id}` !== `${investmentTypeId}`
+              ),
+            };
+  
+            return updatedScenarioToSelect;
+          })
+        );
+  
+        if (selectedScenario?.id === scenarioId) {
+          setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        }
+  
+        return true;
       }
-  
-      return true;
     } catch (error) {
       console.error("Error deleting investment type:", error);
       return false;
     }
   };
-
+    
   const createInvestment = async (scenarioId, newInvestment) => {
     try {
-      const newInvestmentWithId = { ...newInvestment, id: `${Date.now()}` };
-      let updatedScenarioToSelect = null;
+      const generatedId = `${Date.now()}`;
   
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id !== scenarioId) return scenario;
+      if (user?.email) {
+        // Construct backend-compatible payload
+        const payload = {
+          special_id: generatedId,
+          value: Number(newInvestment.value),
+          tax_status: newInvestment.account,
+          investment_type_id: newInvestment.type, // This should be the investmentType ID
+        };
   
-          // Add investment to the set
-          const updatedInvestments = new Set(scenario.Investments);
-          updatedInvestments.add(newInvestmentWithId);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/investments/${scenarioId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
   
-          // Ensure investment type is tracked
-          const updatedInvestmentTypes = scenario.InvestmentTypes;
-          const typeExists = Array.from(updatedInvestmentTypes).some(
-            (type) => type.name === newInvestmentWithId.type.name
-          );
-          if (!typeExists) {
-            updatedInvestmentTypes.add(newInvestmentWithId.type);
-          }
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
   
-          // Determine updated strategies
-          const updatedExpenseWithdrawalStrategy = [
-            ...scenario.expense_withdrawl_strategy,
-            newInvestmentWithId,
-          ];
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Failed to create investment: ${errorText}`);
+        }
   
-          const updatedRothConversionStrategy =
-            newInvestmentWithId.account === "PTR"
-              ? [...scenario.roth_conversion_strategy, newInvestmentWithId]
-              : scenario.roth_conversion_strategy;
+        const { investment: created } = await res.json();
+        fetchScenarios(); // Refresh state from server
+        return created;
+      } else {
+        // Guest mode: Create locally
+        const guestInvestment = {
+          ...newInvestment,
+          id: generatedId,
+          special_id: generatedId,
+          tax_status: newInvestment.account,
+          investment_type_id: newInvestment.type,
+        };
   
-          const updatedRmdStrategy =
-            newInvestmentWithId.account === "PTR"
-              ? [...scenario.rmd_strategy, newInvestmentWithId]
-              : scenario.rmd_strategy;
+        let updatedScenarioToSelect = null;
   
-          // Build updated scenario
-          const updatedScenario = {
-            ...scenario,
-            Investments: updatedInvestments,
-            InvestmentTypes: updatedInvestmentTypes,
-            expense_withdrawl_strategy: updatedExpenseWithdrawalStrategy,
-            roth_conversion_strategy: updatedRothConversionStrategy,
-            rmd_strategy: updatedRmdStrategy,
-          };
+        setScenarios((prevScenarios) =>
+          prevScenarios.map((scenario) => {
+            if (scenario.id !== scenarioId) return scenario;
   
-          updatedScenarioToSelect = updatedScenario;
-          return updatedScenario;
-        })
-      );
+            const updatedInvestments = new Set(scenario.Investments);
+            updatedInvestments.add(guestInvestment);
   
-      // Update selection state
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
-        setTimeout(() => setSelectedInvestment(newInvestmentWithId), 0);
+            const updatedScenario = {
+              ...scenario,
+              Investments: updatedInvestments,
+              expense_withdrawl_strategy: [...scenario.expense_withdrawl_strategy, guestInvestment],
+              roth_conversion_strategy:
+                guestInvestment.tax_status === "PTR"
+                  ? [...scenario.roth_conversion_strategy, guestInvestment]
+                  : scenario.roth_conversion_strategy,
+              rmd_strategy:
+                guestInvestment.tax_status === "PTR"
+                  ? [...scenario.rmd_strategy, guestInvestment]
+                  : scenario.rmd_strategy,
+            };
+  
+            updatedScenarioToSelect = updatedScenario;
+            return updatedScenario;
+          })
+        );
+  
+        if (selectedScenario?.id === scenarioId) {
+          setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+          setTimeout(() => setSelectedInvestment(guestInvestment), 0);
+        }
+  
+        return guestInvestment;
       }
-  
-      return newInvestmentWithId;
     } catch (error) {
       console.error("Error creating investment:", error);
       return null;
     }
   };
-  
+
   const editInvestment = async (scenarioId, updatedInvestment) => {
     try {
-      let updatedScenarioToSelect = null;
+      if (user?.email) {
+        // Prepare payload for backend
+        const payload = {
+          value: Number(updatedInvestment.value),
+          tax_status: updatedInvestment.account,
+          investment_type_id: updatedInvestment.type.id || updatedInvestment.type,
+        };
   
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id !== scenarioId) return scenario;
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/investments/edit/${scenarioId}/${updatedInvestment.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload),
+          }
+        );
   
-          // Update investments
-          const updatedInvestments = new Set();
-          for (const inv of scenario.Investments) {
-            if (inv.id === updatedInvestment.id) {
-              updatedInvestments.add(updatedInvestment);
-            } else {
-              updatedInvestments.add(inv);
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
+  
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Failed to edit investment: ${errText}`);
+        }
+  
+        const { investment: updatedFromServer } = await res.json();
+        fetchScenarios();
+        return updatedFromServer;
+      } else {
+        // Guest mode
+        let updatedScenarioToSelect = null;
+  
+        setScenarios((prevScenarios) =>
+          prevScenarios.map((scenario) => {
+            if (scenario.id !== scenarioId) return scenario;
+  
+            const updatedInvestments = new Set();
+            for (const inv of scenario.Investments) {
+              if (inv.id === updatedInvestment.id) {
+                updatedInvestments.add(updatedInvestment);
+              } else {
+                updatedInvestments.add(inv);
+              }
             }
-          }
   
-          // Ensure type is tracked
-          const updatedInvestmentTypes = new Set(scenario.InvestmentTypes);
-          const typeExists = Array.from(updatedInvestmentTypes).some(
-            (type) => type.name === updatedInvestment.type.name
-          );
-          if (!typeExists) {
-            updatedInvestmentTypes.add(updatedInvestment.type);
-          }
+            const updatedInvestmentTypes = new Set(scenario.InvestmentTypes);
+            const typeExists = Array.from(updatedInvestmentTypes).some(
+              (type) => type.name === updatedInvestment.type.name
+            );
+            if (!typeExists) {
+              updatedInvestmentTypes.add(updatedInvestment.type);
+            }
   
-          // Update strategies
-          const isPTR = updatedInvestment.account === "PTR";
+            const isPTR = updatedInvestment.account === "PTR";
   
-          const updatedExpenseStrategy = Array.from(updatedInvestments);
-          const updatedRothStrategy = isPTR
-            ? updatedExpenseStrategy.filter((inv) => inv.account === "PTR")
-            : scenario.roth_conversion_strategy.filter((inv) => inv.id !== updatedInvestment.id);
-          const updatedRmdStrategy = isPTR
-            ? updatedExpenseStrategy.filter((inv) => inv.account === "PTR")
-            : scenario.rmd_strategy.filter((inv) => inv.id !== updatedInvestment.id);
+            const updatedExpenseStrategy = Array.from(updatedInvestments);
+            const updatedRothStrategy = isPTR
+              ? updatedExpenseStrategy.filter((inv) => inv.account === "PTR")
+              : scenario.roth_conversion_strategy.filter((inv) => inv.id !== updatedInvestment.id);
+            const updatedRmdStrategy = isPTR
+              ? updatedExpenseStrategy.filter((inv) => inv.account === "PTR")
+              : scenario.rmd_strategy.filter((inv) => inv.id !== updatedInvestment.id);
   
-          const updatedScenario = {
-            ...scenario,
-            Investments: updatedInvestments,
-            InvestmentTypes: updatedInvestmentTypes,
-            expense_withdrawl_strategy: updatedExpenseStrategy,
-            roth_conversion_strategy: updatedRothStrategy,
-            rmd_strategy: updatedRmdStrategy,
-          };
+            const updatedScenario = {
+              ...scenario,
+              Investments: updatedInvestments,
+              InvestmentTypes: updatedInvestmentTypes,
+              expense_withdrawl_strategy: updatedExpenseStrategy,
+              roth_conversion_strategy: updatedRothStrategy,
+              rmd_strategy: updatedRmdStrategy,
+            };
   
-          updatedScenarioToSelect = updatedScenario;
-          return updatedScenario;
-        })
-      );
+            updatedScenarioToSelect = updatedScenario;
+            return updatedScenario;
+          })
+        );
   
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
-        setTimeout(() => setSelectedInvestment(updatedInvestment), 0);
+        if (selectedScenario?.id === scenarioId) {
+          setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+          setTimeout(() => setSelectedInvestment(updatedInvestment), 0);
+        }
+  
+        return updatedInvestment;
       }
-  
-      return updatedInvestment;
     } catch (error) {
       console.error("Error editing investment:", error);
+      return null;
     }
-  };
+  };  
 
   const duplicateInvestment = async (scenarioId, investmentId) => {
     try {
@@ -500,51 +636,106 @@ export const DataProvider = ({ children }) => {
       const original = Array.from(scenario.Investments).find((inv) => inv.id === investmentId);
       if (!original) return;
   
-      const duplicated = {
-        ...original,
-        id: `${Date.now()}`,
-        name: `${original.type.name} (Copy)`, // optional
-      };
+      if (user?.email) {
+        // 🔁 Logged-in: Use backend endpoint
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/investments/duplicate/${scenarioId}/${investmentId}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+          }
+        );
   
-      await createInvestment(scenarioId, duplicated);
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
+  
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Failed to duplicate investment: ${errorText}`);
+        }
+  
+        const { investment: duplicatedFromServer } = await res.json();
+        fetchScenarios();
+        return duplicatedFromServer;
+      } else {
+        // Guest mode (local-only)
+        const duplicated = {
+          ...original,
+          id: `${Date.now()}`,
+          special_id: `${Date.now()}`,
+          name: `${original.type.name} (Copy)`,
+        };
+  
+        await createInvestment(scenarioId, duplicated);
+        return duplicated;
+      }
     } catch (error) {
       console.error("Error duplicating investment:", error);
+      return null;
     }
   };  
 
   const deleteInvestment = async (scenarioId, investmentId) => {
     try {
-      let updatedScenarioToSelect = null;
+      if (user?.email) {
+        // 🔐 Logged-in: delete from backend
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/investments/delete/${scenarioId}/${investmentId}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          }
+        );
   
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id !== scenarioId) return scenario;
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
   
-          const updatedInvestments = new Set(
-            Array.from(scenario.Investments).filter((inv) => inv.id !== investmentId)
-          );
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Failed to delete investment: ${errorText}`);
+        }
   
-          const updatedScenario = {
-            ...scenario,
-            Investments: updatedInvestments,
-            expense_withdrawl_strategy: scenario.expense_withdrawl_strategy.filter(
-              (inv) => inv.id !== investmentId
-            ),
-            roth_conversion_strategy: scenario.roth_conversion_strategy.filter(
-              (inv) => inv.id !== investmentId
-            ),
-            rmd_strategy: scenario.rmd_strategy.filter(
-              (inv) => inv.id !== investmentId
-            ),
-          };
+        // Refresh from backend
+        fetchScenarios();
+      } else {
+        // 👤 Guest mode: local-only update
+        let updatedScenarioToSelect = null;
   
-          updatedScenarioToSelect = updatedScenario;
-          return updatedScenario;
-        })
-      );
+        setScenarios((prevScenarios) =>
+          prevScenarios.map((scenario) => {
+            if (scenario.id !== scenarioId) return scenario;
   
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+            const updatedInvestments = new Set(
+              Array.from(scenario.Investments).filter((inv) => inv.id !== investmentId)
+            );
+  
+            const updatedScenario = {
+              ...scenario,
+              Investments: updatedInvestments,
+              expense_withdrawl_strategy: scenario.expense_withdrawl_strategy.filter(
+                (inv) => inv.id !== investmentId
+              ),
+              roth_conversion_strategy: scenario.roth_conversion_strategy.filter(
+                (inv) => inv.id !== investmentId
+              ),
+              rmd_strategy: scenario.rmd_strategy.filter(
+                (inv) => inv.id !== investmentId
+              ),
+            };
+  
+            updatedScenarioToSelect = updatedScenario;
+            return updatedScenario;
+          })
+        );
+  
+        if (selectedScenario?.id === scenarioId) {
+          setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        }
       }
     } catch (error) {
       console.error("Error deleting investment:", error);
@@ -717,7 +908,46 @@ export const DataProvider = ({ children }) => {
     }
   };
   
-  const reorderStrategy = (scenarioId, strategyKey, fromIndex, toIndex) => {
+  // const reorderStrategy = (scenarioId, strategyKey, fromIndex, toIndex) => {
+  //   if (fromIndex === toIndex) return;
+  
+  //   let updatedScenarioToSelect = null;
+  
+  //   setScenarios((prevScenarios) =>
+  //     prevScenarios.map((scenario) => {
+  //       if (scenario.id !== scenarioId) return scenario;
+  
+  //       const strategyCopy = [...(scenario[strategyKey] || [])];
+  //       if (
+  //         fromIndex < 0 ||
+  //         toIndex < 0 ||
+  //         fromIndex >= strategyCopy.length ||
+  //         toIndex >= strategyCopy.length
+  //       ) {
+  //         return scenario;
+  //       }
+  
+  //       const [moved] = strategyCopy.splice(fromIndex, 1);
+  //       strategyCopy.splice(toIndex, 0, moved);
+  
+  //       const updatedScenario = {
+  //         ...scenario,
+  //         [strategyKey]: strategyCopy,
+  //       };
+  
+  //       updatedScenarioToSelect = updatedScenario;
+  //       return updatedScenario;
+  //     })
+  //   );
+  
+  //   if (selectedScenario?.id === scenarioId) {
+  //     setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+  //   }
+  
+  //   // TODO: Push reordered strategy to backend (e.g., /api/scenarios/:id/:strategyKey)
+  // };
+  
+  const reorderStrategy = async (scenarioId, strategyKey, fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;
   
     let updatedScenarioToSelect = null;
@@ -753,9 +983,35 @@ export const DataProvider = ({ children }) => {
       setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
     }
   
-    // TODO: Push reordered strategy to backend (e.g., /api/scenarios/:id/:strategyKey)
+    // ✅ Push to backend if user is logged in
+    if (user?.email) {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/strategy/${scenarioId}/${strategyKey}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ strategy: updatedScenarioToSelect[strategyKey] }),
+          }
+        );
+  
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
+  
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Failed to update strategy order:", errorText);
+        }
+      } catch (err) {
+        console.error("Error syncing strategy to backend:", err);
+      }
+    }
   };
   
+
   useEffect(() => {
     if (user?.email) {
       fetchScenarios(); // ✅ Load hardcoded list for now

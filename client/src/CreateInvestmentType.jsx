@@ -4,7 +4,7 @@ import { useSelected } from "./SelectedContext";
 import { useData } from "./DataContext";
 
 export default function CreateInvestmentType() {
-  const { selectedScenario, setSelectedInvestmentType } = useSelected();
+  const { selectedScenario, setSelectedInvestmentType, deselectInvestment } = useSelected();
   const { createInvestmentType } = useData();
   const navigate = useNavigate();
 
@@ -37,31 +37,36 @@ export default function CreateInvestmentType() {
       console.error("No scenario selected.");
       return;
     }
-
-    // Build the cleaned payload
+  
+    // Build backend-compatible payload
     const payload = {
       name: newTypeData.name,
-      description: newTypeData.description,
-      expected_annual_return:
-        newTypeData.return_mode === "fixed"
-          ? newTypeData.return_fixed
-          : `N(${newTypeData.return_mean},${newTypeData.return_stddev})`,
-      expected_annual_income:
-        newTypeData.income_mode === "fixed"
-          ? newTypeData.income_fixed
-          : `N(${newTypeData.income_mean},${newTypeData.income_stddev})`,
-      expense_ratio: newTypeData.expense_ratio,
+      description: newTypeData.description || null,
+      expected_change_type: newTypeData.return_mode,
+      expected_change_value: newTypeData.return_mode === "fixed" ? Number(newTypeData.return_fixed) : null,
+      expected_change_mean: newTypeData.return_mode === "normal" ? Number(newTypeData.return_mean) : null,
+      expected_change_std_dev: newTypeData.return_mode === "normal" ? Number(newTypeData.return_stddev) : null,
+      expected_income_type: newTypeData.income_mode,
+      expected_income_value: newTypeData.income_mode === "fixed" ? Number(newTypeData.income_fixed) : null,
+      expected_income_mean: newTypeData.income_mode === "normal" ? Number(newTypeData.income_mean) : null,
+      expected_income_std_dev: newTypeData.income_mode === "normal" ? Number(newTypeData.income_stddev) : null,
+      expense_ratio: Number(newTypeData.expense_ratio),
       taxability: newTypeData.taxability,
     };
-
+  
     try {
       const createdType = await createInvestmentType(selectedScenario.id, payload);
-      setSelectedInvestmentType(createdType);
+      console.log("created investment returned", createdType)
+      if (createdType) {
+        deselectInvestment();
+        setSelectedInvestmentType(createdType);
+      }
       navigate("/investments");
     } catch (err) {
       console.error("Failed to create investment type:", err);
     }
   };
+  
 
   return (
     <main>

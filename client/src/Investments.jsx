@@ -74,7 +74,7 @@ function InvestmentTypeList(){
       deselectInvestment();
     }
     else if (investmentType?.id){
-      if(selectedInvestment && selectedInvestment.type !== investmentType){
+      if(selectedInvestment && selectedInvestment.type !== investmentType.id){
         deselectInvestment();
       }
 
@@ -116,7 +116,7 @@ function InvestmentTypeList(){
       <div
         className={`${styles["inner-container"]} ${styles["investment-list"]}`}
       >
-        <h2>Investment Types:</h2>
+        <h2>Types:</h2>
         <div className={styles["investment-type-list-header"]}>
           <span className={styles["investment-span"]}>Name</span>
         </div>
@@ -148,7 +148,7 @@ function InvestmentTypeList(){
 }
 
 function InvestmentTypeActions({ investmentType }) {
-  const { selectedScenario, deselectInvestmentType } = useSelected();
+  const { selectedScenario, deselectInvestmentType, setSelectedInvestmentType } = useSelected();
   const { duplicateInvestmentType, deleteInvestmentType } = useData();
 
   if (!investmentType) {
@@ -184,8 +184,10 @@ function InvestmentTypeActions({ investmentType }) {
 
   async function handleDuplicateButtonClick() {
     if (investmentType.id !== null && selectedScenario?.id) {
-      const duplicatedInvestment = await duplicateInvestmentType(selectedScenario.id, investmentType.id);
-      setSelectedInvestment(duplicatedInvestment);
+      const duplicatedInvestmentType = await duplicateInvestmentType(selectedScenario.id, investmentType.id);
+      if (duplicatedInvestmentType){
+        setSelectedInvestmentType(duplicatedInvestmentType);
+      }
     }
   }
 
@@ -263,6 +265,108 @@ function InvestmentTypeActions({ investmentType }) {
   );
 }
 
+function InvestmentTypeInfo() {
+  const { selectedInvestment, selectedInvestmentType } = useSelected();
+  let investment = selectedInvestment;
+  if (!investment) {
+    investment = {
+      account: null,
+      value: null
+    };
+  }
+
+
+  let type = selectedInvestmentType;
+  if (!type) {
+      type= {
+        name: "",
+        description: "",
+        expectedChange: "",
+        expenseRatio: "",
+        expectedIncome: "",
+        taxability: "",
+      }
+  }
+
+  return (
+    <section className={styles["investment-basic-info"]}>
+      <section className={styles["outer-container"]}>
+        <div className={styles["inner-container"]}>
+          <div className={styles["investment-info"]}>
+            <h2 className={styles["investment-title"]}>Investment Type Details:</h2>
+            <div className={styles["info-row"]}>
+              <label className={styles["info-item"]}>Name: </label>
+              <label className={styles["info-value"]}>{type.name}</label>
+            </div>
+            <div className={`${styles["info-row"]} ${styles["description-row"]}`}>
+              <label className={`${styles["info-item"]} ${styles["description-item"]}`}>Description: </label>
+              <label className={`${styles["info-value"]} ${styles["description-value"]}`}>{type.description}</label>
+            </div>
+            <div className={styles["info-row"]}>
+              <label className={styles["info-item"]}>Expected Annual Return: </label>
+              {type.expected_change_type === "fixed" ? (
+                <label className={styles["info-value"]}>{type.expected_change_value}</label>
+              ) : type.expected_change_type === "normal" ? (
+                <label className={styles["info-value"]}>
+                  Mean: {type.expected_change_mean}, Std Dev: {type.expected_change_std_dev}
+                </label>
+              ) : (
+                <label className={styles["info-value"]}>—</label>
+              )}
+            </div>
+            <div className={styles["info-row"]}>
+              <label className={styles["info-item"]}>Expense Ratio: </label>
+              <label className={styles["info-value"]}>{type.expense_ratio}%</label>
+            </div>
+            <div className={styles["info-row"]}>
+              <label className={styles["info-item"]}>Expected Income: </label>
+              {type.expected_income_type === "fixed" ? (
+                <label className={styles["info-value"]}>{type.expected_income_value}</label>
+              ) : type.expected_income_type === "normal" ? (
+                <label className={styles["info-value"]}>
+                  Mean: {type.expected_income_mean}, Std Dev: {type.expected_income_std_dev}
+                </label>
+              ) : (
+                <label className={styles["info-value"]}>—</label>
+              )}
+            </div>
+            <div className={styles["info-row"]}>
+              <label className={styles["info-item"]}>Taxability: </label>
+              <label className={styles["info-value"]}>{type.taxability}</label>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className={styles["outer-container"]}>
+        <div className={styles["inner-container"]}>
+          <div className={styles["investment-info"]}>
+            <h2 className={styles["investment-title"]}>Investment Details:</h2>
+
+            <div className={styles["info-row"]}>
+              <label className={styles["info-item"]}>Account Tax Status: </label>
+              <label className={styles["info-value"]}>{investment.tax_status}</label>
+            </div>
+            <div className={styles["info-row"]}>
+              <label className={styles["info-item"]}>Current Value: </label>
+              <label className={styles["info-value"]}>{investment !== null && investment.value !== null ? `$${investment.value.toLocaleString()}` : ""}</label>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+  );
+}
+
+export function get_type_from_id(investment_type_id, selectedScenario){
+  if (selectedScenario === null || (selectedScenario && selectedScenario.InvestmentTypes === null)){
+    return null;
+  }
+
+  return selectedScenario.InvestmentTypes.find(
+    (type) => type.id === investment_type_id
+  );
+}
+
 function InvestmentList() {
   const {
     selectedScenario,
@@ -277,7 +381,7 @@ function InvestmentList() {
       deselectInvestment();
     } else if (investment?.id) {
       setSelectedInvestment(investment);
-      setSelectedInvestmentType(investment.type)
+      setSelectedInvestmentType(get_type_from_id(investment.investment_type_id, selectedScenario))
     }
   }
 
@@ -329,19 +433,13 @@ function InvestmentList() {
               }
             >
               <span className={styles["investment-span"]}>
-                {investment?.type?.name ?? "—"}
+                {get_type_from_id(investment.investment_type_id, selectedScenario)?.name ?? "—"}
               </span>
-  
-              {/* Show delimiter only if there's an account */}
-              {investment?.account && <span>:</span>}
   
               <span className={styles["investment-span"]}>
-                {investment?.account ?? "—"}
+                {investment?.tax_status ?? "—"}
               </span>
-  
-              {/* Show delimiter only if there's a value */}
-              {investment?.value && <span>:</span>}
-  
+    
               <span className={styles["investment-span"]}>
                 {investment?.value
                   ? `$${investment.value.toLocaleString()}`
@@ -355,82 +453,9 @@ function InvestmentList() {
   );
 }
 
-function InvestmentTypeInfo() {
-  const { selectedInvestment, selectedInvestmentType } = useSelected();
-  let investment = selectedInvestment;
-  if (!investment) {
-    investment = {
-      account: "",
-      value: ""
-    };
-  }
-
-
-  let type = selectedInvestmentType;
-  if (!type) {
-      type= {
-        name: "",
-        description: "",
-        expectedChange: "",
-        expenseRatio: "",
-        expectedIncome: "",
-        taxability: "",
-      }
-  }
-
-  return (
-    <section className={styles["outer-container"]}>
-      <div className={styles["inner-container"]}>
-        <div className={styles["investment-info"]}>
-          <h2 className={styles["investment-title"]}>Investment Type Details:</h2>
-          <div className={styles["info-row"]}>
-            <label className={styles["info-item"]}>Name: </label>
-            <label className={styles["info-value"]}>{type.name}</label>
-          </div>
-          <div className={`${styles["info-row"]} ${styles["description-row"]}`}>
-            <label className={`${styles["info-item"]} ${styles["description-item"]}`}>Description: </label>
-            <label className={`${styles["info-value"]} ${styles["description-value"]}`}>{type.description}</label>
-          </div>
-          <div className={styles["info-row"]}>
-            <label className={styles["info-item"]}>Expected Annual Return: </label>
-            <label className={styles["info-value"]}>{type.expected_annual_return}</label>
-          </div>
-          <div className={styles["info-row"]}>
-            <label className={styles["info-item"]}>Expense Ratio: </label>
-            <label className={styles["info-value"]}>{type.expense_ratio}%</label>
-          </div>
-          <div className={styles["info-row"]}>
-            <label className={styles["info-item"]}>Expected Income: </label>
-            <label className={styles["info-value"]}>{type.expected_annual_income}</label>
-          </div>
-          <div className={styles["info-row"]}>
-            <label className={styles["info-item"]}>Taxability: </label>
-            <label className={styles["info-value"]}>{type.taxability}</label>
-          </div>
-          <div className={styles["info-row"]}>
-            <label className={styles["info-item"]}>Account Tax Status: </label>
-            <label className={styles["info-value"]}>{investment.account}</label>
-          </div>
-          <div className={styles["info-row"]}>
-            <label className={styles["info-item"]}>Current Value: </label>
-            <label className={styles["info-value"]}>${investment.value.toLocaleString()}</label>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function InvestmentActions({ investment }) {
-  const { selectedScenario, deselectInvestment } = useSelected();
+  const { selectedScenario, deselectInvestment, setSelectedInvestment, setSelectedInvestmentType } = useSelected();
   const { duplicateInvestment, deleteInvestment } = useData();
-
-  if (!investment) {
-    investment = {
-      id: null,
-      type: { name: "None!" },
-    };
-  }
 
   function handleDeleteButtonClick() {
     if (investment.id !== null && selectedScenario?.id) {
@@ -444,9 +469,13 @@ function InvestmentActions({ investment }) {
     }
   }
 
-  function handleDuplicateButtonClick() {
+  async function handleDuplicateButtonClick() {
     if (investment.id !== null && selectedScenario?.id) {
-      duplicateInvestment(selectedScenario.id, investment.id);
+      const duplicated_investment = await duplicateInvestment(selectedScenario.id, investment.id);
+      if (duplicated_investment){
+        setSelectedInvestmentType(get_type_from_id(duplicated_investment.investment_type_id, selectedScenario));
+        setSelectedInvestment(duplicated_investment);
+      }
     }
   }
 
@@ -458,7 +487,7 @@ function InvestmentActions({ investment }) {
         className={`${styles["inner-container"]} ${styles["investment-actions"]}`}
       >
         <div className={styles["investment-actions-content"]}>
-          <h2>Investment:</h2>
+          <h2>Investment Actions:</h2>
           <div className={styles["button-container"]}>
             {selectedScenario ? (
               <Link to="/create-investment">
@@ -480,7 +509,7 @@ function InvestmentActions({ investment }) {
 
             <h3 className={styles["selected-header"]}>
               <label>Selected:</label>
-              <label>{investment.type.name}</label>
+              <label>{(investment !== null && get_type_from_id(investment.investment_type_id, selectedScenario)?.name) || "None!"}</label>
             </h3>
 
             <button
@@ -490,9 +519,9 @@ function InvestmentActions({ investment }) {
               Duplicate
             </button>
 
-            {investment.id !== null ? (
+            {investment && investment.id !== null ? (
               <Link
-                to={`/edit-investment/${investment.id}`}
+                to={`/edit-investment/${investment?.id}`}
               
               >
                 <button
