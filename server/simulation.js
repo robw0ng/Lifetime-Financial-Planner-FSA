@@ -292,7 +292,7 @@ async function simulateScenario(scenario) {
         await processNonDiscretionaryExpensesAndTax(state, scenario, year, currentYear, yearData);
 
         // 7. Process Discretionary Expenses
-        await processDiscretionaryExpenses(state, scenario, year);
+        await processDiscretionaryExpenses(state, scenario, year, yearData);
 
         // 8. Process Investment Events
         await processInvestEvents(state, year);
@@ -310,9 +310,10 @@ async function simulateScenario(scenario) {
                 event.amount = Math.round(event.amount * 100) / 100;
             }
         }
-
-        console.log(state.investments)
-        console.log(state.events)
+        state.curYearIncome = Math.round(state.curYearIncome * 100) / 100
+        state.curYearSS = Math.round(state.curYearSS * 100) / 100
+        state.curYearGains = Math.round(state.curYearGains * 100) / 100
+        state.curYearEarlyWithdrawals = Math.round(state.curYearEarlyWithdrawals * 100) / 100
 
         //set some values for yearData
         yearData.year = currentYear
@@ -321,7 +322,9 @@ async function simulateScenario(scenario) {
         yearData.totalIncome = state.curYearIncome
 
         //push to return data
-        returnData.append(yearData)
+        returnData.push(yearData)
+
+        console.log(yearData)
 
         // Store current year values for next year's tax calculation
         state.prevYearIncome = state.curYearIncome;
@@ -753,10 +756,10 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
         const earlyWithdrawalTax = state.prevYearEarlyWithdrawals * 0.1;
 
         //add taxes to year data
-        yearData.federalTax = federalIncomeTax
-        yearData.stateTax = stateTax
-        yearData.capitalGainsTax = capitalGainsTax
-        yearData.earlyWithdrawalTax = earlyWithdrawalTax
+        yearData.federalTax = Math.round(federalIncomeTax * 100) / 100
+        yearData.stateTax = Math.round(stateTax * 100) / 100
+        yearData.capitalGainsTax = Math.round(capitalGainsTax * 100) / 100
+        yearData.earlyWithdrawalTax = Math.round(earlyWithdrawalTax * 100) / 100
 
         totalTax += federalIncomeTax + stateTax + capitalGainsTax + earlyWithdrawalTax;
     }
@@ -810,6 +813,9 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
 
     // Calculate total payment needed
     const totalPayment = Math.round((sumOfNonDiscExpenses + totalTax) * 100) / 100;
+
+    //set total expense in year data
+    yearData.totalExpenses = totalPayment
 
     // Find cash investment
     const cashInvestment = state.investments.find(inv => inv.special_id === 'cash');
@@ -889,7 +895,7 @@ function calculateCapitalGainsTax(gains, brackets, isMarried) {
     return Math.max(0, tax); // Ensure non-negative tax
 }
 
-async function processDiscretionaryExpenses(state, scenario, year) {
+async function processDiscretionaryExpenses(state, scenario, year, yearData) {
     console.log('\nProcessing discretionary expenses...');
     const userAge = year - scenario.birth_year;
 
@@ -959,6 +965,12 @@ async function processDiscretionaryExpenses(state, scenario, year) {
 
     // Determine how much of the expense we can afford
     let affordableAmount = Math.min(totalAmount, maxSpendable);
+
+    //set discretionary exenses paid percentage
+    yearData.discretionaryExpensesPaidPercentage = affordableAmount / totalAmount
+    //increment total expenses by affordableAmount
+    affordableAmount = Math.round(affordableAmount * 100) / 100
+    yearData.totalExpenses += affordableAmount
 
     // Try to pay from cash first
     const cashPayment = Math.min(affordableAmount, cashInvestment.value);
