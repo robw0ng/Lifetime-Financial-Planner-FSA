@@ -95,7 +95,7 @@ function StrategyList({ title, strategyKey, strategyItems }) {
         {strategyItems.length === 0 ? (
           <div className={styles["strategy-item"]}>
             <span className={styles["strategy-span"]}>—</span>
-            <span className={styles["strategy-span"]}>None</span>
+            <span className={styles["strategy-span"]}>—</span>
             <span className={styles["strategy-span"]}>—</span>
           </div>
         ) : (

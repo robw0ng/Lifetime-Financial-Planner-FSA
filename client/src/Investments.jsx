@@ -279,12 +279,12 @@ function InvestmentTypeInfo() {
   let type = selectedInvestmentType;
   if (!type) {
       type= {
-        name: "",
-        description: "",
-        expectedChange: "",
-        expenseRatio: "",
-        expectedIncome: "",
-        taxability: "",
+        name: null,
+        description: null,
+        expected_change_value: null,
+        expense_ratio: null,
+        expected_income_value: null,
+        taxability: null,
       }
   }
 
@@ -311,12 +311,12 @@ function InvestmentTypeInfo() {
                   Mean: {type.expected_change_mean}, Std Dev: {type.expected_change_std_dev}
                 </label>
               ) : (
-                <label className={styles["info-value"]}>—</label>
+                <label className={styles["info-value"]}></label>
               )}
             </div>
             <div className={styles["info-row"]}>
               <label className={styles["info-item"]}>Expense Ratio: </label>
-              <label className={styles["info-value"]}>{type.expense_ratio}%</label>
+              <label className={styles["info-value"]}>{type !== null && type.expense_ratio !== null ? `%${type.expense_ratio}` : ""}</label>
             </div>
             <div className={styles["info-row"]}>
               <label className={styles["info-item"]}>Expected Income: </label>
@@ -327,7 +327,7 @@ function InvestmentTypeInfo() {
                   Mean: {type.expected_income_mean}, Std Dev: {type.expected_income_std_dev}
                 </label>
               ) : (
-                <label className={styles["info-value"]}>—</label>
+                <label className={styles["info-value"]}></label>
               )}
             </div>
             <div className={styles["info-row"]}>

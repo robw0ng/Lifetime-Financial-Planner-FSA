@@ -102,7 +102,7 @@ function EventSeriesList() {
   let seriesArray = selectedScenario ? Array.from(selectedScenario.events || []) : [];
 
   if (seriesArray.length === 0) {
-    seriesArray.push({ id: null, name: "No event series available", type: null, startYear: { value: null } });
+    seriesArray.push({ id: null, name: null, type: null, startYear: { value: null } });
   }
 
   const selectEvent = (event) => {
@@ -162,15 +162,15 @@ function EventSeriesList() {
 function EventSeriesInfo({ event }) {
   if (!event) {
     event = {
-      name: "No Event Selected",
-      type: "",
-      description: "",
+      name: null,
+      type: null,
+      description: null,
     };
   }
 
   // Render start year information
   const renderStartYear = () => {
-    if (!event.startYear) return "—";
+    if (!event.startYear) return "";
     if (event.startYear.type === "fixed") {
       return `${event.startYear.value} (Fixed)`;
     } else if (event.startYear.type === "uniform") {
@@ -182,12 +182,12 @@ function EventSeriesInfo({ event }) {
     } else if (event.startYear.type === "yearAfterEvent") {
       return `Year After Event (${event.startYear.reference})`;
     }
-    return "—";
+    return "";
   };
 
   // Render duration information
   const renderDuration = () => {
-    if (!event.duration) return "—";
+    if (!event.duration) return "";
     if (event.duration.type === "fixed") {
       return `${event.duration.value} years (Fixed)`;
     } else if (event.duration.type === "uniform") {
@@ -195,13 +195,13 @@ function EventSeriesInfo({ event }) {
     } else if (event.duration.type === "normal") {
       return `Normal [Mean: ${event.duration.mean}, Std: ${event.duration.std}] years`;
     }
-    return "—";
+    return "";
   };
 
   // Render expected change information
   const renderExpectedChange = () => {
     const change = event.expectedChange;
-    if (!change) return "—";
+    if (!change) return "";
     if (change.type === "fixed") {
       return `${change.value} (Fixed)`;
     } else if (change.type === "uniform") {
@@ -209,13 +209,13 @@ function EventSeriesInfo({ event }) {
     } else if (change.type === "normal") {
       return `Normal [Mean: ${change.mean}, Std: ${change.std}]`;
     }
-    return "—";
+    return "";
   };
 
   // Render allocation details for invest/rebalance
   const renderAllocation = () => {
     const allocation = event.allocation;
-    if (!allocation) return "—";
+    if (!allocation) return "";
 
     if (typeof allocation === "object") {
       return (
@@ -248,7 +248,7 @@ function EventSeriesInfo({ event }) {
               Description:
             </label>
             <span className={`${styles["info-value"]} ${styles["description-value"]}`}>
-              {event.description || "—"}
+              {event.description}
             </span>
           </div>
 
@@ -267,7 +267,7 @@ function EventSeriesInfo({ event }) {
               <div className={styles["info-row"]}>
                 <label className={styles["info-item"]}>Initial Amount:</label>
                 <span className={styles["info-value"]}>
-                  ${event.initialAmount?.toLocaleString() ?? "—"}
+                  ${event.initialAmount?.toLocaleString()}
                 </span>
               </div>
 
@@ -286,7 +286,7 @@ function EventSeriesInfo({ event }) {
               {event.userPercentage !== null && (
                 <div className={styles["info-row"]}>
                   <label className={styles["info-item"]}>User Percentage:</label>
-                  <span className={styles["info-value"]}>{event.userPercentage ?? "—"}%</span>
+                  <span className={styles["info-value"]}>{event.userPercentage}%</span>
                 </div>
               )}
 
@@ -314,7 +314,7 @@ function EventSeriesInfo({ event }) {
             <>
               <div className={styles["info-row"]}>
                 <label className={styles["info-item"]}>Allocation Type:</label>
-                <span className={styles["info-value"]}>{event.allocationType ?? "—"}</span>
+                <span className={styles["info-value"]}>{event.allocationType}</span>
               </div>
 
               <div className={styles["info-row"]}>
@@ -326,7 +326,7 @@ function EventSeriesInfo({ event }) {
                 <div className={styles["info-row"]}>
                   <label className={styles["info-item"]}>Max Cash:</label>
                   <span className={styles["info-value"]}>
-                    ${event.maxCash?.toLocaleString() ?? "—"}
+                    ${event.maxCash?.toLocaleString()}
                   </span>
                 </div>
               )}
