@@ -688,11 +688,6 @@ async function processRothConversion(state, scenario, year) {
 
     // Update income and early withdrawal totals
     state.curYearIncome += rothConversionAmount;
-
-    // Add to early withdrawals if user is under 59
-    if (userAge < EARLY_WITHDRAWAL_AGE) {
-        state.curYearEarlyWithdrawals = (state.curYearEarlyWithdrawals || 0) + rothConversionAmount;
-    }
 }
 
 async function processNonDiscretionaryExpensesAndTax(state, scenario, year, startYear, yearData) {
