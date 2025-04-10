@@ -4,7 +4,7 @@ import { useData } from "./DataContext";
 import styles from "./EventSeries.module.css";
 
 function EventSeriesActions({ eventSeries }) {
-  const { selectedScenario, deselectEventSeries } = useSelected();
+  const { selectedScenario, deselectEventSeries, setSelectedEventSeries } = useSelected();
   const { deleteEventSeries, duplicateEventSeries } = useData();
 
   if (!eventSeries) {
@@ -24,9 +24,10 @@ function EventSeriesActions({ eventSeries }) {
     }
   };
 
-  const handleDuplicate = () => {
+  const handleDuplicate = async () => {
     if (eventSeries.id !== null && selectedScenario?.id) {
-      duplicateEventSeries(selectedScenario.id, eventSeries.id);
+      const duplicated = await duplicateEventSeries(selectedScenario.id, eventSeries.id);
+      setSelectedEventSeries(duplicated);
     }
   };
 
@@ -99,7 +100,7 @@ function EventSeriesActions({ eventSeries }) {
 function EventSeriesList() {
   const { selectedScenario, selectedEventSeries, setSelectedEventSeries, deselectEventSeries } = useSelected();
 
-  let seriesArray = selectedScenario ? Array.from(selectedScenario.events || []) : [];
+  let seriesArray = selectedScenario ? Array.from(selectedScenario.EventSeries || []) : [];
 
   if (seriesArray.length === 0) {
     seriesArray.push({ id: null, name: null, type: null, startYear: { value: null } });
@@ -140,13 +141,20 @@ function EventSeriesList() {
                 {event?.name ?? "—"}
               </span>
 
-              {event?.startYear?.value && <span>:</span>}
-
-              <span className={styles["event-series-span"]}>
+              {/* <span className={styles["event-series-span"]}>
                 {event.startYear?.value ?? "—"}
-                </span>
-
-              {event?.type && <span>:</span>}
+              </span> */}
+              <span className={styles["event-series-span"]}>
+                {event.start_year_type === "fixed"
+                  ? event.start_year_value
+                  : event.start_year_type === "normal"
+                  ? `N(${event.start_year_mean}, ${event.start_year_std_dev})`
+                  : event.start_year_type === "uniform"
+                  ? `U(${event.start_year_lower}, ${event.start_year_upper})`
+                  : event.start_year_type === "sameAsEvent" || event.start_year_type === "yearAfterEvent"
+                  ? `${event.start_year_type} (${event.start_year_other_event})`
+                  : "—"}
+              </span>
 
               <span className={styles["event-series-span"]}>
                 {event?.type ?? "—"}
@@ -168,46 +176,79 @@ function EventSeriesInfo({ event }) {
     };
   }
 
-  // Render start year information
+  // // Render start year information
+  // const renderStartYear = () => {
+  //   if (!event.startYear) return "";
+  //   if (event.startYear.type === "fixed") {
+  //     return `${event.startYear.value} (Fixed)`;
+  //   } else if (event.startYear.type === "uniform") {
+  //     return `Uniform [Min: ${event.startYear.min}, Max: ${event.startYear.max}]`;
+  //   } else if (event.startYear.type === "normal") {
+  //     return `Normal [Mean: ${event.startYear.mean}, Std: ${event.startYear.std}]`;
+  //   } else if (event.startYear.type === "sameAsEvent") {
+  //     return `Same as Event (${event.startYear.reference})`;
+  //   } else if (event.startYear.type === "yearAfterEvent") {
+  //     return `Year After Event (${event.startYear.reference})`;
+  //   }
+  //   return "";
+  // };
   const renderStartYear = () => {
-    if (!event.startYear) return "";
-    if (event.startYear.type === "fixed") {
-      return `${event.startYear.value} (Fixed)`;
-    } else if (event.startYear.type === "uniform") {
-      return `Uniform [Min: ${event.startYear.min}, Max: ${event.startYear.max}]`;
-    } else if (event.startYear.type === "normal") {
-      return `Normal [Mean: ${event.startYear.mean}, Std: ${event.startYear.std}]`;
-    } else if (event.startYear.type === "sameAsEvent") {
-      return `Same as Event (${event.startYear.reference})`;
-    } else if (event.startYear.type === "yearAfterEvent") {
-      return `Year After Event (${event.startYear.reference})`;
+    if (!event.start_year_type) return "—";
+  
+    switch (event.start_year_type) {
+      case "fixed":
+        return `${event.start_year_value} (Fixed)`;
+      case "uniform":
+        return `Uniform [Min: ${event.start_year_lower}, Max: ${event.start_year_upper}]`;
+      case "normal":
+        return `Normal [Mean: ${event.start_year_mean}, Std: ${event.start_year_std_dev}]`;
+      case "sameAsEvent":
+        return `Same as Event (${event.start_year_other_event})`;
+      case "yearAfterEvent":
+        return `Year After Event (${event.start_year_other_event})`;
+      default:
+        return "—";
     }
-    return "";
   };
+  
 
   // Render duration information
+  // const renderDuration = () => {
+  //   if (!event.duration) return "";
+  //   if (event.duration.type === "fixed") {
+  //     return `${event.duration.value} years (Fixed)`;
+  //   } else if (event.duration.type === "uniform") {
+  //     return `Uniform [Min: ${event.duration.min}, Max: ${event.duration.max}] years`;
+  //   } else if (event.duration.type === "normal") {
+  //     return `Normal [Mean: ${event.duration.mean}, Std: ${event.duration.std}] years`;
+  //   }
+  //   return "";
+  // };
   const renderDuration = () => {
-    if (!event.duration) return "";
-    if (event.duration.type === "fixed") {
-      return `${event.duration.value} years (Fixed)`;
-    } else if (event.duration.type === "uniform") {
-      return `Uniform [Min: ${event.duration.min}, Max: ${event.duration.max}] years`;
-    } else if (event.duration.type === "normal") {
-      return `Normal [Mean: ${event.duration.mean}, Std: ${event.duration.std}] years`;
+    if (!event.duration_type) return "—";
+  
+    switch (event.duration_type) {
+      case "fixed":
+        return `${event.duration_value} years (Fixed)`;
+      case "uniform":
+        return `Uniform [Min: ${event.duration_lower}, Max: ${event.duration_upper}] years`;
+      case "normal":
+        return `Normal [Mean: ${event.duration_mean}, Std: ${event.duration_std_dev}] years`;
+      default:
+        return "—";
     }
-    return "";
   };
 
   // Render expected change information
   const renderExpectedChange = () => {
-    const change = event.expectedChange;
+    const change = event.expected_change_type;
     if (!change) return "";
-    if (change.type === "fixed") {
-      return `${change.value} (Fixed)`;
-    } else if (change.type === "uniform") {
-      return `Uniform [Min: ${change.min}, Max: ${change.max}]`;
-    } else if (change.type === "normal") {
-      return `Normal [Mean: ${change.mean}, Std: ${change.std}]`;
+    if (event.expected_change_type === "fixed") {
+      return `${event.expected_change_value} (Fixed)`;
+    } else if (event.expected_change_type === "uniform") {
+      return `Uniform [Min: ${event.expected_change_lower}, Max: ${event.expected_change_upper}]`;
+    } else if (event.expected_change_type === "normal") {
+      return `Normal [Mean: ${event.expected_change_mean}, Std: ${event.expected_change_std_dev}]`;
     }
     return "";
   };
@@ -267,7 +308,7 @@ function EventSeriesInfo({ event }) {
               <div className={styles["info-row"]}>
                 <label className={styles["info-item"]}>Initial Amount:</label>
                 <span className={styles["info-value"]}>
-                  ${event.initialAmount?.toLocaleString()}
+                  ${event.initial_amount?.toLocaleString()}
                 </span>
               </div>
 
@@ -279,14 +320,14 @@ function EventSeriesInfo({ event }) {
               <div className={styles["info-row"]}>
                 <label className={styles["info-item"]}>Inflation Adjusted:</label>
                 <span className={styles["info-value"]}>
-                  {event.inflationAdjusted ? "Yes" : "No"}
+                  {event.inflation_adjusted ? "Yes" : "No"}
                 </span>
               </div>
 
-              {event.userPercentage !== null && (
+              {event.user_percentage !== null && (
                 <div className={styles["info-row"]}>
                   <label className={styles["info-item"]}>User Percentage:</label>
-                  <span className={styles["info-value"]}>{event.userPercentage}%</span>
+                  <span className={styles["info-value"]}>{event.user_percentage}%</span>
                 </div>
               )}
 
@@ -294,7 +335,7 @@ function EventSeriesInfo({ event }) {
                 <div className={styles["info-row"]}>
                   <label className={styles["info-item"]}>Social Security:</label>
                   <span className={styles["info-value"]}>
-                    {event.isSocialSecurity ? "Yes" : "No"}
+                    {event.is_social ? "Yes" : "No"}
                   </span>
                 </div>
               )}
@@ -303,7 +344,7 @@ function EventSeriesInfo({ event }) {
                 <div className={styles["info-row"]}>
                   <label className={styles["info-item"]}>Discretionary:</label>
                   <span className={styles["info-value"]}>
-                    {event.isDiscretionary ? "Yes" : "No"}
+                    {event.is_discretionary ? "Yes" : "No"}
                   </span>
                 </div>
               )}

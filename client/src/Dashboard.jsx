@@ -54,8 +54,8 @@ function ScenarioList() {
 
 function Summary(){
   const {selectedScenario} = useSelected();
-  const totalPortfolioValue = selectedScenario?.investments
-    ? Array.from(selectedScenario.investments).reduce((sum, investment) => sum + investment.value, 0)
+  const totalPortfolioValue = selectedScenario?.Investments
+    ? Array.from(selectedScenario.Investments).reduce((sum, investment) => sum + investment.value, 0)
     : 0;
     const formatToDollars = (value) =>
       new Intl.NumberFormat("en-US", {

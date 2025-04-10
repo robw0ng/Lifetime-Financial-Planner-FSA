@@ -744,208 +744,167 @@ export const DataProvider = ({ children }) => {
   
   const createEventSeries = async (scenarioId, newEventSeries) => {
     try {
-      const newEventWithId = { ...newEventSeries, id: `${Date.now()}` };
+      if (user?.email) {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/events/${scenarioId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(newEventSeries),
+        });
   
-      let updatedScenarioToSelect = null;
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
   
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          console.log(scenario);
-          if (scenario.id === scenarioId) {
-            const updatedEvents = new Set(scenario.EventSeries);
-            updatedEvents.add(newEventWithId);
+        if (!res.ok) throw new Error("Failed to create event series");
   
-            const updatedSpendingStrategy = (
-              newEventWithId.type === "expense" && newEventWithId.isDiscretionary
-                ? [...scenario.spendingStrategy, newEventWithId]
-                : [...scenario.spendingStrategy]
-            );
-  
-            const updatedScenario = {
-              ...scenario,
-              events: updatedEvents,
-              spendingStrategy: updatedSpendingStrategy,
-            };
-  
-            updatedScenarioToSelect = updatedScenario;
-            return updatedScenario;
-          }
-          return scenario;
-        })
-      );
-  
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        const { eventSeries: created } = await res.json();
+        fetchScenarios();
+        return created;
+      } else {
+        const guestEventSeries = { ...newEventSeries, id: `${Date.now()}` };
+        setScenarios((prev) =>
+          prev.map((s) =>
+            s.id === scenarioId
+              ? { ...s, Events: [...(s.Events || []), guestEventSeries] }
+              : s
+          )
+        );
+        return guestEventSeries;
       }
-  
-      // TODO: Send to backend later
     } catch (error) {
-      console.error('Error creating event series:', error);
+      console.error("Error creating event series:", error);
+      return null;
     }
   };
   
-  const editEventSeries = async (scenarioId, editedEventSeries) => {
+  const editEventSeries = async (scenarioId, updatedEventSeries) => {
     try {
-      let updatedScenarioToSelect = null;
-  
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id === scenarioId) {
-            const updatedEvents = new Set(
-              Array.from(scenario.EventSeries).map((event) =>
-                event.id === editedEventSeries.id ? editedEventSeries : event
-              )
-            );
-  
-            // Rebuild spendingStrategy
-            const updatedSpendingStrategy = Array.from(updatedEvents).filter(
-              (e) => e.type === "expense" && e.isDiscretionary
-            );
-  
-            const updatedScenario = {
-              ...scenario,
-              events: updatedEvents,
-              spendingStrategy: updatedSpendingStrategy,
-            };
-  
-            updatedScenarioToSelect = updatedScenario;
-            return updatedScenario;
+      if (user?.email) {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/events/edit/${scenarioId}/${updatedEventSeries.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(updatedEventSeries),
           }
-          return scenario;
-        })
-      );
+        );
   
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
+  
+        if (!res.ok) throw new Error("Failed to update event series");
+  
+        const { eventSeries: updated } = await res.json();
+        fetchScenarios();
+        return updated;
+      } else {
+        setScenarios((prev) =>
+          prev.map((s) => {
+            if (s.id !== scenarioId) return s;
+            const updatedEvents = s.Events.map((ev) =>
+              ev.id === updatedEventSeries.id ? updatedEventSeries : ev
+            );
+            return { ...s, Events: updatedEvents };
+          })
+        );
+        return updatedEventSeries;
       }
-    } catch (error) {
-      console.error('Error editing event series:', error);
+    } catch (err) {
+      console.error("Error editing event series:", err);
+      return null;
     }
   };
-
+  
   const duplicateEventSeries = async (scenarioId, eventSeriesId) => {
     try {
-      let duplicatedEvent = null;
-      let updatedScenarioToSelect = null;
+      const scenario = scenarios.find((s) => s.id === scenarioId);
+      if (!scenario) return null;
   
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id === scenarioId) {
-            const eventToDuplicate = Array.from(scenario.EventSeries).find(event => event.id === eventSeriesId);
-            if (!eventToDuplicate) return scenario;
+      const original = scenario.EventSeries?.find((ev) => `${ev.id}` === `${eventSeriesId}`);
+      if (!original) return null;
   
-            duplicatedEvent = {
-              ...eventToDuplicate,
-              id: `${Date.now()}`,
-              name: `${eventToDuplicate.name} (Copy)`,
-            };
-  
-            const updatedEvents = new Set(scenario.EventSeries);
-            updatedEvents.add(duplicatedEvent);
-  
-            const updatedSpendingStrategy = (
-              duplicatedEvent.type === "expense" && duplicatedEvent.isDiscretionary
-                ? [...scenario.spendingStrategy, duplicatedEvent]
-                : [...scenario.spendingStrategy]
-            );
-  
-            const updatedScenario = {
-              ...scenario,
-              events: updatedEvents,
-              spendingStrategy: updatedSpendingStrategy,
-            };
-  
-            updatedScenarioToSelect = updatedScenario;
-            return updatedScenario;
+      if (user?.email) {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/events/duplicate/${scenarioId}/${eventSeriesId}`,
+          {
+            method: "POST",
+            credentials: "include",
           }
-          return scenario;
-        })
-      );
+        );
   
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
+  
+        if (!res.ok) throw new Error("Failed to duplicate event series");
+  
+        const { eventSeries: duplicated } = await res.json();
+        fetchScenarios();
+        return duplicated;
+      } else {
+        const duplicated = {
+          ...original,
+          id: `${Date.now()}`,
+          name: `${original.name} (Copy)`,
+        };
+  
+        setScenarios((prev) =>
+          prev.map((s) =>
+            s.id === scenarioId
+              ? { ...s, EventSeries: [...(s.EventSeries || []), duplicated] }
+              : s
+          )
+        );
+  
+        return duplicated;
       }
-  
-      return duplicatedEvent;
-    } catch (error) {
-      console.error('Error duplicating event series:', error);
+    } catch (err) {
+      console.error("Error duplicating event series:", err);
+      return null;
     }
-  };
-  
+  };  
+
   const deleteEventSeries = async (scenarioId, eventSeriesId) => {
     try {
-      let updatedScenarioToSelect = null;
-  
-      setScenarios((prevScenarios) =>
-        prevScenarios.map((scenario) => {
-          if (scenario.id === scenarioId) {
-            const updatedEvents = new Set(
-              Array.from(scenario.EventSeries).filter(event => event.id !== eventSeriesId)
-            );
-  
-            const updatedSpendingStrategy = scenario.spendingStrategy.filter(
-              (event) => event.id !== eventSeriesId
-            );
-  
-            const updatedScenario = {
-              ...scenario,
-              events: updatedEvents,
-              spendingStrategy: updatedSpendingStrategy,
-            };
-  
-            updatedScenarioToSelect = updatedScenario;
-            return updatedScenario;
+      if (user?.email) {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/events/delete/${scenarioId}/${eventSeriesId}`,
+          {
+            method: "DELETE",
+            credentials: "include",
           }
-          return scenario;
-        })
-      );
+        );
   
-      if (selectedScenario?.id === scenarioId) {
-        setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
+        if (res.status === 401) {
+          logout();
+          throw new Error("Unauthorized");
+        }
+  
+        if (!res.ok) throw new Error("Failed to delete event series");
+  
+        fetchScenarios();
+        return true;
+      } else {
+        setScenarios((prev) =>
+          prev.map((s) => {
+            if (s.id !== scenarioId) return s;
+            const updatedEvents = s.Events.filter((ev) => ev.id !== eventSeriesId);
+            return { ...s, Events: updatedEvents };
+          })
+        );
+        return true;
       }
-    } catch (error) {
-      console.error('Error deleting event series:', error);
+    } catch (err) {
+      console.error("Error deleting event series:", err);
+      return false;
     }
   };
-  
-  // const reorderStrategy = (scenarioId, strategyKey, fromIndex, toIndex) => {
-  //   if (fromIndex === toIndex) return;
-  
-  //   let updatedScenarioToSelect = null;
-  
-  //   setScenarios((prevScenarios) =>
-  //     prevScenarios.map((scenario) => {
-  //       if (scenario.id !== scenarioId) return scenario;
-  
-  //       const strategyCopy = [...(scenario[strategyKey] || [])];
-  //       if (
-  //         fromIndex < 0 ||
-  //         toIndex < 0 ||
-  //         fromIndex >= strategyCopy.length ||
-  //         toIndex >= strategyCopy.length
-  //       ) {
-  //         return scenario;
-  //       }
-  
-  //       const [moved] = strategyCopy.splice(fromIndex, 1);
-  //       strategyCopy.splice(toIndex, 0, moved);
-  
-  //       const updatedScenario = {
-  //         ...scenario,
-  //         [strategyKey]: strategyCopy,
-  //       };
-  
-  //       updatedScenarioToSelect = updatedScenario;
-  //       return updatedScenario;
-  //     })
-  //   );
-  
-  //   if (selectedScenario?.id === scenarioId) {
-  //     setTimeout(() => setSelectedScenario(updatedScenarioToSelect), 0);
-  //   }
-  
-  //   // TODO: Push reordered strategy to backend (e.g., /api/scenarios/:id/:strategyKey)
-  // };
   
   const reorderStrategy = async (scenarioId, strategyKey, fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;

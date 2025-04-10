@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useData } from "./DataContext";
 import { useSelected } from "./SelectedContext";
 import "./CreateEventSeries.css";
+import { get_type_from_id } from "./Investments";
 
 export default function CreateEventSeries() {
   const navigate = useNavigate();
-  const { selectedScenario } = useSelected();
+  const { selectedScenario, setSelectedEventSeries } = useSelected();
   const { createEventSeries } = useData();
 
   const [formData, setFormData] = useState({
@@ -96,18 +97,18 @@ export default function CreateEventSeries() {
 
   // Build an array of investments from the selected scenario
   const scenarioInvestments =
-    selectedScenario && selectedScenario.investments
-      ? Array.isArray(selectedScenario.investments)
-        ? selectedScenario.investments
-        : Array.from(selectedScenario.investments)
+    selectedScenario && selectedScenario.Investments
+      ? Array.isArray(selectedScenario.Investments)
+        ? selectedScenario.Investments
+        : Array.from(selectedScenario.Investments)
       : [];
 
   // Build an array of event series from the selected scenario (for start year reference)
   const scenarioEvents =
-    selectedScenario && selectedScenario.events
-      ? Array.isArray(selectedScenario.events)
-        ? selectedScenario.events
-        : Array.from(selectedScenario.events)
+    selectedScenario && selectedScenario.EventSeries
+      ? Array.isArray(selectedScenario.EventSeries)
+        ? selectedScenario.EventSeries
+        : Array.from(selectedScenario.EventSeries)
       : [];
 
   const handleSubmit = async (e) => {
@@ -233,35 +234,103 @@ export default function CreateEventSeries() {
     }
 
     // Construct the final event series object
+    // const newEventSeries = {
+    //   name: formData.name,
+    //   description: formData.description,
+    //   type: formData.type,
+    //   start_year_value: startYear,
+    //   duration,
+    //   initialAmount:
+    //     (formData.type === "income" || formData.type === "expense")
+    //       ? Number(formData.initialAmount)
+    //       : null,
+    //   expectedChange:
+    //     (formData.type === "income" || formData.type === "expense")
+    //       ? expectedChange
+    //       : null,
+    //   inflationAdjusted: formData.inflationAdjusted,
+    //   // Only include userPercentage if the scenario is married
+    //   userPercentage: selectedScenario && selectedScenario.isMarried && formData.userPercentage
+    //     ? Number(formData.userPercentage)
+    //     : null,
+    //   isSocialSecurity: formData.type === "income" ? formData.isSocialSecurity : null,
+    //   isDiscretionary: formData.type === "expense" ? formData.isDiscretionary : null,
+    //   allocation:
+    //     (formData.type === "invest" || formData.type === "rebalance")
+    //       ? allocationData
+    //       : null,
+    //   maxCash: formData.type === "invest" ? Number(formData.maxCash) : null,
+    // };
     const newEventSeries = {
       name: formData.name,
       description: formData.description,
       type: formData.type,
-      startYear,
-      duration,
-      initialAmount:
-        (formData.type === "income" || formData.type === "expense")
-          ? Number(formData.initialAmount)
+    
+      // Start Year
+      start_year_type: formData.startYearType,
+      start_year_value: formData.startYearType === "fixed" ? Number(formData.startYearValue) : null,
+      start_year_mean: formData.startYearType === "normal" ? Number(formData.startYearMean) : null,
+      start_year_std_dev: formData.startYearType === "normal" ? Number(formData.startYearStd) : null,
+      start_year_lower: formData.startYearType === "uniform" ? Number(formData.startYearMin) : null,
+      start_year_upper: formData.startYearType === "uniform" ? Number(formData.startYearMax) : null,
+      start_year_other_event:
+        formData.startYearType === "sameAsEvent" || formData.startYearType === "yearAfterEvent"
+          ? formData.startYearEventId
           : null,
-      expectedChange:
-        (formData.type === "income" || formData.type === "expense")
-          ? expectedChange
-          : null,
-      inflationAdjusted: formData.inflationAdjusted,
-      // Only include userPercentage if the scenario is married
-      userPercentage: selectedScenario && selectedScenario.isMarried && formData.userPercentage
-        ? Number(formData.userPercentage)
-        : null,
-      isSocialSecurity: formData.type === "income" ? formData.isSocialSecurity : null,
-      isDiscretionary: formData.type === "expense" ? formData.isDiscretionary : null,
-      allocation:
-        (formData.type === "invest" || formData.type === "rebalance")
-          ? allocationData
-          : null,
-      maxCash: formData.type === "invest" ? Number(formData.maxCash) : null,
+    
+      // Duration
+      duration_type: formData.durationType,
+      duration_value: formData.durationType === "fixed" ? Number(formData.durationValue) : null,
+      duration_mean: formData.durationType === "normal" ? Number(formData.durationMean) : null,
+      duration_std_dev: formData.durationType === "normal" ? Number(formData.durationStd) : null,
+      duration_lower: formData.durationType === "uniform" ? Number(formData.durationMin) : null,
+      duration_upper: formData.durationType === "uniform" ? Number(formData.durationMax) : null,
     };
+    
+        // Income or Expense
+    if (formData.type === "income" || formData.type === "expense") {
+      newEventSeries.initial_amount = Number(formData.initialAmount);
+      newEventSeries.expected_change_type = formData.expectedChangeType;
 
-    await createEventSeries(selectedScenario.id, newEventSeries);
+      if (formData.expectedChangeType === "fixed") {
+        newEventSeries.expected_change_value = Number(formData.expectedChangeValue);
+      } else if (formData.expectedChangeType === "uniform") {
+        newEventSeries.expected_change_lower = Number(formData.expectedChangeMin);
+        newEventSeries.expected_change_upper = Number(formData.expectedChangeMax);
+      } else if (formData.expectedChangeType === "normal") {
+        newEventSeries.expected_change_mean = Number(formData.expectedChangeMean);
+        newEventSeries.expected_change_std_dev = Number(formData.expectedChangeStd);
+      }
+
+      newEventSeries.inflation_adjusted = formData.inflationAdjusted;
+      newEventSeries.user_percentage =
+        selectedScenario && selectedScenario.is_married && formData.userPercentage
+          ? Number(formData.userPercentage)
+          : 100; // default to 100 if not provided
+      if (formData.type === "income") {
+        newEventSeries.is_social = formData.isSocialSecurity;
+      }
+      if (formData.type === "expense") {
+        newEventSeries.is_discretionary = formData.isDiscretionary;
+      }
+    }
+
+    // Invest or Rebalance
+    if (formData.type === "invest" || formData.type === "rebalance") {
+      const isGlide = formData.allocationType === "glide";
+      newEventSeries.is_glide_path = isGlide;
+      newEventSeries.asset_allocation = isGlide ? formData.allocationGlideInitial : formData.allocationFixed;
+      if (isGlide) {
+        newEventSeries.asset_allocation2 = formData.allocationGlideFinal;
+      }
+      if (formData.type === "invest") {
+        newEventSeries.max_cash = Number(formData.maxCash);
+      }
+    }
+    
+    const created_event_series = await createEventSeries(selectedScenario.id, newEventSeries);
+    console.log("created event series", created_event_series);
+    setSelectedEventSeries(created_event_series);
     navigate("/eventseries");
   };
 
@@ -617,7 +686,7 @@ export default function CreateEventSeries() {
                 onChange={handleChange}
               />
             </label>
-            {selectedScenario && selectedScenario.isMarried && (
+            {selectedScenario && selectedScenario.is_married && (
               <label>
                 User Percentage:
                 <input
@@ -691,7 +760,7 @@ export default function CreateEventSeries() {
                     {scenarioInvestments.map((inv) => (
                       <div key={inv.id} style={{ marginBottom: "0.5rem" }}>
                         <label>
-                          {inv.type.name} (%):
+                          {get_type_from_id(inv.investment_type_id, selectedScenario).name} (%):
                           <input
                             type="text"
                             inputMode="numeric"
@@ -713,7 +782,7 @@ export default function CreateEventSeries() {
                       {scenarioInvestments.map((inv) => (
                         <div key={inv.id} style={{ marginBottom: "0.5rem" }}>
                           <label>
-                            {inv.type.name}:
+                            {get_type_from_id(inv.investment_type_id, selectedScenario).name}:
                             <input
                               type="text"
                               inputMode="numeric"
@@ -732,7 +801,7 @@ export default function CreateEventSeries() {
                       {scenarioInvestments.map((inv) => (
                         <div key={inv.id} style={{ marginBottom: "0.5rem" }}>
                           <label>
-                            {inv.type.name}:
+                            {get_type_from_id(inv.investment_type_id, selectedScenario).name}:
                             <input
                               type="text"
                               inputMode="numeric"

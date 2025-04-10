@@ -17,7 +17,18 @@ function get_investment_from_special_id(investment_special_id, selectedScenario)
 
 function get_type_from_special_id(investment_special_id, selectedScenario){
   const investment_obj = get_investment_from_special_id(investment_special_id, selectedScenario);
-  return get_type_from_id(investment_obj.investment_type_id, selectedScenario);
+
+  if (investment_obj){
+    return get_type_from_id(investment_obj.investment_type_id, selectedScenario);    
+  }
+  return null;
+}
+
+function get_expense_from_id(expense_id, selectedScenario){
+  console.log("expense_id:", expense_id);
+  const expense_obj = selectedScenario.EventSeries.find((event) => Number(event.id) === Number(expense_id));
+  console.log("expense returned", expense_obj);
+  return expense_obj;
 }
 
 function ScenarioList() {
@@ -123,15 +134,11 @@ function StrategyList({ title, strategyKey, strategyItems }) {
                   ⬇️
                 </button>
               </span>
-              {item?.type && <span>:</span>}
-
               <span className={styles["strategy-span"]}>
-                {get_type_from_special_id(item, selectedScenario)?.name || item.name}
+                {get_type_from_special_id(item, selectedScenario)?.name || get_expense_from_id(item, selectedScenario)?.name || "—"}
               </span>
-
-              {item?.type && <span>:</span>}
               <span className={styles["strategy-span"]}>
-                ${get_investment_from_special_id(item, selectedScenario).value?.toLocaleString() ?? "—"}
+                ${get_investment_from_special_id(item, selectedScenario)?.value?.toLocaleString() || get_expense_from_id(item, selectedScenario)?.initial_amount || "—"}
               </span>
             </div>
           ))
