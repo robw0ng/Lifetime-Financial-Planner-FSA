@@ -573,6 +573,7 @@ async function processInvestmentUpdates(state) {
         }
 
         // Add to taxable income if applicable
+        // (certain non-retirements are not taxable, after-tax is always not taxable, pre-tax is taxed on withdrawal)
         if (investment.tax_status === 'non-retirement' && investmentType.taxability === 'true') {
             state.curYearIncome += generatedIncome;
         }
@@ -686,7 +687,7 @@ async function processRothConversion(state, scenario, year) {
         }
     }
 
-    // Update income and early withdrawal totals
+    // Update income only (early withdrawal not applicable for roth conversions)
     state.curYearIncome += rothConversionAmount;
 }
 
@@ -835,8 +836,9 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
             const sellAmount = Math.min(remainingWithdrawal, investment.value);
             remainingWithdrawal -= sellAmount;
 
-            // Calculate and track capital gains for non-pre-tax investments
-            if (investment.tax_status !== 'pre-tax') {
+            // Calculate and track capital gains for non-retirement investments only
+            // after-tax isn't taxable, and pre-tax is taxed as income
+            if (investment.tax_status === 'non-retirement') {
                 const sellFraction = sellAmount / investment.value;
                 const capitalGain = sellFraction * (investment.value - (investment.purchase_price || 0));
                 state.curYearGains += capitalGain;
@@ -845,7 +847,7 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
                 investment.purchase_price *= (1 - sellFraction);
             }
 
-            // Update income for pre-tax withdrawals
+            // Update income for pre-tax withdrawals only
             if (investment.tax_status === 'pre-tax') {
                 state.curYearIncome += sellAmount;
             }
@@ -989,8 +991,9 @@ async function withdrawForExpense(state, scenario, amount, userAge) {
         const sellAmount = Math.min(amount, investment.value);
         if (sellAmount <= 0) break;
 
-        // Calculate and track capital gains for non-pre-tax investments
-        if (investment.tax_status !== 'pre-tax') {
+        // Calculate and track capital gains for non-retirement investments only
+        // after-tax isn't taxable, and pre-tax is taxed as income
+        if (investment.tax_status === 'non-retirement') {
             const sellFraction = sellAmount / investment.value;
             const capitalGain = sellFraction * (investment.value - investment.purchase_price);
             state.curYearGains += capitalGain;
@@ -999,7 +1002,7 @@ async function withdrawForExpense(state, scenario, amount, userAge) {
             investment.purchase_price *= (1 - sellFraction);
         }
 
-        // Update income for pre-tax withdrawals
+        // Update income for pre-tax withdrawals only
         if (investment.tax_status === 'pre-tax') {
             state.curYearIncome += sellAmount;
         }
