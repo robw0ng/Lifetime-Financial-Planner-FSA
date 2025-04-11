@@ -810,6 +810,13 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
     // Calculate total payment needed
     const totalPayment = Math.round((sumOfNonDiscExpenses + totalTax) * 100) / 100;
 
+    // if user runs out of liquidity and cannot pay required expenses, halt the simulation
+    const totalAssets = state.investments.reduce((sum, inv) => sum + inv.value, 0);
+    if (totalAssets < totalPayment) {
+        console.log(`Simulation stopped in year ${year}: Not enough assets to pay non-discretionary expenses and taxes`);
+        return returnData
+    }
+
     //set total expense in year data
     yearData.totalExpenses = totalPayment
 
