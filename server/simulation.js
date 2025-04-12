@@ -266,6 +266,12 @@ async function simulateScenario(scenario) {
         if (year != currentYear) {
             updateTaxBrackets(state, state.inflationRate);
             state.retirementLimits = Math.round(state.retirementLimits * (1 + state.inflationRate) * 100) / 100;
+
+            // Also calculate adflation adjustment for all income/expense events
+            const event = state.events.filter(event => event.type === 'income' || event.type === 'expense');
+            if (event.inflation_adjusted) {
+                event.amount *= (1 + state.inflationRate);
+            }
         }
         
         //reset curr year values
@@ -457,11 +463,6 @@ async function processIncome(state, year) {
             } else {
                 event.amount *= (1 + sampleUniform(event.expected_change_lower, event.expected_change_upper));
             }
-        }
-
-        // Apply inflation adjustment if enabled
-        if (event.is_inflation_adjusted) {
-            event.amount *= (1 + state.inflationRate);
         }
     }
     
@@ -799,11 +800,6 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
                 event.amount *= (1 + sampleUniform(event.expected_change_lower, event.expected_change_upper));  // Percentage change using uniform distribution
             }
         }
-
-        // Apply inflation adjustment if needed
-        if (event.inflation_adjusted) {
-            event.amount *= (1 + state.inflationRate);
-        }
     });
 
 
@@ -938,12 +934,6 @@ async function processDiscretionaryExpenses(state, scenario, year, yearData) {
                 } else {
                     event.amount *= (1 + sampleUniform(event.expected_change_lower, event.expected_change_upper));
                 }
-            }
-
-
-            // Apply inflation adjustment if needed
-            if (event.inflation_adjusted) {
-                event.amount *= (1 + state.inflationRate);
             }
             
             return {
