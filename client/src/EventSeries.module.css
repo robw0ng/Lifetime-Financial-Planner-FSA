@@ -66,6 +66,10 @@
     border-radius: 10px;
 }
 
+.action-button:disabled{
+    background-color: gray;
+}
+
 .action-button:hover{
     color: inherit;
     opacity: 80%;
@@ -236,4 +240,20 @@
     height: 100%;
     width: 100%;
     flex: 0;
+}
+
+.sharing-settings{
+    height: 100%;
+    width: 100%;
+}
+
+.scenario-shared-button-container{
+    display: flex;
+    flex-direction: row;
+    background-color: #2c2e35;
+    border-radius: 10px
+}
+
+.share-button{
+ background-color: #2c2e35;
 }

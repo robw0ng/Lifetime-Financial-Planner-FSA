@@ -12,6 +12,7 @@ import LoginPage from './LoginPage';
 import ProtectedRoute from './ProtectedRoute';
 import CreateScenario from './CreateScenario';
 import EditScenario from './EditScenario';
+import ShareScenarioForm from './ShareScenarioForm';
 import { DataProvider } from './DataContext';
 import CreateInvestment from './CreateInvestment';
 import EditInvestment from './EditInvestment';
@@ -44,6 +45,7 @@ const AppContent = () => {
 
         <Route path="/create-scenario" element={<ProtectedRoute element={<CreateScenario />} />} />
         <Route path="/edit-scenario/:id" element={<ProtectedRoute element={<EditScenario />} />} />
+        <Route path="/share-scenario/:id" element={<ProtectedRoute element={<ShareScenarioForm />} />} />
 
         <Route path="/create-investment" element={<ProtectedRoute element={<CreateInvestment />} />} />
         <Route path="/edit-investment/:id" element={<ProtectedRoute element={<EditInvestment />} />} />

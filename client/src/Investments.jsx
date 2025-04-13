@@ -3,14 +3,70 @@ import { useSelected } from "./SelectedContext";
 import { useData } from "./DataContext";
 import { Link } from "react-router-dom";
 
+// function ScenarioList() {
+//   const {
+//     selectedScenario,
+//     setSelectedScenario,
+//     deselectScenario,
+//     deselectInvestment,
+//   } = useSelected();
+//   const { scenarios } = useData();
+
+//   function selectScenario(scenario) {
+//     if (selectedScenario && scenario.id === selectedScenario.id) {
+//       deselectScenario();
+//     } else if (scenario.id !== 0) {
+//       setSelectedScenario(scenario);
+//       console.log(scenario);
+//       deselectInvestment();
+//     }
+//   }
+//   let scenariosList = scenarios;
+
+//   // If the scenarios list is empty, display a placeholder item
+//   if (scenariosList.length <= 0) {
+//     scenariosList = [{ name: "No scenarios available...", id: null }];
+//   }
+
+//   return (
+//     <section
+//       className={`${styles["outer-container"]} ${styles["scenario-list-container"]}`}
+//     >
+//       <div
+//         className={`${styles["inner-container"]} ${styles["scenario-list"]}`}
+//       >
+//         <h2 className={styles["scenario-list-title"]}>Scenarios:</h2>
+//         <div className={styles["scenario-item-list"]}>
+//           {scenariosList.map((scenario, index) => (
+//             <div
+//               key={index}
+//               className={
+//                 selectedScenario && scenario.id === selectedScenario.id
+//                   ? `${styles["selected"]} ${styles["scenario-item"]}`
+//                   : styles["scenario-item"]
+//               }
+//               onClick={
+//                 scenario.id !== null ? () => selectScenario(scenario) : undefined
+//               }
+//             >
+//               <span>{scenario.name}</span>
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     </section>
+//   );
+// }
+
 function ScenarioList() {
   const {
     selectedScenario,
     setSelectedScenario,
     deselectScenario,
     deselectInvestment,
+    shared, 
+    setShared 
   } = useSelected();
-  const { scenarios } = useData();
 
   function selectScenario(scenario) {
     if (selectedScenario && scenario.id === selectedScenario.id) {
@@ -21,37 +77,88 @@ function ScenarioList() {
       deselectInvestment();
     }
   }
+  const { scenarios, sharedScenarios, fetchShared } = useData();
   let scenariosList = scenarios;
+  let sharedScenariosList = sharedScenarios;
+
+  function selectShared(){
+    setShared(true);
+    fetchShared();
+  }
+
+  function selectOwned(){
+    setShared(false);
+  }
+
 
   // If the scenarios list is empty, display a placeholder item
   if (scenariosList.length <= 0) {
     scenariosList = [{ name: "No scenarios available...", id: null }];
   }
 
+  if (sharedScenariosList.length <= 0){
+    sharedScenariosList = [{ name: "No scenarios available...", id: null }];
+  }
+
   return (
     <section
-      className={`${styles["outer-container"]} ${styles["scenario-list-container"]}`}
-    >
-      <div
-        className={`${styles["inner-container"]} ${styles["scenario-list"]}`}
-      >
+      className={`${styles["outer-container"]} ${styles["scenario-list-container"]}`}>
+      <div className={`${styles["inner-container"]} ${styles["scenario-list"]}`}>
+        <div className={`${styles["scenario-shared-button-container"]}`}>
+          <button 
+          className={
+            shared === false
+            ? `${styles["share-button"]} ${styles["selected"]}`
+            : styles["share-button"]          
+          }
+          onClick={selectOwned}
+          >
+          Owned</button>
+          <button 
+          className={
+            shared === true
+            ? `${styles["share-button"]} ${styles["selected"]}`
+            : styles["share-button"]          
+          }
+          onClick={selectShared}
+          >
+            Shared</button>
+        </div>
         <h2 className={styles["scenario-list-title"]}>Scenarios:</h2>
         <div className={styles["scenario-item-list"]}>
-          {scenariosList.map((scenario, index) => (
-            <div
-              key={index}
-              className={
-                selectedScenario && scenario.id === selectedScenario.id
-                  ? `${styles["selected"]} ${styles["scenario-item"]}`
-                  : styles["scenario-item"]
-              }
-              onClick={
-                scenario.id !== null ? () => selectScenario(scenario) : undefined
-              }
-            >
-              <span>{scenario.name}</span>
-            </div>
-          ))}
+          {shared === true ? 
+            (sharedScenariosList.map((shared_scenario, index) => (
+              <div
+                key={shared_scenario.id}
+                className={
+                  selectedScenario && shared_scenario.id === selectedScenario.id
+                    ? `${styles["selected"]} ${styles["scenario-item"]}`
+                    : styles["scenario-item"]
+                }
+                onClick={
+                  shared_scenario.id !== null ? () => selectScenario(shared_scenario) : undefined
+                }
+              >
+                <span>{shared_scenario.name}</span>
+              </div>
+            ))) 
+            :
+            (scenariosList.map((scenario, index) => (
+              <div
+                key={scenario.id}
+                className={
+                  selectedScenario && scenario.id === selectedScenario.id
+                    ? `${styles["selected"]} ${styles["scenario-item"]}`
+                    : styles["scenario-item"]
+                }
+                onClick={
+                  scenario.id !== null ? () => selectScenario(scenario) : undefined
+                }
+              >
+                <span>{scenario.name}</span>
+              </div>
+            )))
+          }
         </div>
       </div>
     </section>
@@ -205,6 +312,7 @@ function InvestmentTypeActions({ investmentType }) {
             <Link to="/create-investment-type" className={styles["action-button"]}>
               <button
                 className={`${styles["action-button"]} ${styles["create"]}`}
+                disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
               >
                 Create
               </button>
@@ -213,6 +321,7 @@ function InvestmentTypeActions({ investmentType }) {
             <Link to="" className={styles["action-button"]}>
               <button
                 className={`${styles["action-button"]} ${styles["create"]}`}
+                disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
               >
                 Create
               </button>
@@ -227,6 +336,7 @@ function InvestmentTypeActions({ investmentType }) {
           <button
             className={`${styles["action-button"]} ${styles["duplicate"]}`}
             onClick={handleDuplicateButtonClick}
+            disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
           >
             Duplicate
           </button>
@@ -238,6 +348,7 @@ function InvestmentTypeActions({ investmentType }) {
             >
               <button
                 className={`${styles["action-button"]} ${styles["edit"]}`}
+                disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
               >
                 Edit
               </button>
@@ -246,6 +357,7 @@ function InvestmentTypeActions({ investmentType }) {
             <Link className={styles["action-button"]}>
               <button
                 className={`${styles["action-button"]} ${styles["edit"]}`}
+                disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
               >
                 Edit
               </button>
@@ -255,6 +367,7 @@ function InvestmentTypeActions({ investmentType }) {
           <button
             className={`${styles["action-button"]} ${styles["delete"]}`}
             onClick={handleDeleteButtonClick}
+            disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
           >
             Delete
           </button>
@@ -490,17 +603,19 @@ function InvestmentActions({ investment }) {
           <h2>Investment Actions:</h2>
           <div className={styles["button-container"]}>
             {selectedScenario ? (
-              <Link to="/create-investment">
+              <Link to="/create-investment" className={styles["action-button"]}>
                 <button
                   className={`${styles["action-button"]} ${styles["create"]}`}
+                  disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
                 >
                   Create
                 </button>
               </Link>
             ) : (
-              <Link to="">
+              <Link to="" className={styles["action-button"]}>
                 <button
                   className={`${styles["action-button"]} ${styles["create"]}`}
+                  disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
                 >
                   Create
                 </button>
@@ -515,6 +630,7 @@ function InvestmentActions({ investment }) {
             <button
               className={`${styles["action-button"]} ${styles["duplicate"]}`}
               onClick={handleDuplicateButtonClick}
+              disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
             >
               Duplicate
             </button>
@@ -522,18 +638,22 @@ function InvestmentActions({ investment }) {
             {investment && investment.id !== null ? (
               <Link
                 to={`/edit-investment/${investment?.id}`}
-              
+                className={styles["action-button"]}
               >
                 <button
                   className={`${styles["action-button"]} ${styles["edit"]}`}
+                  disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
                 >
                   Edit
                 </button>
               </Link>
             ) : (
-              <Link>
+              <Link
+                className={styles["action-button"]}
+              >
                 <button
                   className={`${styles["action-button"]} ${styles["edit"]}`}
+                  disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
                 >
                   Edit
                 </button>
@@ -543,6 +663,7 @@ function InvestmentActions({ investment }) {
             <button
               className={`${styles["action-button"]} ${styles["delete"]}`}
               onClick={handleDeleteButtonClick}
+              disabled={selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw"}
             >
               Delete
             </button>

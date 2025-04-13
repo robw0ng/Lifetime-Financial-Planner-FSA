@@ -36,8 +36,9 @@ function ScenarioList() {
     selectedScenario,
     setSelectedScenario,
     deselectScenario,
+    shared, 
+    setShared 
   } = useSelected();
-  const { scenarios } = useData();
 
   function selectScenario(scenario) {
     if (selectedScenario && scenario.id === selectedScenario.id) {
@@ -47,40 +48,91 @@ function ScenarioList() {
       console.log(scenario);
     }
   }
+
+  const { scenarios, sharedScenarios, fetchShared } = useData();
   let scenariosList = scenarios;
+  let sharedScenariosList = sharedScenarios;
+
+  function selectShared(){
+    setShared(true);
+    fetchShared();
+  }
+
+  function selectOwned(){
+    setShared(false);
+  }
 
   if (scenariosList.length <= 0) {
     scenariosList = [{ name: "No scenarios available...", id: null }];
   }
 
+  if (sharedScenariosList.length <= 0){
+    sharedScenariosList = [{ name: "No scenarios available...", id: null }];
+  }
+
   return (
     <section
-      className={`${styles["outer-container"]} ${styles["scenario-list-container"]}`}
-    >
-      <div
-        className={`${styles["inner-container"]} ${styles["scenario-list"]}`}
-      >
+      className={`${styles["outer-container"]} ${styles["scenario-list-container"]}`}>
+      <div className={`${styles["inner-container"]} ${styles["scenario-list"]}`}>
+        <div className={`${styles["scenario-shared-button-container"]}`}>
+          <button 
+          className={
+            shared === false
+            ? `${styles["share-button"]} ${styles["selected"]}`
+            : styles["share-button"]          
+          }
+          onClick={selectOwned}
+          >
+          Owned</button>
+          <button 
+          className={
+            shared === true
+            ? `${styles["share-button"]} ${styles["selected"]}`
+            : styles["share-button"]          
+          }
+          onClick={selectShared}
+          >
+            Shared</button>
+        </div>
         <h2 className={styles["scenario-list-title"]}>Scenarios:</h2>
         <div className={styles["scenario-item-list"]}>
-          {scenariosList.map((scenario, index) => (
-            <div
-              key={index}
-              className={
-                selectedScenario && scenario.id === selectedScenario.id
-                  ? `${styles["selected"]} ${styles["scenario-item"]}`
-                  : styles["scenario-item"]
-              }
-              onClick={
-                scenario.id !== null ? () => selectScenario(scenario) : undefined
-              }
-            >
-              <span>{scenario.name}</span>
-            </div>
-          ))}
+          {shared === true ? 
+            (sharedScenariosList.map((shared_scenario, index) => (
+              <div
+                key={shared_scenario.id}
+                className={
+                  selectedScenario && shared_scenario.id === selectedScenario.id
+                    ? `${styles["selected"]} ${styles["scenario-item"]}`
+                    : styles["scenario-item"]
+                }
+                onClick={
+                  shared_scenario.id !== null ? () => selectScenario(shared_scenario) : undefined
+                }
+              >
+                <span>{shared_scenario.name}</span>
+              </div>
+            ))) 
+            :
+            (scenariosList.map((scenario, index) => (
+              <div
+                key={scenario.id}
+                className={
+                  selectedScenario && scenario.id === selectedScenario.id
+                    ? `${styles["selected"]} ${styles["scenario-item"]}`
+                    : styles["scenario-item"]
+                }
+                onClick={
+                  scenario.id !== null ? () => selectScenario(scenario) : undefined
+                }
+              >
+                <span>{scenario.name}</span>
+              </div>
+            )))
+          }
         </div>
       </div>
     </section>
-  );
+  );  
 }
 
 function StrategyList({ title, strategyKey, strategyItems }) {
@@ -118,7 +170,7 @@ function StrategyList({ title, strategyKey, strategyItems }) {
                     e.stopPropagation();
                     handleMove(index, "up");
                   }}
-                  disabled={index <= 0}
+                  disabled={index <= 0 || (selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw")}
                   className={styles["move-button"]}
                 >
                   ⬆️
@@ -128,7 +180,7 @@ function StrategyList({ title, strategyKey, strategyItems }) {
                     e.stopPropagation();
                     handleMove(index, "down");
                   }}
-                  disabled={index >= strategyItems.length - 1}
+                  disabled={index >= strategyItems.length - 1 || (selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw")}
                   className={styles["move-button"]}
                 >
                   ⬇️

@@ -36,7 +36,7 @@ export default function CreateScenario() {
 	});
 
 	const { createScenario } = useData(); // Use createScenario from context
-	const { setSelectedScenario } = useSelected();
+	const { setSelectedScenario, setShared } = useSelected();
 	const navigate = useNavigate(); // Add useNavigate for redirection
 
 	const handleChange = (e) => {
@@ -106,9 +106,9 @@ export default function CreateScenario() {
 		};
 		try {
 			const createdScenario = await createScenario(newScenario);
-			setSelectedScenario(createdScenario);
-			console.log(createdScenario);
+			setShared(false);
 			navigate("/scenarios");
+			setSelectedScenario(createdScenario);
 		} catch (err) {
 			console.log("Error during scenario creation:", err.message);
 		}

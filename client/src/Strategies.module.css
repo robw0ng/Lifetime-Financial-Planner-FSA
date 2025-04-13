@@ -127,3 +127,14 @@
     opacity: 0.3;
     cursor: not-allowed;
 }
+
+.scenario-shared-button-container{
+    display: flex;
+    flex-direction: row;
+    background-color: #2c2e35;
+    border-radius: 10px
+}
+
+.share-button{
+ background-color: #2c2e35;
+}

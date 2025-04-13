@@ -5,7 +5,7 @@ import { useSelected } from "./SelectedContext";
 
 export default function EditScenario() {
   const { id } = useParams(); // Get scenario ID from URL
-  const { scenarios, editScenario } = useData();
+  const { allScenarios, editScenario } = useData();
   const { setSelectedScenario } = useSelected();
   const navigate = useNavigate();
 
@@ -38,7 +38,7 @@ export default function EditScenario() {
     // sharing_settings: "",
   });
 
-  const scenarioToEdit = scenarios.find(
+  const scenarioToEdit = allScenarios.find(
     (scenario) => Number(scenario.id) === Number(id)
   );
 
@@ -73,7 +73,7 @@ export default function EditScenario() {
         // sharing_settings: scenarioToEdit.sharingSettings || "",
       });
     }
-  }, [id, scenarios]);
+  }, [id, allScenarios]);
 
   // Handle changes in form inputs
   const handleChange = (e) => {

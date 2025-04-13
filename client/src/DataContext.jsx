@@ -7,12 +7,15 @@ const DataContext = createContext();
 export const DataProvider = ({ children }) => {
   const { user, logout } = useAuth(); // ✅ Use email from AuthContext
   const [ scenarios, setScenarios ] = useState([]);
+  const [ sharedScenarios, setSharedScenarios ] = useState([]);
+  const [ allScenarios, setAllScenarios ] = useState([]);
+  const [ accessList, setAccessList ] = useState([]);
   const [ loading, setLoading ] = useState(true);
   const { selectedScenario, setSelectedScenario, selectedInvestment, setSelectedInvestment } = useSelected();
   
-  const fetchScenarios = async () => {
+  const fetchOwned = async () => {
     try {
-      setLoading(true);
+      // setLoading(true);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios`, {
         method: "GET",
         credentials: "include",
@@ -29,16 +32,77 @@ export const DataProvider = ({ children }) => {
   
       const data = await res.json();
       setScenarios(data);
-      if (selectedScenario) {
-        const updatedSelectedScenario = data.find((scenario) => scenario.id === selectedScenario.id);
-        if (updatedSelectedScenario) {
-          setSelectedScenario(updatedSelectedScenario);
-        }
-      }
+      // if (selectedScenario) {
+      //   const updatedSelectedScenario = data.find((scenario) => scenario.id === selectedScenario.id);
+      //   if (updatedSelectedScenario) {
+      //     setSelectedScenario(updatedSelectedScenario);
+      //   }
+      // }
+      return data;
     } catch (error) {
       console.error("Error fetching scenarios:", error);
-    } finally {
-      setLoading(false);
+    } 
+    // finally {
+      // setLoading(false);
+    // }
+    return null;
+  };
+
+  const fetchShared = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/shared`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        throw new Error("Unauthorized");
+      }
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch scenarios");
+      }
+      const data = await res.json();
+      setSharedScenarios(data);
+      // if (selectedScenario) {
+      //   const updatedSelectedScenario = data.find((shared_scenario) => shared_scenario.id === selectedScenario.id);
+      //   if (updatedSelectedScenario) {
+      //     setSelectedScenario(updatedSelectedScenario);
+      //   }
+      // }
+      return data;
+    }
+    catch (error){
+      console.error("Error fetching shared scenarios:", error);
+    }
+    return null;
+  };
+
+  const fetchScenarios = async () => {
+    let owned = await fetchOwned();
+    let shared = await fetchShared();
+    let new_all_scenarios = [...owned, ...shared]
+    setAllScenarios(new_all_scenarios);
+    if (selectedScenario) {
+      const updatedSelectedScenario = new_all_scenarios.find((scenario) => String(scenario.id) === String(selectedScenario.id));
+      if (updatedSelectedScenario) {
+        console.log("updating selected scenario to", updatedSelectedScenario);
+        setSelectedScenario(updatedSelectedScenario);
+      }
+    }
+
+  };
+
+  const fetchAccessList = async (scenarioId) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/access/${scenarioId}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch access list");
+      const data = await res.json();
+      setAccessList(data);
+    } catch (err) {
+      console.error("Error fetching access list:", err.message);
     }
   };
 
@@ -66,7 +130,7 @@ export const DataProvider = ({ children }) => {
     
         const { scenario: createdScenario } = await res.json();
     
-        fetchScenarios();
+        await fetchScenarios();
         return createdScenario;
       }
       else{
@@ -101,7 +165,7 @@ export const DataProvider = ({ children }) => {
 
 				const data = await res.json();
 				const updatedScenario = data.scenario;
-        fetchScenarios();
+        await fetchScenarios();
         return updatedScenario;
 			} else {
 				setScenarios((prev) =>
@@ -135,7 +199,7 @@ export const DataProvider = ({ children }) => {
         }
   
         console.log("Scenario deleted from backend");
-        fetchScenarios();
+        await fetchScenarios();
       } else {
         setScenarios((prev) => prev.filter((scenario) => scenario.id !== scenarioId));
       }
@@ -146,7 +210,9 @@ export const DataProvider = ({ children }) => {
   
   const duplicateScenario = async (scenarioId) => {
     try {
-      const scenarioToDuplicate = scenarios.find((scenario) => scenario.id === scenarioId);
+      const scenarioToDuplicate = scenarios.find((scenario) => scenario.id === scenarioId) || 
+                  sharedScenarios.find((sharedScenario) => sharedScenario.id === scenarioId);
+      console.log("scenario to dup", scenarioToDuplicate);
       if (!scenarioToDuplicate) {
         console.error("Scenario not found for duplication");
         return null;
@@ -174,7 +240,7 @@ export const DataProvider = ({ children }) => {
   
         const { scenario: duplicatedScenario } = await res.json();
   
-        fetchScenarios();
+        await fetchScenarios();
         return duplicatedScenario;
       } else {
         // Guest user fallback
@@ -193,6 +259,73 @@ export const DataProvider = ({ children }) => {
     }
   };
   
+  const leaveScenario = async(scenarioId) => {
+    try{
+      if (user?.email) {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/scenarios/leave/${scenarioId}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+          }
+        );
+        console.log(res.json);
+        await fetchScenarios();
+      }  
+    }
+    catch (error){
+      console.error("Error leaving scenario:", error);
+    }
+  };
+
+  const shareScenario = async (scenarioId, email, permission) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/share/${scenarioId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, permission }), // 👈 send the payload
+      });
+  
+      if (res.status === 401) {
+        throw new Error("Unauthorized");
+      }
+  
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to share scenario: ${errorText}`);
+      }
+  
+      console.log("Scenario shared successfully!");
+      return {success: true, message: "Success!"};
+    } catch (err) {
+      console.error("Error sharing scenario:", err.message);
+      return { success: false, message: err.message };
+    }
+  };  
+
+  const removeScenarioAccess = async (scenarioId, userIdToRemove) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/unshare/${scenarioId}/${userIdToRemove}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+  
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Failed to remove access: ${text}`);
+      }
+  
+      fetchAccessList(scenarioId);
+      return true;
+    } catch (error) {
+      console.error("Error removing scenario access:", error);
+      return false;
+    }
+  };
+  
+
   const createInvestmentType = async (scenarioId, newInvestmentType) => {
     try {
       if (user?.email) {
@@ -215,7 +348,7 @@ export const DataProvider = ({ children }) => {
         }
   
         const { investmentType: createdType } = await res.json();
-        fetchScenarios();
+        await fetchScenarios();
         return createdType;
       } else {
         // Guest mode: create local type
@@ -263,7 +396,7 @@ export const DataProvider = ({ children }) => {
   
         const { investmentType: updated } = await res.json();
   
-        fetchScenarios();
+        await fetchScenarios();
         return updated;
       } else {
         // Guest mode: update locally only
@@ -329,7 +462,7 @@ export const DataProvider = ({ children }) => {
   
         const { investmentType: duplicated } = await res.json();
   
-        fetchScenarios();
+        await fetchScenarios();
   
         return duplicated;
       } else {
@@ -398,7 +531,7 @@ export const DataProvider = ({ children }) => {
           throw new Error(`Failed to delete investment type: ${errorText}`);
         }
   
-        fetchScenarios();
+        await fetchScenarios();
         return true;
       } else {
         // Guest mode: delete locally only
@@ -480,7 +613,7 @@ export const DataProvider = ({ children }) => {
         }
   
         const { investment: created } = await res.json();
-        fetchScenarios(); // Refresh state from server
+        await fetchScenarios(); // Refresh state from server
         return created;
       } else {
         // Guest mode: Create locally
@@ -564,7 +697,7 @@ export const DataProvider = ({ children }) => {
         }
   
         const { investment: updatedFromServer } = await res.json();
-        fetchScenarios();
+        await fetchScenarios();
         return updatedFromServer;
       } else {
         // Guest mode
@@ -658,7 +791,7 @@ export const DataProvider = ({ children }) => {
         }
   
         const { investment: duplicatedFromServer } = await res.json();
-        fetchScenarios();
+        await fetchScenarios();
         return duplicatedFromServer;
       } else {
         // Guest mode (local-only)
@@ -701,7 +834,7 @@ export const DataProvider = ({ children }) => {
         }
   
         // Refresh from backend
-        fetchScenarios();
+        await fetchScenarios();
       } else {
         // 👤 Guest mode: local-only update
         let updatedScenarioToSelect = null;
@@ -760,7 +893,7 @@ export const DataProvider = ({ children }) => {
         if (!res.ok) throw new Error("Failed to create event series");
   
         const { eventSeries: created } = await res.json();
-        fetchScenarios();
+        await fetchScenarios();
         return created;
       } else {
         const guestEventSeries = { ...newEventSeries, id: `${Date.now()}` };
@@ -800,7 +933,7 @@ export const DataProvider = ({ children }) => {
         if (!res.ok) throw new Error("Failed to update event series");
   
         const { eventSeries: updated } = await res.json();
-        fetchScenarios();
+        await fetchScenarios();
         return updated;
       } else {
         setScenarios((prev) =>
@@ -845,7 +978,7 @@ export const DataProvider = ({ children }) => {
         if (!res.ok) throw new Error("Failed to duplicate event series");
   
         const { eventSeries: duplicated } = await res.json();
-        fetchScenarios();
+        await fetchScenarios();
         return duplicated;
       } else {
         const duplicated = {
@@ -888,7 +1021,7 @@ export const DataProvider = ({ children }) => {
   
         if (!res.ok) throw new Error("Failed to delete event series");
   
-        fetchScenarios();
+        await fetchScenarios();
         return true;
       } else {
         setScenarios((prev) =>
@@ -973,7 +1106,7 @@ export const DataProvider = ({ children }) => {
 
   useEffect(() => {
     if (user?.email) {
-      fetchScenarios(); // ✅ Load hardcoded list for now
+      fetchScenarios();
     }
   }, [user?.email]);
 
@@ -981,12 +1114,24 @@ export const DataProvider = ({ children }) => {
     <DataContext.Provider value={{ 
     scenarios, 
     setScenarios,
+    sharedScenarios,
+    setSharedScenarios,
+    allScenarios,
+    setAllScenarios,
+    accessList,
+    setAccessList,
     loading, 
-    fetchScenarios, 
+    fetchOwned,
+    fetchShared,
+    fetchScenarios,
+    fetchAccessList,
     createScenario, 
     editScenario, 
     duplicateScenario, 
     deleteScenario,
+    leaveScenario,
+    shareScenario,
+    removeScenarioAccess,
     createInvestmentType,
     editInvestmentType,
     duplicateInvestmentType,

@@ -4,10 +4,11 @@ import { useSelected } from "./SelectedContext";
 import { useData } from "./DataContext";
 import { Link } from "react-router-dom";
 import { get_type_from_id } from "./Investments";
+import { useState, useEffect } from "react";
 
 function ScenarioActions({ scenario }) {
   const isScenarioSelected = scenario;
-  const { duplicateScenario, deleteScenario } = useData();
+  const { duplicateScenario, deleteScenario, leaveScenario } = useData();
   const { setSelectedScenario, deselectScenario } = useSelected();
   if (!scenario) {
     scenario = {
@@ -16,21 +17,36 @@ function ScenarioActions({ scenario }) {
     };
   }
 
-  function handleDeleteButtonClick() {
+  async function handleDeleteButtonClick() {
     if (scenario.id !== null) {
       const confirmDelete = window.confirm(
         "Are you sure you want to delete this scenario?"
       );
       if (confirmDelete) {
-        deleteScenario(scenario.id);
+        await deleteScenario(scenario.id);
         deselectScenario();
       }
     }
   }
 
+  async function handleLeaveButtonClick() {
+    if (scenario.id !== null) {
+      const confirmLeave = window.confirm(
+        "Are you sure you want to leave this scenario?"
+      );
+      if (confirmLeave) {
+        // deleteScenario(scenario.id);
+        await leaveScenario(scenario.id);
+        deselectScenario();
+      }
+    }
+
+  }
+
   async function handleDuplicateButtonClick() {
     if (scenario.id !== null) {
       try {
+        console.log(scenario.id);
         let returnedScenario = await duplicateScenario(scenario.id);
         console.log(returnedScenario);
         if (returnedScenario !== null) {
@@ -76,6 +92,7 @@ function ScenarioActions({ scenario }) {
             >
               <button
                 className={`${styles["action-button"]} ${styles["edit"]}`}
+                disabled={scenario.permission && scenario.permission !== "rw"}
               >
                 Edit Scenario
               </button>
@@ -91,9 +108,19 @@ function ScenarioActions({ scenario }) {
           )}
           <button
             className={`${styles["action-button"]} ${styles["delete"]}`}
-            onClick={handleDeleteButtonClick}
+            onClick={
+              scenario.permission && (scenario.permission === "rw" || scenario.permission === "r")
+              ? handleLeaveButtonClick
+              : handleDeleteButtonClick
+            }
+            // disabled={scenario.permission && (scenario.permission === "rw" || scenario.permission === "r")}
+
           >
-            Delete Scenario
+            {scenario.permission && (scenario.permission === "rw" || scenario.permission === "r")
+              ? "Leave Scenario"
+              : "Delete Scenario"
+            }
+            {/* Delete Scenario */}
           </button>
         </div>
       </div>
@@ -102,6 +129,41 @@ function ScenarioActions({ scenario }) {
 }
 
 function BasicInformation({ scenario }) {
+  const [owner, setOwner] = useState("No one!");
+  useEffect(() => {
+    if (scenario && scenario.user_id) {
+      const fetchOwnerEmail = async () => {
+        try {
+          const res = await fetch(
+            `${import.meta.env.VITE_API_URL}/scenarios/owner/${scenario.user_id}`,
+            {
+              method: "POST",
+              credentials: "include",
+            }
+          );
+
+          if (res.status === 401) {
+            throw new Error("Unauthorized");
+          }
+
+          if (!res.ok) {
+            throw new Error("Failed to fetch scenario owner");
+          }
+
+          const data = await res.json();
+          setOwner(data || "Unknown");
+        } catch (error) {
+          console.error(error);
+        }
+      };
+
+      fetchOwnerEmail();
+    }
+    else{
+      setOwner("No one!");
+    }
+  }, [scenario]);
+
   if (!scenario) {
     scenario = {
       name: "",
@@ -115,10 +177,12 @@ function BasicInformation({ scenario }) {
     };
   }
 
+
   return (
     <div className={styles["outer-container"]}>
       <div className={styles["inner-container"]}>
         <div className={styles["basic-info"]}>
+          <label className={styles["basic-info-title"]}>Owner: {owner}</label>
           <h2 className={styles["basic-info-title"]}>Basic Information:</h2>
           <div className={styles["basic-info-row"]}>
             <p className={styles["basic-info-item"]}>Name:</p>
@@ -304,8 +368,13 @@ function ScenarioInfo({ scenario }) {
 }
 
 export function ScenarioList() {
-  const { selectedScenario, setSelectedScenario, deselectScenario } =
-    useSelected();
+  const { 
+    selectedScenario, 
+    setSelectedScenario, 
+    deselectScenario, 
+    shared, 
+    setShared 
+  } = useSelected();
 
   function selectScenario(scenario) {
     if (selectedScenario && scenario.id === selectedScenario.id) {
@@ -316,37 +385,84 @@ export function ScenarioList() {
     }
   }
 
-  const { scenarios } = useData();
+  const { scenarios, sharedScenarios, fetchShared } = useData();
   let scenariosList = scenarios;
+  let sharedScenariosList = sharedScenarios;
 
-  if (scenariosList.length <= 0) {
+
+  function selectShared(){
+    setShared(true);
+    fetchShared();
+  }
+
+  function selectOwned(){
+    setShared(false);
+  }
+
+  if (scenariosList.length <= 0 ) {
     scenariosList = [{ name: "No scenarios available...", id: null }];
+  }
+
+  if (sharedScenariosList.length <= 0){
+    sharedScenariosList = [{ name: "No scenarios available...", id: null }];
   }
 
   return (
     <section
-      className={`${styles["outer-container"]} ${styles["scenario-list-container"]}`}
-    >
-      <div
-        className={`${styles["inner-container"]} ${styles["scenario-list"]}`}
-      >
+      className={`${styles["outer-container"]} ${styles["scenario-list-container"]}`}>
+      <div className={`${styles["inner-container"]} ${styles["scenario-list"]}`}>
+        <div className={`${styles["scenario-shared-button-container"]}`}>
+          <button 
+          className={
+            shared === false
+            ? `${styles["share-button"]} ${styles["selected"]}`
+            : styles["share-button"]          
+          }
+          onClick={selectOwned}
+          >
+          Owned</button>
+          <button 
+          className={
+            shared === true
+            ? `${styles["share-button"]} ${styles["selected"]}`
+            : styles["share-button"]          
+          }
+          onClick={selectShared}
+          >
+            Shared</button>
+        </div>
         <h2 className={styles["scenario-list-title"]}>Scenarios:</h2>
         <div className={styles["scenario-item-list"]}>
-          {scenariosList.map((scenario, index) => (
+          {shared === true ? (sharedScenariosList.map((shared_scenario, index) => (
             <div
-              key={scenario.id}
+              key={shared_scenario.id}
               className={
-                selectedScenario && scenario.id === selectedScenario.id
+                selectedScenario && shared_scenario.id === selectedScenario.id
                   ? `${styles["selected"]} ${styles["scenario-item"]}`
                   : styles["scenario-item"]
               }
               onClick={
-                scenario.id !== null ? () => selectScenario(scenario) : undefined
+                shared_scenario.id !== null ? () => selectScenario(shared_scenario) : undefined
               }
             >
-              <span>{scenario.name}</span>
-            </div>
-          ))}
+              <span>{shared_scenario.name}</span>
+            </div>))) :
+
+            (scenariosList.map((scenario, index) => (
+              <div
+                key={scenario.id}
+                className={
+                  selectedScenario && scenario.id === selectedScenario.id
+                    ? `${styles["selected"]} ${styles["scenario-item"]}`
+                    : styles["scenario-item"]
+                }
+                onClick={
+                  scenario.id !== null ? () => selectScenario(scenario) : undefined
+                }
+              >
+                <span>{scenario.name}</span>
+              </div>)))
+          }
         </div>
       </div>
     </section>
@@ -365,15 +481,42 @@ function ScenariosGraph(){
   )
 }
 
-function ScenarioSharingSettings(){
+function ScenarioSharingSettings() {
+  const { selectedScenario } = useSelected();
+
   return (
-      <div className={styles["outer-container"]}>
-        <div className={styles["inner-container"]}>
-          Sharing settings go here
+    <div className={`${styles["outer-container"]} ${styles["sharing-settings-outer-container"]}`}>
+      <div className={`${styles["inner-container"]}`}>
+        <div className={styles["sharing-settings-inner-container"]}>
+        <h2>Share Scenario</h2>
+          {selectedScenario ? (
+              <Link
+                to={`/share-scenario/${selectedScenario.id}`}
+                className={styles["action-button"]}
+              >
+                <button
+                  className={`${styles["action-button"]} ${styles["share"]}`}
+                  disabled={selectedScenario.permission}
+                >
+                  Share
+                </button>
+              </Link>
+            ) : (
+              <Link className={styles["action-button"]}>
+                <button
+                  className={`${styles["action-button"]}`}
+                  disabled={!selectedScenario}
+                >
+                  Share
+                </button>
+              </Link>
+          )}
         </div>
       </div>
-  )
+    </div>
+  );
 }
+
 
 const Scenarios = () => {
   const { selectedScenario, setSelectedScenario } = useSelected();
