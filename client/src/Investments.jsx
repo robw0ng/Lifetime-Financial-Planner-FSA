@@ -476,7 +476,7 @@ export function get_type_from_id(investment_type_id, selectedScenario){
   }
 
   return selectedScenario.InvestmentTypes.find(
-    (type) => type.id === investment_type_id
+    (type) => String(type.id) === String(investment_type_id)
   );
 }
 

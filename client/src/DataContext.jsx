@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useSelected } from './SelectedContext';
+import yaml from "js-yaml";
 
 const DataContext = createContext();
 
@@ -325,7 +326,6 @@ export const DataProvider = ({ children }) => {
     }
   };
   
-
   const createInvestmentType = async (scenarioId, newInvestmentType) => {
     try {
       if (user?.email) {
@@ -1103,7 +1103,127 @@ export const DataProvider = ({ children }) => {
     }
   };
   
+  const fetchUserTaxYAML = async (userId) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/user/get-yaml`, {
+        method: "GET",
+        credentials: "include",
+      });
+  
+      if (res.status === 401) {
+        console.warn("Unauthorized access while fetching YAML.");
+        return null;
+      }
+  
+      if (!res.ok) {
+        throw new Error("Failed to fetch YAML file");
+      }
+  
+      const data = await res.json();
+      return data.yaml;
+    } catch (error) {
+      console.error("Error fetching YAML file:", error);
+      return null;
+    }
+  };
 
+  const uploadUserYaml = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file); // must match the field name expected by multer: 'file'
+  
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/user/upload-yaml`, {
+        method: "POST",
+        credentials: "include",
+        body: formData, // no need to set Content-Type — browser will handle it
+      });
+  
+      if (!res.ok) throw new Error("Failed to upload YAML");
+  
+      return true;
+    } catch (err) {
+      console.error("Error uploading YAML:", err);
+      return false;
+    }
+  };
+
+const exportScenario = async (scenarioId) => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/export-yaml/${scenarioId}`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!res.ok) throw new Error("Failed to export scenario");
+
+    const yamlText = await res.text();
+
+    // Trigger file download
+    const blob = new Blob([yamlText], { type: "application/x-yaml" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "scenario.yaml");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (err) {
+    console.error("Error exporting scenario:", err);
+  }
+  };
+
+const importScenario = async () => {
+    return new Promise((resolve, reject) => {
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = ".yaml,.yml";
+  
+      fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return reject("No file selected");
+  
+        const formData = new FormData();
+        formData.append("file", file);
+  
+        try {
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/import-yaml`, {
+            method: "POST",
+            credentials: "include",
+            body: formData,
+          });
+  
+          if (!res.ok) throw new Error("Failed to import scenario");
+  
+          const { scenario: importedScenario } = await res.json();
+          fetchScenarios(); // Refresh scenario list
+          resolve(importedScenario);
+        } catch (error) {
+          console.error("Error importing scenario:", error);
+          reject(error);
+        }
+      };
+  
+      fileInput.click();
+    });
+  };
+  
+  
+const removeUserYaml = async () => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/user/remove-yaml`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (!res.ok) throw new Error("Failed to delete YAML");
+
+    return true;
+  } catch (err) {
+    console.error("Error removing YAML:", err);
+    return false;
+  }
+};
+  
   useEffect(() => {
     if (user?.email) {
       fetchScenarios();
@@ -1144,7 +1264,12 @@ export const DataProvider = ({ children }) => {
     editEventSeries,
     duplicateEventSeries,
     deleteEventSeries,
-    reorderStrategy
+    reorderStrategy,
+    fetchUserTaxYAML,
+    uploadUserYaml,
+    removeUserYaml,
+    exportScenario,
+    importScenario,
     }}>
       {children}
     </DataContext.Provider>

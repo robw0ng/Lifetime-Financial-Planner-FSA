@@ -483,39 +483,64 @@ function ScenariosGraph(){
 
 function ScenarioSharingSettings() {
   const { selectedScenario } = useSelected();
+  const { exportScenario, importScenario, fetchScenarios } = useData();
+
+  const handleExport = () => {
+    if (selectedScenario?.id) {
+      exportScenario(selectedScenario.id);
+    }
+  };
+
+  const handleImport = async () => {
+    try {
+      await importScenario();
+    } catch (err) {
+      console.error("Failed to import:", err);
+    }
+  };
 
   return (
     <div className={`${styles["outer-container"]} ${styles["sharing-settings-outer-container"]}`}>
-      <div className={`${styles["inner-container"]}`}>
+      <div className={styles["inner-container"]}>
         <div className={styles["sharing-settings-inner-container"]}>
-        <h2>Share Scenario</h2>
+          <h2>Share Scenario</h2>
           {selectedScenario ? (
-              <Link
-                to={`/share-scenario/${selectedScenario.id}`}
-                className={styles["action-button"]}
+            <Link to={`/share-scenario/${selectedScenario.id}`} className={styles["action-button"]}>
+              <button
+                className={`${styles["action-button"]} ${styles["share"]}`}
+                disabled={selectedScenario.permission}
               >
-                <button
-                  className={`${styles["action-button"]} ${styles["share"]}`}
-                  disabled={selectedScenario.permission}
-                >
-                  Share
-                </button>
-              </Link>
-            ) : (
-              <Link className={styles["action-button"]}>
-                <button
-                  className={`${styles["action-button"]}`}
-                  disabled={!selectedScenario}
-                >
-                  Share
-                </button>
-              </Link>
+                Share
+              </button>
+            </Link>
+          ) : (
+            <Link className={styles["action-button"]}>
+              <button className={styles["action-button"]} disabled={!selectedScenario}>
+                Share
+              </button>
+            </Link>
           )}
+          
+          <button
+            className={`${styles["action-button"]} ${styles["import"]}`}
+            onClick={handleImport}
+          >
+            Import
+          </button>
+
+          <button
+            className={`${styles["action-button"]} ${styles["export"]}`}
+            onClick={handleExport}
+            disabled={!selectedScenario}
+          >
+            Export
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
 
 
 const Scenarios = () => {

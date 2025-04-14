@@ -295,6 +295,14 @@
     border-radius: 10px
 }
 
-.share-button{
- background-color: #2c2e35;
+.share{
+ background-color: #489cbd;
+}
+
+.import {
+    background-color: #9854f7;
+}
+
+.export {
+    background-color: #f79254;
 }

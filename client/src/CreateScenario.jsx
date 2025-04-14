@@ -33,6 +33,7 @@ export default function CreateScenario() {
 		rothEndYear: "",
 		financialGoal: "",
 		stateOfResidence: "",
+		initialCashInvestment: "",
 	});
 
 	const { createScenario } = useData(); // Use createScenario from context
@@ -95,6 +96,7 @@ export default function CreateScenario() {
 			roth_end_year: formData.isRothOptimizerEnabled ? Number(formData.rothEndYear) : null,
 			financial_goal: Number(formData.financialGoal),
 			state_of_residence: formData.stateOfResidence,
+			initial_cash_investment: formData.initialCashInvestment,
 			// empty datastructures
 			// spendingStrategy: [],
 			// expenseWithdrawalStrategy: [],
@@ -139,6 +141,7 @@ export default function CreateScenario() {
 			rothEndYear: "",
 			financialGoal: "",
 			stateOfResidence: "",
+			initialCashInvestment: "",
 		});
 	};
 
@@ -406,6 +409,16 @@ export default function CreateScenario() {
 						type="text"
 						name="stateOfResidence"
 						value={formData.stateOfResidence}
+						onChange={handleChange}
+						required
+					/>
+				</div>
+				<div className="form-group">
+					<label>Initial Cash Investment:</label>
+					<input
+						type="text"
+						name="initialCashInvestment"
+						value={formData.initialCashInvestment}
 						onChange={handleChange}
 						required
 					/>

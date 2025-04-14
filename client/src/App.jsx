@@ -21,6 +21,7 @@ import EditInvestmentType from './EditInvestmentType';
 import CreateEventSeries from './CreateEventSeries';
 import EditEventSeries from './EditEventSeries';
 import Strategies from './Strategies';
+import UserProfile from './UserProfile';
 
 
 const AppContent = () => {
@@ -42,6 +43,7 @@ const AppContent = () => {
         <Route path="/eventseries" element={<ProtectedRoute element={<EventSeries />} />} />
         <Route path="/simulations" element={<ProtectedRoute element={<Simulations />} />} />
         <Route path="/strategies" element={<ProtectedRoute element={<Strategies />} />} />
+        <Route path="/profile" element={<ProtectedRoute element={<UserProfile />} />} />
 
         <Route path="/create-scenario" element={<ProtectedRoute element={<CreateScenario />} />} />
         <Route path="/edit-scenario/:id" element={<ProtectedRoute element={<EditScenario />} />} />

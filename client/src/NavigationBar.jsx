@@ -24,32 +24,35 @@ function NavigationUser() {
   if (!user) return null;
 
   return (
-    <div className={styles.profileColumn}>
-      <div className={styles.profileContainer}>
-        
-        <img
-          src={
-            user.name === 'Guest'
-            ? defaultAvatar
-            : user.picture
-          }
-          alt={user.name}
-          className={styles.avatar}
-          referrerPolicy="no-referrer"
-        />
+      <div className={styles.profileColumn}>
+        <div className={styles.profileContainer}>
+          <Link 
+            className={styles["user-profile-link"]} 
+            to={user.email === null ? "#" : "/profile"}
+          >
+            <img
+              src={
+                user.name === 'Guest'
+                ? defaultAvatar
+                : user.picture
+              }
+              alt={user.name}
+              className={styles.avatar}
+              referrerPolicy="no-referrer"
+            />
 
-        <span className={styles.username}>
-          {user.name === 'Guest' ? 'Guest' : user.name}
-        </span>
-        <button
-          className={styles.signOutButton}
-          onClick={handleLogout}
-        >
-
-          {user.name === 'Guest' ? 'Exit as Guest' : 'Sign Out'}
-        </button>
+            <span className={styles.username}>
+              {user.name === 'Guest' ? 'Guest' : user.name}
+            </span>
+          </Link>
+          <button
+            className={styles.signOutButton}
+            onClick={handleLogout}
+          >
+            {user.name === 'Guest' ? 'Exit as Guest' : 'Sign Out'}
+          </button>
+        </div>
       </div>
-    </div>
   );
 }
 
