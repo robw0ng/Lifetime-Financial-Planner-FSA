@@ -4,6 +4,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import yaml
+import os
+
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 
 # Setup Selenium WebDriver
 url = "https://www.irs.gov/publications/p590b"  # Replace with actual URL
@@ -44,8 +48,11 @@ for row in rows:
         if age2 and period2:
             distribution_data.append({"age": age2, "distribution_period": period2})
 
+# Define the correct save path in the scrapers directory
+save_dir = os.path.dirname(__file__)  # This ensures the file is saved in the same directory as the script
+yaml_filename = os.path.join(save_dir, "uniform_lifetime_table.yaml")
+
 # Save data as YAML
-yaml_filename = "uniform_lifetime_table.yaml"
 with open(yaml_filename, "w") as file:
     yaml.dump({"Uniform_Lifetime_Table": distribution_data}, file, default_flow_style=False)
 
