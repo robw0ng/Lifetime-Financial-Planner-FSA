@@ -74,9 +74,13 @@
     border-radius: 10px;
 }
 
+.action-button:disabled{
+    background-color: gray;
+}
+
 .action-button:hover{
     color: inherit;
-    opacity: 80%;
+    filter: brightness(90%);
 }
 
 .create{
@@ -103,6 +107,7 @@
 }
 
 .scenario-list-title{
+    margin-top: 0px;
     width: 100%;
 }
 
@@ -269,4 +274,35 @@
 .sharing-settings{
     height: 100%;
     width: 100%;
+}
+
+.sharing-settings-outer-container{
+    flex: 0;
+}
+
+.sharing-settings-inner-container{
+    margin: 10px
+}
+
+.sharing-settings-inner-container h2{
+    margin-top: 0px
+}
+
+.scenario-shared-button-container{
+    display: flex;
+    flex-direction: row;
+    background-color: #2c2e35;
+    border-radius: 10px
+}
+
+.share{
+ background-color: #489cbd;
+}
+
+.import {
+    background-color: #9854f7;
+}
+
+.export {
+    background-color: #f79254;
 }

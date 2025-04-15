@@ -1,6 +1,6 @@
-import { useNavigate } from "react-router-dom";
-import { useData } from "./DataContext";
-import { useSelected } from "./SelectedContext";
+import { useNavigate } from 'react-router-dom';
+import { useData } from './DataContext';
+import { useSelected } from './SelectedContext';
 // import "./DeleteEventSeries.css";
 
 export default function DeleteEventSeries() {
@@ -14,7 +14,7 @@ export default function DeleteEventSeries() {
 
   const handleDelete = async () => {
     if (!selectedScenario) {
-      alert("Please select a scenario first.");
+      alert('Please select a scenario first.');
       return;
     }
     
@@ -22,7 +22,7 @@ export default function DeleteEventSeries() {
     if (confirmDelete) {
       await deleteEventSeries(selectedScenario.id, selectedEventSeries.id);
       setSelectedEventSeries(null);
-      navigate("/"); // Redirect after deletion
+      navigate('/'); // Redirect after deletion
     }
   };
 

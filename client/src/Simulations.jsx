@@ -3,5 +3,5 @@ export default function Simulations(){
         <div id="simulations">
             Simulations
         </div>
-    )
+    );
 }

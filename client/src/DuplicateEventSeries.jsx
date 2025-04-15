@@ -1,7 +1,7 @@
-import { useNavigate } from "react-router-dom";
-import { useData } from "./DataContext";
-import { useSelected } from "./SelectedContext";
-import "./DuplicateEventSeries.css";
+import { useNavigate } from 'react-router-dom';
+import { useData } from './DataContext';
+import { useSelected } from './SelectedContext';
+import './DuplicateEventSeries.css';
 
 export default function DuplicateEventSeries() {
   const navigate = useNavigate();
@@ -14,13 +14,13 @@ export default function DuplicateEventSeries() {
 
   const handleDuplicate = async () => {
     if (!selectedScenario) {
-      alert("Please select a scenario first.");
+      alert('Please select a scenario first.');
       return;
     }
     
     const duplicatedEvent = await duplicateEventSeries(selectedScenario.id, selectedEventSeries.id);
     setSelectedEventSeries(duplicatedEvent);
-    navigate("/"); // Redirect after duplication
+    navigate('/'); // Redirect after duplication
   };
 
   return (

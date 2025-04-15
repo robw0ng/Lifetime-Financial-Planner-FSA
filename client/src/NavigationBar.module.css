@@ -118,6 +118,7 @@
   width: 44px;
   height: 44px;
   border-radius: 21px;
+  margin-right: 10px;
 }
 
 .username {
@@ -135,5 +136,12 @@
   overflow: hidden;
   font: inherit;
   color: inherit;
+  cursor: pointer;
+}
+
+.user-profile-link{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   cursor: pointer;
 }

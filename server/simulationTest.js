@@ -284,12 +284,12 @@ async function runTest() {
             include: [
                 { model: Investment, as: "Investments" },
                 { model: InvestmentType, as: "InvestmentTypes" },
-                { model: EventSeries,
+                { model: EventSeries, as: "Event Series",
                     include: [
-                        { model: IncomeEventSeries },
-                        { model: ExpenseEventSeries },
-                        { model: InvestEventSeries },
-                        { model: RebalanceEventSeries }
+                        { model: IncomeEventSeries, as: "IncomeEventSeries" },
+                        { model: ExpenseEventSeries, as: "ExpenseEventSeries" },
+                        { model: InvestEventSeries, as: "InvestEventSeries" },
+                        { model: RebalanceEventSeries, as: "RebalanceEventSeries" }
                     ],
                     as: "EventSeries"
                 },

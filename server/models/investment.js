@@ -8,8 +8,14 @@ module.exports = (sequelize, DataTypes) => {
 		 * The `models/index` file will call this method automatically.
 		 */
 		static associate(models) {
-			Investment.belongsTo(models.InvestmentType, { foreignKey: "investment_type_id", as: "InvestmentType", });
-			Investment.belongsTo(models.Scenario, { foreignKey: "scenario_id", as: "Scenario", });
+			Investment.belongsTo(models.InvestmentType, {
+				foreignKey: "investment_type_id",
+				as: "InvestmentType",
+			});
+			Investment.belongsTo(models.Scenario, {
+				foreignKey: "scenario_id",
+				as: "Scenario",
+			});
 		}
 	}
 	Investment.init(
@@ -33,6 +39,10 @@ module.exports = (sequelize, DataTypes) => {
 				type: DataTypes.STRING,
 				allowNull: false,
 			},
+			is_locked: {
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
+			},			  
 			investment_type_id: {
 				type: DataTypes.INTEGER,
 				allowNull: false,

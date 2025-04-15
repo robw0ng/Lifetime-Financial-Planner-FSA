@@ -1,55 +1,56 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useData } from "./DataContext";
-import { useSelected } from "./SelectedContext";
-import "./CreateEventSeries.css";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useData } from './DataContext';
+import { useSelected } from './SelectedContext';
+import './CreateEventSeries.css';
+import { get_type_from_id } from './Investments';
 
 export default function CreateEventSeries() {
   const navigate = useNavigate();
-  const { selectedScenario } = useSelected();
+  const { selectedScenario, setSelectedEventSeries } = useSelected();
   const { createEventSeries } = useData();
 
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    type: "income", // default type
+    name: '',
+    description: '',
+    type: 'income', // default type
 
     // Start Year Fields
-    startYearType: "fixed", // fixed, uniform, normal, sameAsEvent, yearAfterEvent
-    startYearValue: "",
-    startYearMin: "",
-    startYearMax: "",
-    startYearMean: "",
-    startYearStd: "",
-    startYearEventId: "",
+    startYearType: 'fixed', // fixed, uniform, normal, sameAsEvent, yearAfterEvent
+    startYearValue: '',
+    startYearMin: '',
+    startYearMax: '',
+    startYearMean: '',
+    startYearStd: '',
+    startYearEventId: '',
 
     // Duration Fields
-    durationType: "fixed", // fixed, uniform, normal
-    durationValue: "",
-    durationMin: "",
-    durationMax: "",
-    durationMean: "",
-    durationStd: "",
+    durationType: 'fixed', // fixed, uniform, normal
+    durationValue: '',
+    durationMin: '',
+    durationMax: '',
+    durationMean: '',
+    durationStd: '',
 
     // Income/Expense Specific
-    initialAmount: "",
-    expectedChangeType: "fixed", // fixed, uniform, normal
-    expectedChangeValue: "",
-    expectedChangeMin: "",
-    expectedChangeMax: "",
-    expectedChangeMean: "",
-    expectedChangeStd: "",
+    initialAmount: '',
+    expectedChangeType: 'fixed', // fixed, uniform, normal
+    expectedChangeValue: '',
+    expectedChangeMin: '',
+    expectedChangeMax: '',
+    expectedChangeMean: '',
+    expectedChangeStd: '',
     inflationAdjusted: false,
-    userPercentage: "",
+    userPercentage: '',
     isSocialSecurity: false, // for income
     isDiscretionary: false,  // for expense
 
     // Invest/Rebalance Specific
-    allocationType: "fixed", // "fixed" or "glide"
+    allocationType: 'fixed', // "fixed" or "glide"
     allocationFixed: {}, // for fixed allocation: { [investmentId]: percentage }
     allocationGlideInitial: {}, // for glide: initial allocation percentages
     allocationGlideFinal: {}, // for glide: final allocation percentages
-    maxCash: "", // for invest
+    maxCash: '', // for invest
   });
 
   // Generic handler for text/select/checkbox fields
@@ -57,7 +58,7 @@ export default function CreateEventSeries() {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -96,42 +97,42 @@ export default function CreateEventSeries() {
 
   // Build an array of investments from the selected scenario
   const scenarioInvestments =
-    selectedScenario && selectedScenario.investments
-      ? Array.isArray(selectedScenario.investments)
-        ? selectedScenario.investments
-        : Array.from(selectedScenario.investments)
+    selectedScenario && selectedScenario.Investments
+      ? Array.isArray(selectedScenario.Investments)
+        ? selectedScenario.Investments
+        : Array.from(selectedScenario.Investments)
       : [];
 
   // Build an array of event series from the selected scenario (for start year reference)
   const scenarioEvents =
-    selectedScenario && selectedScenario.events
-      ? Array.isArray(selectedScenario.events)
-        ? selectedScenario.events
-        : Array.from(selectedScenario.events)
+    selectedScenario && selectedScenario.EventSeries
+      ? Array.isArray(selectedScenario.EventSeries)
+        ? selectedScenario.EventSeries
+        : Array.from(selectedScenario.EventSeries)
       : [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedScenario) {
-      alert("Please select a scenario first.");
+      alert('Please select a scenario first.');
       return;
     }
 
     // Validate allocation totals for invest/rebalance
-    if (formData.type === "invest" || formData.type === "rebalance") {
-      if (formData.allocationType === "fixed") {
+    if (formData.type === 'invest' || formData.type === 'rebalance') {
+      if (formData.allocationType === 'fixed') {
         const totalFixed = Object.values(formData.allocationFixed).reduce(
           (sum, val) => sum + Number(val || 0),
           0
         );
         if (totalFixed !== 100) {
           alert(
-            "The fixed allocation percentages must add up to 100. Currently they add up to " +
+            'The fixed allocation percentages must add up to 100. Currently they add up to ' +
               totalFixed
           );
           return;
         }
-      } else if (formData.allocationType === "glide") {
+      } else if (formData.allocationType === 'glide') {
         const totalInitial = Object.values(formData.allocationGlideInitial).reduce(
           (sum, val) => sum + Number(val || 0),
           0
@@ -142,14 +143,14 @@ export default function CreateEventSeries() {
         );
         if (totalInitial !== 100) {
           alert(
-            "The initial glide allocation percentages must add up to 100. Currently they add up to " +
+            'The initial glide allocation percentages must add up to 100. Currently they add up to ' +
               totalInitial
           );
           return;
         }
         if (totalFinal !== 100) {
           alert(
-            "The final glide allocation percentages must add up to 100. Currently they add up to " +
+            'The final glide allocation percentages must add up to 100. Currently they add up to ' +
               totalFinal
           );
           return;
@@ -159,23 +160,23 @@ export default function CreateEventSeries() {
 
     // Build startYear object
     let startYear = null;
-    if (formData.startYearType === "fixed") {
-      startYear = { value: Number(formData.startYearValue), type: "fixed" };
-    } else if (formData.startYearType === "uniform") {
+    if (formData.startYearType === 'fixed') {
+      startYear = { value: Number(formData.startYearValue), type: 'fixed' };
+    } else if (formData.startYearType === 'uniform') {
       startYear = {
         min: Number(formData.startYearMin),
         max: Number(formData.startYearMax),
-        type: "uniform",
+        type: 'uniform',
       };
-    } else if (formData.startYearType === "normal") {
+    } else if (formData.startYearType === 'normal') {
       startYear = {
         mean: Number(formData.startYearMean),
         std: Number(formData.startYearStd),
-        type: "normal",
+        type: 'normal',
       };
     } else if (
-      formData.startYearType === "sameAsEvent" ||
-      formData.startYearType === "yearAfterEvent"
+      formData.startYearType === 'sameAsEvent' ||
+      formData.startYearType === 'yearAfterEvent'
     ) {
       // When an event is selected from the dropdown, we pass its id.
       startYear = { eventId: formData.startYearEventId, type: formData.startYearType };
@@ -183,48 +184,48 @@ export default function CreateEventSeries() {
 
     // Build duration object
     let duration = null;
-    if (formData.durationType === "fixed") {
-      duration = { value: Number(formData.durationValue), type: "fixed" };
-    } else if (formData.durationType === "uniform") {
+    if (formData.durationType === 'fixed') {
+      duration = { value: Number(formData.durationValue), type: 'fixed' };
+    } else if (formData.durationType === 'uniform') {
       duration = {
         min: Number(formData.durationMin),
         max: Number(formData.durationMax),
-        type: "uniform",
+        type: 'uniform',
       };
-    } else if (formData.durationType === "normal") {
+    } else if (formData.durationType === 'normal') {
       duration = {
         mean: Number(formData.durationMean),
         std: Number(formData.durationStd),
-        type: "normal",
+        type: 'normal',
       };
     }
 
     // Build expectedChange for income/expense
     let expectedChange = null;
-    if (formData.type === "income" || formData.type === "expense") {
-      if (formData.expectedChangeType === "fixed") {
-        expectedChange = { value: Number(formData.expectedChangeValue), type: "fixed" };
-      } else if (formData.expectedChangeType === "uniform") {
+    if (formData.type === 'income' || formData.type === 'expense') {
+      if (formData.expectedChangeType === 'fixed') {
+        expectedChange = { value: Number(formData.expectedChangeValue), type: 'fixed' };
+      } else if (formData.expectedChangeType === 'uniform') {
         expectedChange = {
           min: Number(formData.expectedChangeMin),
           max: Number(formData.expectedChangeMax),
-          type: "uniform",
+          type: 'uniform',
         };
-      } else if (formData.expectedChangeType === "normal") {
+      } else if (formData.expectedChangeType === 'normal') {
         expectedChange = {
           mean: Number(formData.expectedChangeMean),
           std: Number(formData.expectedChangeStd),
-          type: "normal",
+          type: 'normal',
         };
       }
     }
 
     // Prepare allocation data based on allocation type
     let allocationData = null;
-    if (formData.type === "invest" || formData.type === "rebalance") {
-      if (formData.allocationType === "fixed") {
+    if (formData.type === 'invest' || formData.type === 'rebalance') {
+      if (formData.allocationType === 'fixed') {
         allocationData = formData.allocationFixed;
-      } else if (formData.allocationType === "glide") {
+      } else if (formData.allocationType === 'glide') {
         allocationData = {
           initial: formData.allocationGlideInitial,
           final: formData.allocationGlideFinal,
@@ -233,36 +234,104 @@ export default function CreateEventSeries() {
     }
 
     // Construct the final event series object
+    // const newEventSeries = {
+    //   name: formData.name,
+    //   description: formData.description,
+    //   type: formData.type,
+    //   start_year_value: startYear,
+    //   duration,
+    //   initialAmount:
+    //     (formData.type === "income" || formData.type === "expense")
+    //       ? Number(formData.initialAmount)
+    //       : null,
+    //   expectedChange:
+    //     (formData.type === "income" || formData.type === "expense")
+    //       ? expectedChange
+    //       : null,
+    //   inflationAdjusted: formData.inflationAdjusted,
+    //   // Only include userPercentage if the scenario is married
+    //   userPercentage: selectedScenario && selectedScenario.isMarried && formData.userPercentage
+    //     ? Number(formData.userPercentage)
+    //     : null,
+    //   isSocialSecurity: formData.type === "income" ? formData.isSocialSecurity : null,
+    //   isDiscretionary: formData.type === "expense" ? formData.isDiscretionary : null,
+    //   allocation:
+    //     (formData.type === "invest" || formData.type === "rebalance")
+    //       ? allocationData
+    //       : null,
+    //   maxCash: formData.type === "invest" ? Number(formData.maxCash) : null,
+    // };
     const newEventSeries = {
       name: formData.name,
       description: formData.description,
       type: formData.type,
-      startYear,
-      duration,
-      initialAmount:
-        (formData.type === "income" || formData.type === "expense")
-          ? Number(formData.initialAmount)
+    
+      // Start Year
+      start_year_type: formData.startYearType,
+      start_year_value: formData.startYearType === 'fixed' ? Number(formData.startYearValue) : null,
+      start_year_mean: formData.startYearType === 'normal' ? Number(formData.startYearMean) : null,
+      start_year_std_dev: formData.startYearType === 'normal' ? Number(formData.startYearStd) : null,
+      start_year_lower: formData.startYearType === 'uniform' ? Number(formData.startYearMin) : null,
+      start_year_upper: formData.startYearType === 'uniform' ? Number(formData.startYearMax) : null,
+      start_year_other_event:
+        formData.startYearType === 'sameAsEvent' || formData.startYearType === 'yearAfterEvent'
+          ? formData.startYearEventId
           : null,
-      expectedChange:
-        (formData.type === "income" || formData.type === "expense")
-          ? expectedChange
-          : null,
-      inflationAdjusted: formData.inflationAdjusted,
-      // Only include userPercentage if the scenario is married
-      userPercentage: selectedScenario && selectedScenario.isMarried && formData.userPercentage
-        ? Number(formData.userPercentage)
-        : null,
-      isSocialSecurity: formData.type === "income" ? formData.isSocialSecurity : null,
-      isDiscretionary: formData.type === "expense" ? formData.isDiscretionary : null,
-      allocation:
-        (formData.type === "invest" || formData.type === "rebalance")
-          ? allocationData
-          : null,
-      maxCash: formData.type === "invest" ? Number(formData.maxCash) : null,
+    
+      // Duration
+      duration_type: formData.durationType,
+      duration_value: formData.durationType === 'fixed' ? Number(formData.durationValue) : null,
+      duration_mean: formData.durationType === 'normal' ? Number(formData.durationMean) : null,
+      duration_std_dev: formData.durationType === 'normal' ? Number(formData.durationStd) : null,
+      duration_lower: formData.durationType === 'uniform' ? Number(formData.durationMin) : null,
+      duration_upper: formData.durationType === 'uniform' ? Number(formData.durationMax) : null,
     };
+    
+        // Income or Expense
+    if (formData.type === 'income' || formData.type === 'expense') {
+      newEventSeries.initial_amount = Number(formData.initialAmount);
+      newEventSeries.expected_change_type = formData.expectedChangeType;
 
-    await createEventSeries(selectedScenario.id, newEventSeries);
-    navigate("/eventseries");
+      if (formData.expectedChangeType === 'fixed') {
+        newEventSeries.expected_change_value = Number(formData.expectedChangeValue);
+      } else if (formData.expectedChangeType === 'uniform') {
+        newEventSeries.expected_change_lower = Number(formData.expectedChangeMin);
+        newEventSeries.expected_change_upper = Number(formData.expectedChangeMax);
+      } else if (formData.expectedChangeType === 'normal') {
+        newEventSeries.expected_change_mean = Number(formData.expectedChangeMean);
+        newEventSeries.expected_change_std_dev = Number(formData.expectedChangeStd);
+      }
+
+      newEventSeries.inflation_adjusted = formData.inflationAdjusted;
+      newEventSeries.user_percentage =
+        selectedScenario && selectedScenario.is_married && formData.userPercentage
+          ? Number(formData.userPercentage)
+          : 100; // default to 100 if not provided
+      if (formData.type === 'income') {
+        newEventSeries.is_social = formData.isSocialSecurity;
+      }
+      if (formData.type === 'expense') {
+        newEventSeries.is_discretionary = formData.isDiscretionary;
+      }
+    }
+
+    // Invest or Rebalance
+    if (formData.type === 'invest' || formData.type === 'rebalance') {
+      const isGlide = formData.allocationType === 'glide';
+      newEventSeries.is_glide_path = isGlide;
+      newEventSeries.asset_allocation = isGlide ? formData.allocationGlideInitial : formData.allocationFixed;
+      if (isGlide) {
+        newEventSeries.asset_allocation2 = formData.allocationGlideFinal;
+      }
+      if (formData.type === 'invest') {
+        newEventSeries.max_cash = Number(formData.maxCash);
+      }
+    }
+    
+    const created_event_series = await createEventSeries(selectedScenario.id, newEventSeries);
+    console.log('created event series', created_event_series);
+    setSelectedEventSeries(created_event_series);
+    navigate('/eventseries');
   };
 
   return (
@@ -317,7 +386,7 @@ export default function CreateEventSeries() {
               <option value="yearAfterEvent">Year After Event Ends</option>
             </select>
           </label>
-          {formData.startYearType === "fixed" && (
+          {formData.startYearType === 'fixed' && (
             <label>
               Year:
               <input
@@ -331,7 +400,7 @@ export default function CreateEventSeries() {
               />
             </label>
           )}
-          {formData.startYearType === "uniform" && (
+          {formData.startYearType === 'uniform' && (
             <>
               <label>
                 Min Year:
@@ -359,7 +428,7 @@ export default function CreateEventSeries() {
               </label>
             </>
           )}
-          {formData.startYearType === "normal" && (
+          {formData.startYearType === 'normal' && (
             <>
               <label>
                 Mean Year:
@@ -387,8 +456,8 @@ export default function CreateEventSeries() {
               </label>
             </>
           )}
-          {(formData.startYearType === "sameAsEvent" ||
-            formData.startYearType === "yearAfterEvent") && (
+          {(formData.startYearType === 'sameAsEvent' ||
+            formData.startYearType === 'yearAfterEvent') && (
             <label>
               Reference Event Series:
               <select
@@ -399,20 +468,20 @@ export default function CreateEventSeries() {
               >
                 <option value="">-- Select an Event Series --</option>
                 {scenarioEvents.map((event) => {
-                  let displayYear = "";
-                  if (formData.startYearType === "sameAsEvent") {
+                  let displayYear = '';
+                  if (formData.startYearType === 'sameAsEvent') {
                     // Use event start year if fixed
                     displayYear =
-                      event.startYear && event.startYear.type === "fixed"
+                      event.startYear && event.startYear.type === 'fixed'
                         ? event.startYear.value
-                        : "";
-                  } else if (formData.startYearType === "yearAfterEvent") {
+                        : '';
+                  } else if (formData.startYearType === 'yearAfterEvent') {
                     // Use event end year if both startYear and duration are fixed
                     if (
                       event.startYear &&
-                      event.startYear.type === "fixed" &&
+                      event.startYear.type === 'fixed' &&
                       event.duration &&
-                      event.duration.type === "fixed"
+                      event.duration.type === 'fixed'
                     ) {
                       displayYear =
                         Number(event.startYear.value) + Number(event.duration.value);
@@ -420,7 +489,7 @@ export default function CreateEventSeries() {
                   }
                   return (
                     <option key={event.id} value={event.id}>
-                      {event.name} {displayYear ? `(${displayYear})` : ""}
+                      {event.name} {displayYear ? `(${displayYear})` : ''}
                     </option>
                   );
                 })}
@@ -440,7 +509,7 @@ export default function CreateEventSeries() {
               <option value="normal">Normal Distribution</option>
             </select>
           </label>
-          {formData.durationType === "fixed" && (
+          {formData.durationType === 'fixed' && (
             <label>
               Duration:
               <input
@@ -454,7 +523,7 @@ export default function CreateEventSeries() {
               />
             </label>
           )}
-          {formData.durationType === "uniform" && (
+          {formData.durationType === 'uniform' && (
             <>
               <label>
                 Min Duration:
@@ -482,7 +551,7 @@ export default function CreateEventSeries() {
               </label>
             </>
           )}
-          {formData.durationType === "normal" && (
+          {formData.durationType === 'normal' && (
             <>
               <label>
                 Mean Duration:
@@ -513,9 +582,9 @@ export default function CreateEventSeries() {
         </fieldset>
 
         {/* Income/Expense Specific Section */}
-        {(formData.type === "income" || formData.type === "expense") && (
+        {(formData.type === 'income' || formData.type === 'expense') && (
           <fieldset>
-            <legend>{formData.type === "income" ? "Income" : "Expense"} Details</legend>
+            <legend>{formData.type === 'income' ? 'Income' : 'Expense'} Details</legend>
             <label>
               Initial Amount:
               <input
@@ -539,7 +608,7 @@ export default function CreateEventSeries() {
                 <option value="normal">Normal Distribution</option>
               </select>
             </label>
-            {formData.expectedChangeType === "fixed" && (
+            {formData.expectedChangeType === 'fixed' && (
               <label>
                 Expected Change:
                 <input
@@ -552,7 +621,7 @@ export default function CreateEventSeries() {
                 />
               </label>
             )}
-            {formData.expectedChangeType === "uniform" && (
+            {formData.expectedChangeType === 'uniform' && (
               <>
                 <label>
                   Min Change:
@@ -580,7 +649,7 @@ export default function CreateEventSeries() {
                 </label>
               </>
             )}
-            {formData.expectedChangeType === "normal" && (
+            {formData.expectedChangeType === 'normal' && (
               <>
                 <label>
                   Mean Change:
@@ -617,7 +686,7 @@ export default function CreateEventSeries() {
                 onChange={handleChange}
               />
             </label>
-            {selectedScenario && selectedScenario.isMarried && (
+            {selectedScenario && selectedScenario.is_married && (
               <label>
                 User Percentage:
                 <input
@@ -630,7 +699,7 @@ export default function CreateEventSeries() {
                 />
               </label>
             )}
-            {formData.type === "income" && (
+            {formData.type === 'income' && (
               <label>
                 Is Social Security:
                 <input
@@ -641,7 +710,7 @@ export default function CreateEventSeries() {
                 />
               </label>
             )}
-            {formData.type === "expense" && (
+            {formData.type === 'expense' && (
               <label>
                 Is Discretionary:
                 <input
@@ -656,9 +725,9 @@ export default function CreateEventSeries() {
         )}
 
         {/* Invest/Rebalance Specific Section */}
-        {(formData.type === "invest" || formData.type === "rebalance") && (
+        {(formData.type === 'invest' || formData.type === 'rebalance') && (
           <fieldset>
-            <legend>{formData.type === "invest" ? "Invest" : "Rebalance"} Details</legend>
+            <legend>{formData.type === 'invest' ? 'Invest' : 'Rebalance'} Details</legend>
             {/* Allocation Mode Toggle */}
             <p>Choose allocation mode:</p>
             <label>
@@ -666,17 +735,17 @@ export default function CreateEventSeries() {
                 type="radio"
                 name="allocationType"
                 value="fixed"
-                checked={formData.allocationType === "fixed"}
+                checked={formData.allocationType === 'fixed'}
                 onChange={handleChange}
               />
               Fixed
             </label>
-            <label style={{ marginLeft: "1rem" }}>
+            <label style={{ marginLeft: '1rem' }}>
               <input
                 type="radio"
                 name="allocationType"
                 value="glide"
-                checked={formData.allocationType === "glide"}
+                checked={formData.allocationType === 'glide'}
                 onChange={handleChange}
               />
               Glide Path
@@ -685,18 +754,18 @@ export default function CreateEventSeries() {
             {/* Render allocation inputs if investments exist */}
             {scenarioInvestments.length > 0 ? (
               <>
-                {formData.allocationType === "fixed" && (
+                {formData.allocationType === 'fixed' && (
                   <div>
                     <p>Enter a percentage allocation for each investment:</p>
                     {scenarioInvestments.map((inv) => (
-                      <div key={inv.id} style={{ marginBottom: "0.5rem" }}>
+                      <div key={inv.id} style={{ marginBottom: '0.5rem' }}>
                         <label>
-                          {inv.type.name} (%):
+                          {get_type_from_id(inv.investment_type_id, selectedScenario).name} (%):
                           <input
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            value={formData.allocationFixed[inv.id] || ""}
+                            value={formData.allocationFixed[inv.id] || ''}
                             onChange={(e) =>
                               handleAllocationFixedChange(inv.id, e.target.value)
                             }
@@ -706,19 +775,19 @@ export default function CreateEventSeries() {
                     ))}
                   </div>
                 )}
-                {formData.allocationType === "glide" && (
+                {formData.allocationType === 'glide' && (
                   <>
                     <div>
                       <h4>Initial Allocation (%)</h4>
                       {scenarioInvestments.map((inv) => (
-                        <div key={inv.id} style={{ marginBottom: "0.5rem" }}>
+                        <div key={inv.id} style={{ marginBottom: '0.5rem' }}>
                           <label>
-                            {inv.type.name}:
+                            {get_type_from_id(inv.investment_type_id, selectedScenario).name}:
                             <input
                               type="text"
                               inputMode="numeric"
                               pattern="[0-9]*"
-                              value={formData.allocationGlideInitial[inv.id] || ""}
+                              value={formData.allocationGlideInitial[inv.id] || ''}
                               onChange={(e) =>
                                 handleAllocationGlideInitialChange(inv.id, e.target.value)
                               }
@@ -727,17 +796,17 @@ export default function CreateEventSeries() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ marginTop: "1rem" }}>
+                    <div style={{ marginTop: '1rem' }}>
                       <h4>Final Allocation (%)</h4>
                       {scenarioInvestments.map((inv) => (
-                        <div key={inv.id} style={{ marginBottom: "0.5rem" }}>
+                        <div key={inv.id} style={{ marginBottom: '0.5rem' }}>
                           <label>
-                            {inv.type.name}:
+                            {get_type_from_id(inv.investment_type_id, selectedScenario).name}:
                             <input
                               type="text"
                               inputMode="numeric"
                               pattern="[0-9]*"
-                              value={formData.allocationGlideFinal[inv.id] || ""}
+                              value={formData.allocationGlideFinal[inv.id] || ''}
                               onChange={(e) =>
                                 handleAllocationGlideFinalChange(inv.id, e.target.value)
                               }
@@ -752,7 +821,7 @@ export default function CreateEventSeries() {
             ) : (
               <p>No investments found in this scenario.</p>
             )}
-            {formData.type === "invest" && (
+            {formData.type === 'invest' && (
               <label>
                 Maximum Cash:
                 <input

@@ -176,20 +176,23 @@ async function simulateScenario(scenario) {
         let eventData = { ...eventseries.dataValues };
 
         // Remove all event series references
-        delete eventData.IncomeEventSery;
-        delete eventData.ExpenseEventSery;
-        delete eventData.InvestEventSery;
-        delete eventData.RebalanceEventSery;
+        delete eventData.IncomeEventSeries;
+        delete eventData.ExpenseEventSeries;
+        delete eventData.InvestEventSeries;
+        delete eventData.RebalanceEventSeries;
+
+        console.log(eventseries)
 
         // Determine the specific event type and add only its dataValues
-        if (eventseries.IncomeEventSery) {
-            Object.assign(eventData, eventseries.IncomeEventSery.dataValues);
-        } else if (eventseries.ExpenseEventSery) {
-            Object.assign(eventData, eventseries.ExpenseEventSery.dataValues);
-        } else if (eventseries.InvestEventSery) {
-            Object.assign(eventData, eventseries.InvestEventSery.dataValues);
-        } else if (eventseries.RebalanceEventSery) {
-            Object.assign(eventData, eventseries.RebalanceEventSery.dataValues);
+        if (eventseries.IncomeEventSeries) {
+            console.log(eventseries.dataValues.IncomeEventSeries)
+            Object.assign(eventData, eventseries.dataValues.IncomeEventSeries.dataValues);
+        } else if (eventseries.ExpenseEventSeries) {
+            Object.assign(eventData, eventseries.dataValues.ExpenseEventSeries.dataValues);
+        } else if (eventseries.InvestEventSeries) {
+            Object.assign(eventData, eventseries.dataValues.InvestEventSeries.dataValues);
+        } else if (eventseries.RebalanceEventSeries) {
+            Object.assign(eventData, eventseries.dataValues.RebalanceEventSeries.dataValues);
         }
 
         // Push cleaned-up event data
@@ -1055,6 +1058,7 @@ async function processInvestEvents(state, year) {
 
     //there should only be 1 invest event for a given year
     for (const event of investEvents) {
+        console.log(event)
         // Calculate excess cash above max_cash threshold
         const maxCash = event.max_cash || 0;
         const excessCash = Math.max(0, cashInvestment.value - maxCash);

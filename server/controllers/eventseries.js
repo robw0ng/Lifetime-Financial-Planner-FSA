@@ -11,10 +11,10 @@ router.get("/:id", async (req, res) => {
 		const allEventSeries = await EventSeries.findAll({
 			where: { scenario_id: id },
 			include: [
-				{ model: IncomeEventSeries },
-				{ model: ExpenseEventSeries },
-				{ model: InvestEventSeries },
-				{ model: RebalanceEventSeries },
+				{ model: IncomeEventSeries, as: "IncomeEventSeries" },
+				{ model: ExpenseEventSeries, as: "ExpenseEventSeries" },
+				{ model: InvestEventSeries, as: "InvestEventSeries" },
+				{ model: RebalanceEventSeries, as: "RebalanceEventSeries" },
 			],
 		});
 		res.status(200).json(allEventSeries);
@@ -137,6 +137,13 @@ router.post("/:id", async (req, res) => {
 				user_percentage: Number(user_percentage),
 				is_discretionary,
 			});
+
+			if (is_discretionary){
+				const currentStrategy = canUser.spending_strategy || []; // Ensure it's an array
+				const updatedStrategy = [...currentStrategy, newExpenseEvent.id]; // Add the new ID
+				await canUser.update({ spending_strategy: updatedStrategy });
+			}
+
 		} else if (type === "invest") {
 			const { is_glide_path, asset_allocation, asset_allocation2, max_cash } = req.body;
 			const newInvestEvent = await InvestEventSeries.create({
@@ -157,7 +164,29 @@ router.post("/:id", async (req, res) => {
 				asset_allocation2: is_glide_path ? asset_allocation2 : null,
 			});
 		}
-		res.status(201).json({ eventSeries: newEventSeries });
+		const createdEventSeries = await EventSeries.findOne({
+			where: { id: newEventSeries.id },
+			include: [
+				{ model: IncomeEventSeries, as: "IncomeEventSeries" },
+				{ model: ExpenseEventSeries, as: "ExpenseEventSeries" },
+				{ model: InvestEventSeries, as: "InvestEventSeries" },
+				{ model: RebalanceEventSeries, as: "RebalanceEventSeries" },
+			],
+		});
+
+		const eventData = createdEventSeries.toJSON();
+		const typeSpecific = eventData.IncomeEventSeries || eventData.ExpenseEventSeries || eventData.InvestEventSeries || eventData.RebalanceEventSeries || {};
+
+		const flattened_event_series = {
+			...eventData,
+			...typeSpecific,
+			IncomeEventSeries: undefined,
+			ExpenseEventSeries: undefined,
+			InvestEventSeries: undefined,
+			RebalanceEventSeries: undefined,
+		}
+
+		res.status(201).json({ eventSeries: flattened_event_series });
 	} catch (err) {
 		res.status(400).json(err.message);
 		console.log(err.message);
@@ -220,6 +249,8 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 		}
 
 		await eventSeries.update(eventSeriesFields);
+		// pull strat from spending
+		let updated_spending = (canUser.spending_strategy || []).filter((spending_id) => String(spending_id) !== String(id))
 
 		// based on type, edit corresponding EventSeries Type
 		if (type === "income") {
@@ -274,6 +305,11 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 				user_percentage,
 				is_discretionary,
 			};
+
+			if (is_discretionary){
+				updated_spending.push(String(id));
+			}
+
 			const expenseSeries = await ExpenseEventSeries.findOne({ where: { id } });
 			await expenseSeries.update(expenseFields);
 		} else if (type === "invest") {
@@ -287,7 +323,36 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 			const rebalanceSeries = await RebalanceEventSeries.findOne({ where: { id } });
 			await rebalanceSeries.update(rebalanceFields);
 		}
-		res.status(200).json({ eventSeries });
+
+		await Scenario.update(
+			{
+				spending_strategy: updated_spending
+			},
+			{where: {id: scenario_id}}
+		);
+
+		const populatedEventSeries = await EventSeries.findOne({
+			where: { id },
+			include: [
+				{ model: IncomeEventSeries, as: "IncomeEventSeries" },
+				{ model: ExpenseEventSeries, as: "ExpenseEventSeries" },
+				{ model: InvestEventSeries, as: "InvestEventSeries" },
+				{ model: RebalanceEventSeries, as: "RebalanceEventSeries" },
+			],
+		});
+
+		const eventData = populatedEventSeries.toJSON();
+		const typeSpecific = eventData.IncomeEventSeries || eventData.ExpenseEventSeries || eventData.InvestEventSeries || eventData.RebalanceEventSeries || {};
+		const flattened_event_series = {
+			...eventData,
+			...typeSpecific,
+			IncomeEventSeries: undefined,
+			ExpenseEventSeries: undefined,
+			InvestEventSeries: undefined,
+			RebalanceEventSeries: undefined,
+		}
+
+		res.status(200).json({ eventSeries: flattened_event_series });
 	} catch (err) {
 		res.status(400).json(err.message);
 		console.log(err.message);
@@ -309,11 +374,17 @@ router.delete("/delete/:scenarioId/:id", async (req, res) => {
 
 	try {
 		const eventSeries = await EventSeries.findOne({ where: { id, scenario_id } });
+		const eventSeriesId = eventSeries.id;
 		if (!eventSeries) {
 			return res.status(404).json("Event series not found");
 		}
 
-		await eventSeries.destory();
+		await eventSeries.destroy();
+		if (canUser.spending_strategy.includes(String(eventSeriesId))) {
+			const currentStrategy = canUser.spending_strategy || [];
+			const updatedStrategy = currentStrategy.filter(strategyId => String(strategyId) !== String(eventSeriesId));
+			await canUser.update({ spending_strategy: updatedStrategy });
+		}
 		// corresponding Event Series Type automatically deleted, FK=CASCADE
 		res.status(200).json("Event series deleted successfully");
 	} catch (err) {
@@ -324,47 +395,83 @@ router.delete("/delete/:scenarioId/:id", async (req, res) => {
 
 // Duplicate existing event series
 router.post("/duplicate/:scenarioId/:id", async (req, res) => {
+	const { user } = req.session;
 	const id = req.params.id;
 	const scenario_id = req.params.scenarioId;
+	if (!user) {
+		return res.status(401).json("User not authenticated");
+	}
+	const canUser = await Scenario.findOne({ where: { id: scenario_id, user_id: user.id } });
+	if (!canUser) {
+		return res.status(401).json("User not authenticated");
+	}
+
 	try {
-		const eventSeries = await EventSeries.findOne({ where: { id, scenario_id } });
+		const eventSeries = await EventSeries.findOne({
+			where: { id, scenario_id },
+			include: [
+				{ model: IncomeEventSeries, as: "IncomeEventSeries" },
+				{ model: ExpenseEventSeries, as: "ExpenseEventSeries" },
+				{ model: InvestEventSeries, as: "InvestEventSeries" },
+				{ model: RebalanceEventSeries, as: "RebalanceEventSeries" },
+			],
+		});
 		if (!eventSeries) {
 			return res.status(404).json("Event series not found");
 		}
 
 		const duplicatedEventSeries = await EventSeries.create({
-			...eventSeries.get(),
+			...eventSeries.toJSON(),
 			id: undefined, // Ensure new event series gets a unique ID
 			name: `${eventSeries.name} (Copy)`,
+			scenario_id: canUser.id,
 		});
 
 		// duplicate corresponding Event Series Type
 		if (eventSeries.type === "income") {
 			const incomeSeries = await IncomeEventSeries.findOne({ where: { id } });
 			const duplicatedIncomeSeries = await IncomeEventSeries.create({
-				...incomeSeries.get(),
+				...incomeSeries.toJSON(),
 				id: duplicatedEventSeries.id,
 			});
 		} else if (eventSeries.type === "expense") {
 			const expenseSeries = await ExpenseEventSeries.findOne({ where: { id } });
 			const duplicatedExpenseSeries = await ExpenseEventSeries.create({
-				...expenseSeries.get(),
+				...expenseSeries.toJSON(),
 				id: duplicatedEventSeries.id,
 			});
+
+			if (expenseSeries.is_discretionary){
+				const currentStrategy = canUser.spending_strategy || []; // Ensure it's an array
+				const updatedStrategy = [...currentStrategy, duplicatedExpenseSeries.id]; // Add the new ID
+				await canUser.update({ spending_strategy: updatedStrategy });
+			}
+
+
 		} else if (eventSeries.type === "invest") {
 			const investSeries = await InvestEventSeries.findOne({ where: { id } });
 			const duplicatedInvestSeries = await InvestEventSeries.create({
-				...investSeries.get(),
+				...investSeries.toJSON(),
 				id: duplicatedEventSeries.id,
 			});
 		} else if (eventSeries.type === "rebalance") {
 			const rebalanceSeries = await RebalanceEventSeries.findOne({ where: { id } });
 			const duplicatedRebalanceSeries = await RebalanceEventSeries.create({
-				...rebalanceSeries.get(),
+				...rebalanceSeries.toJSON(),
 				id: duplicatedEventSeries.id,
 			});
 		}
-		res.status(201).json({ eventSeries: duplicatedEventSeries });
+
+		const fullEventSeries = await EventSeries.findOne({
+			where: { id: duplicatedEventSeries.id, scenario_id: canUser.id },
+			include: [
+				{ model: IncomeEventSeries, as: "IncomeEventSeries" },
+				{ model: ExpenseEventSeries, as: "ExpenseEventSeries" },
+				{ model: InvestEventSeries, as: "InvestEventSeries" },
+				{ model: RebalanceEventSeries, as: "RebalanceEventSeries" },
+			],
+		});
+		res.status(201).json({ eventSeries: fullEventSeries });
 	} catch (err) {
 		res.status(400).json(err.message);
 		console.log(err.message);
