@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "./DataContext";
 import { useSelected } from "./SelectedContext";
-// import "./CreateEventSeries.css";
+import { get_type_from_id } from "./Investments";
 
 export default function EditEventSeries() {
   const navigate = useNavigate();
