@@ -176,20 +176,23 @@ async function simulateScenario(scenario) {
         let eventData = { ...eventseries.dataValues };
 
         // Remove all event series references
-        delete eventData.IncomeEventSery;
-        delete eventData.ExpenseEventSery;
-        delete eventData.InvestEventSery;
-        delete eventData.RebalanceEventSery;
+        delete eventData.IncomeEventSeries;
+        delete eventData.ExpenseEventSeries;
+        delete eventData.InvestEventSeries;
+        delete eventData.RebalanceEventSeries;
+
+        console.log(eventseries)
 
         // Determine the specific event type and add only its dataValues
-        if (eventseries.IncomeEventSery) {
-            Object.assign(eventData, eventseries.IncomeEventSery.dataValues);
-        } else if (eventseries.ExpenseEventSery) {
-            Object.assign(eventData, eventseries.ExpenseEventSery.dataValues);
-        } else if (eventseries.InvestEventSery) {
-            Object.assign(eventData, eventseries.InvestEventSery.dataValues);
-        } else if (eventseries.RebalanceEventSery) {
-            Object.assign(eventData, eventseries.RebalanceEventSery.dataValues);
+        if (eventseries.IncomeEventSeries) {
+            console.log(eventseries.dataValues.IncomeEventSeries)
+            Object.assign(eventData, eventseries.dataValues.IncomeEventSeries.dataValues);
+        } else if (eventseries.ExpenseEventSeries) {
+            Object.assign(eventData, eventseries.dataValues.ExpenseEventSeries.dataValues);
+        } else if (eventseries.InvestEventSeries) {
+            Object.assign(eventData, eventseries.dataValues.InvestEventSeries.dataValues);
+        } else if (eventseries.RebalanceEventSeries) {
+            Object.assign(eventData, eventseries.dataValues.RebalanceEventSeries.dataValues);
         }
 
         // Push cleaned-up event data
@@ -266,6 +269,12 @@ async function simulateScenario(scenario) {
         if (year != currentYear) {
             updateTaxBrackets(state, state.inflationRate);
             state.retirementLimits = Math.round(state.retirementLimits * (1 + state.inflationRate) * 100) / 100;
+
+            // Also calculate adflation adjustment for all income/expense events
+            const event = state.events.filter(event => event.type === 'income' || event.type === 'expense');
+            if (event.inflation_adjusted) {
+                event.amount *= (1 + state.inflationRate);
+            }
         }
         
         //reset curr year values
@@ -458,11 +467,6 @@ async function processIncome(state, year) {
                 event.amount *= (1 + sampleUniform(event.expected_change_lower, event.expected_change_upper));
             }
         }
-
-        // Apply inflation adjustment if enabled
-        if (event.is_inflation_adjusted) {
-            event.amount *= (1 + state.inflationRate);
-        }
     }
     
 }
@@ -573,6 +577,7 @@ async function processInvestmentUpdates(state) {
         }
 
         // Add to taxable income if applicable
+        // (certain non-retirements are not taxable, after-tax is always not taxable, pre-tax is taxed on withdrawal)
         if (investment.tax_status === 'non-retirement' && investmentType.taxability === 'true') {
             state.curYearIncome += generatedIncome;
         }
@@ -686,13 +691,8 @@ async function processRothConversion(state, scenario, year) {
         }
     }
 
-    // Update income and early withdrawal totals
+    // Update income only (early withdrawal not applicable for roth conversions)
     state.curYearIncome += rothConversionAmount;
-
-    // Add to early withdrawals if user is under 59
-    if (userAge < EARLY_WITHDRAWAL_AGE) {
-        state.curYearEarlyWithdrawals = (state.curYearEarlyWithdrawals || 0) + rothConversionAmount;
-    }
 }
 
 async function processNonDiscretionaryExpensesAndTax(state, scenario, year, startYear, yearData) {
@@ -803,16 +803,18 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
                 event.amount *= (1 + sampleUniform(event.expected_change_lower, event.expected_change_upper));  // Percentage change using uniform distribution
             }
         }
-
-        // Apply inflation adjustment if needed
-        if (event.inflation_adjusted) {
-            event.amount *= (1 + state.inflationRate);
-        }
     });
 
 
     // Calculate total payment needed
     const totalPayment = Math.round((sumOfNonDiscExpenses + totalTax) * 100) / 100;
+
+    // if user runs out of liquidity and cannot pay required expenses, halt the simulation
+    const totalAssets = state.investments.reduce((sum, inv) => sum + inv.value, 0);
+    if (totalAssets < totalPayment) {
+        console.log(`Simulation stopped in year ${year}: Not enough assets to pay non-discretionary expenses and taxes`);
+        return returnData
+    }
 
     //set total expense in year data
     yearData.totalExpenses = totalPayment
@@ -840,8 +842,9 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
             const sellAmount = Math.min(remainingWithdrawal, investment.value);
             remainingWithdrawal -= sellAmount;
 
-            // Calculate and track capital gains for non-pre-tax investments
-            if (investment.tax_status !== 'pre-tax') {
+            // Calculate and track capital gains for non-retirement investments only
+            // after-tax isn't taxable, and pre-tax is taxed as income
+            if (investment.tax_status === 'non-retirement') {
                 const sellFraction = sellAmount / investment.value;
                 const capitalGain = sellFraction * (investment.value - (investment.purchase_price || 0));
                 state.curYearGains += capitalGain;
@@ -850,7 +853,7 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
                 investment.purchase_price *= (1 - sellFraction);
             }
 
-            // Update income for pre-tax withdrawals
+            // Update income for pre-tax withdrawals only
             if (investment.tax_status === 'pre-tax') {
                 state.curYearIncome += sellAmount;
             }
@@ -935,12 +938,6 @@ async function processDiscretionaryExpenses(state, scenario, year, yearData) {
                     event.amount *= (1 + sampleUniform(event.expected_change_lower, event.expected_change_upper));
                 }
             }
-
-
-            // Apply inflation adjustment if needed
-            if (event.inflation_adjusted) {
-                event.amount *= (1 + state.inflationRate);
-            }
             
             return {
                 event,
@@ -994,8 +991,9 @@ async function withdrawForExpense(state, scenario, amount, userAge) {
         const sellAmount = Math.min(amount, investment.value);
         if (sellAmount <= 0) break;
 
-        // Calculate and track capital gains for non-pre-tax investments
-        if (investment.tax_status !== 'pre-tax') {
+        // Calculate and track capital gains for non-retirement investments only
+        // after-tax isn't taxable, and pre-tax is taxed as income
+        if (investment.tax_status === 'non-retirement') {
             const sellFraction = sellAmount / investment.value;
             const capitalGain = sellFraction * (investment.value - investment.purchase_price);
             state.curYearGains += capitalGain;
@@ -1004,7 +1002,7 @@ async function withdrawForExpense(state, scenario, amount, userAge) {
             investment.purchase_price *= (1 - sellFraction);
         }
 
-        // Update income for pre-tax withdrawals
+        // Update income for pre-tax withdrawals only
         if (investment.tax_status === 'pre-tax') {
             state.curYearIncome += sellAmount;
         }
@@ -1060,6 +1058,7 @@ async function processInvestEvents(state, year) {
 
     //there should only be 1 invest event for a given year
     for (const event of investEvents) {
+        console.log(event)
         // Calculate excess cash above max_cash threshold
         const maxCash = event.max_cash || 0;
         const excessCash = Math.max(0, cashInvestment.value - maxCash);
