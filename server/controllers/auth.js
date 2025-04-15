@@ -38,6 +38,8 @@ router.post("/", async (req, res) => {
 			id: user.id,
 			email: user.email,
 			name: user.name,
+			last_scenario_used_id: user.last_scenario_used_id,
+			last_simulation_success_probability: user.last_simulation_success_probability,
 			picture: payload.picture,
 		};
 
@@ -48,6 +50,8 @@ router.post("/", async (req, res) => {
 				id: user.id, 
 				email: user.email, 
 				name: user.name,
+				last_scenario_used_id: user.last_scenario_used_id,
+				last_simulation_success_probability: user.last_simulation_success_probability,
 				picture: payload.picture,
 			}, 
 			newUser: registered 

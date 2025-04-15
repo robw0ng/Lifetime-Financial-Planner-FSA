@@ -8,9 +8,23 @@ module.exports = (sequelize, DataTypes) => {
 		 * The `models/index` file will call this method automatically.
 		 */
 		static associate(models) {
-			User.hasMany(models.Scenario, { foreignKey: "user_id" });
+			// A user owns many scenarios directly
+			User.hasMany(models.Scenario, {
+			  foreignKey: "user_id",
+			  as: "OwnedScenarios",
+			  onDelete: "CASCADE",
+			  hooks: true,
+			});
+		  
+			// A user can also access many shared scenarios
+			User.belongsToMany(models.Scenario, {
+			  through: models.ScenarioAccess,
+			  foreignKey: "user_id",
+			  otherKey: "scenario_id",
+			  as: "SharedScenarios",
+			});
+		  }
 		}
-	}
 	User.init(
 		{
 			id: {
@@ -31,6 +45,10 @@ module.exports = (sequelize, DataTypes) => {
 					isEmail: true,
 				},
 			},
+			uploaded_tax_yaml: {
+				type: DataTypes.TEXT,
+				allowNull: true,
+			}			  
 		},
 		{
 			sequelize,
