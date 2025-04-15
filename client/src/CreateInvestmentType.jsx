@@ -80,7 +80,7 @@ export default function CreateInvestmentType() {
 
         <div className="form-group">
           <label>Description:</label>
-          <textarea name="description" value={newTypeData.description} onChange={handleChange} rows="4" />
+          <textarea name="description" value={newTypeData.description} onChange={handleChange} rows="4" required/>
         </div>
 
         {/* Expected Annual Return Mode */}

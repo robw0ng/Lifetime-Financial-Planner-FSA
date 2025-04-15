@@ -105,7 +105,7 @@ export default function EditInvestmentType() {
 
         <div className="form-group">
           <label>Description:</label>
-          <textarea name="description" value={formData.description} onChange={handleChange} rows="4" />
+          <textarea name="description" value={formData.description} onChange={handleChange} rows="4" required/>
         </div>
 
         {/* Expected Return */}
