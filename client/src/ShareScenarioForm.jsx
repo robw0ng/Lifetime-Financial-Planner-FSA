@@ -112,10 +112,10 @@
 //     );
 // }
 
-import { useData } from "./DataContext";
-import { useEffect, useState } from "react";
-import { useSelected } from "./SelectedContext";
-import styles from "./ShareScenarioForm.module.css";
+import { useData } from './DataContext';
+import { useEffect, useState } from 'react';
+import { useSelected } from './SelectedContext';
+import styles from './ShareScenarioForm.module.css';
 
 export default function ShareScenarioForm() {
   const { accessList, fetchAccessList, shareScenario, removeScenarioAccess } = useData();
@@ -126,15 +126,15 @@ export default function ShareScenarioForm() {
   }, [selectedScenario.id]);
 
   const [formData, setFormData] = useState({
-    email: "",
-    permission: "",
+    email: '',
+    permission: '',
   });
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -148,7 +148,7 @@ export default function ShareScenarioForm() {
     );
 
     if (success) {
-      setFormData({ email: "", permission: "" });
+      setFormData({ email: '', permission: '' });
       fetchAccessList(selectedScenario.id);
     }
     else if (!success){
@@ -157,33 +157,33 @@ export default function ShareScenarioForm() {
   };
 
   const handleRemoveButton = async (userIdToRemove) => {
-    const confirmed = window.confirm("Are you sure you want to remove this user's access?");
+    const confirmed = window.confirm('Are you sure you want to remove this user\'s access?');
     if (!confirmed) return;
 
     const success = await removeScenarioAccess(selectedScenario.id, userIdToRemove);
     if (success) {
         
     } else {
-      alert("Failed to remove access.");
+      alert('Failed to remove access.');
     }
   };
 
   return (
-    <div className={styles["form-container"]}>
-      <button className={styles["back-button"]} onClick={() => window.history.back()}>
+    <div className={styles['form-container']}>
+      <button className={styles['back-button']} onClick={() => window.history.back()}>
         ⬅️ Go Back
       </button>
-      <div className={styles["form-content"]}>
-        <div className={`${styles["outer-container"]} ${styles["share-list-outer-container"]}`}>
-          <div className={styles["inner-container"]}>
-            <div className={styles["share-list-container"]}>
+      <div className={styles['form-content']}>
+        <div className={`${styles['outer-container']} ${styles['share-list-outer-container']}`}>
+          <div className={styles['inner-container']}>
+            <div className={styles['share-list-container']}>
               <h2>Shared With:</h2>
-              <div className={styles["share-list"]}>
-                {accessList.length === 0 && <div className={styles["user-item"]}>Nobody!</div>}
+              <div className={styles['share-list']}>
+                {accessList.length === 0 && <div className={styles['user-item']}>Nobody!</div>}
                 {accessList.map((entry) => (
-                  <div className={styles["user-item"]} key={entry.user_id}>
-                    {entry.email} — {entry.permission === "rw" ? "Read/Write" : "Read Only"}
-                    <button className={styles["remove-button"]} onClick={() => handleRemoveButton(entry.user_id)}>
+                  <div className={styles['user-item']} key={entry.user_id}>
+                    {entry.email} — {entry.permission === 'rw' ? 'Read/Write' : 'Read Only'}
+                    <button className={styles['remove-button']} onClick={() => handleRemoveButton(entry.user_id)}>
                         ❌
                     </button>
                   </div>
@@ -193,19 +193,19 @@ export default function ShareScenarioForm() {
           </div>
         </div>
 
-        <div className={styles["share-actions"]}>
-          <h2 className={styles["actions-header"]}>Share:</h2>
-          <h3 className={styles["outer-container"]}>
-            <div className={styles["inner-container"]}>
-              <div className={styles["selected-text"]}>
+        <div className={styles['share-actions']}>
+          <h2 className={styles['actions-header']}>Share:</h2>
+          <h3 className={styles['outer-container']}>
+            <div className={styles['inner-container']}>
+              <div className={styles['selected-text']}>
                 <label>Selected Scenario:</label>
                 <label>{selectedScenario.name}</label>
               </div>
             </div>
           </h3>
 
-          <form className={styles["share-form"]} onSubmit={handleSubmit}>
-            <div className={styles["form-group"]}>
+          <form className={styles['share-form']} onSubmit={handleSubmit}>
+            <div className={styles['form-group']}>
               <label htmlFor="email">Email:</label>
               <input
                 type="email"
@@ -217,7 +217,7 @@ export default function ShareScenarioForm() {
               />
             </div>
 
-            <div className={styles["form-group"]}>
+            <div className={styles['form-group']}>
               <label htmlFor="permission">Permission:</label>
               <select
                 id="permission"
@@ -236,7 +236,7 @@ export default function ShareScenarioForm() {
 
             <button
               type="submit"
-              className={`${styles["action-button"]} ${styles["share"]}`}
+              className={`${styles['action-button']} ${styles['share']}`}
             >
               Share
             </button>

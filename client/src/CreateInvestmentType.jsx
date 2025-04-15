@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSelected } from "./SelectedContext";
-import { useData } from "./DataContext";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelected } from './SelectedContext';
+import { useData } from './DataContext';
 
 export default function CreateInvestmentType() {
   const { selectedScenario, setSelectedInvestmentType, deselectInvestment } = useSelected();
@@ -9,18 +9,18 @@ export default function CreateInvestmentType() {
   const navigate = useNavigate();
 
   const [newTypeData, setNewTypeData] = useState({
-    name: "",
-    description: "",
-    return_mode: "fixed",
-    return_fixed: "",
-    return_mean: "",
-    return_stddev: "",
-    income_mode: "fixed",
-    income_fixed: "",
-    income_mean: "",
-    income_stddev: "",
-    expense_ratio: "",
-    taxability: "taxable",
+    name: '',
+    description: '',
+    return_mode: 'fixed',
+    return_fixed: '',
+    return_mean: '',
+    return_stddev: '',
+    income_mode: 'fixed',
+    income_fixed: '',
+    income_mean: '',
+    income_stddev: '',
+    expense_ratio: '',
+    taxability: 'taxable',
   });
 
   const handleChange = (e) => {
@@ -34,7 +34,7 @@ export default function CreateInvestmentType() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedScenario?.id) {
-      console.error("No scenario selected.");
+      console.error('No scenario selected.');
       return;
     }
   
@@ -43,27 +43,27 @@ export default function CreateInvestmentType() {
       name: newTypeData.name,
       description: newTypeData.description || null,
       expected_change_type: newTypeData.return_mode,
-      expected_change_value: newTypeData.return_mode === "fixed" ? Number(newTypeData.return_fixed) : null,
-      expected_change_mean: newTypeData.return_mode === "normal" ? Number(newTypeData.return_mean) : null,
-      expected_change_std_dev: newTypeData.return_mode === "normal" ? Number(newTypeData.return_stddev) : null,
+      expected_change_value: newTypeData.return_mode === 'fixed' ? Number(newTypeData.return_fixed) : null,
+      expected_change_mean: newTypeData.return_mode === 'normal' ? Number(newTypeData.return_mean) : null,
+      expected_change_std_dev: newTypeData.return_mode === 'normal' ? Number(newTypeData.return_stddev) : null,
       expected_income_type: newTypeData.income_mode,
-      expected_income_value: newTypeData.income_mode === "fixed" ? Number(newTypeData.income_fixed) : null,
-      expected_income_mean: newTypeData.income_mode === "normal" ? Number(newTypeData.income_mean) : null,
-      expected_income_std_dev: newTypeData.income_mode === "normal" ? Number(newTypeData.income_stddev) : null,
+      expected_income_value: newTypeData.income_mode === 'fixed' ? Number(newTypeData.income_fixed) : null,
+      expected_income_mean: newTypeData.income_mode === 'normal' ? Number(newTypeData.income_mean) : null,
+      expected_income_std_dev: newTypeData.income_mode === 'normal' ? Number(newTypeData.income_stddev) : null,
       expense_ratio: Number(newTypeData.expense_ratio),
       taxability: newTypeData.taxability,
     };
   
     try {
       const createdType = await createInvestmentType(selectedScenario.id, payload);
-      console.log("created investment returned", createdType)
+      console.log('created investment returned', createdType);
       if (createdType) {
         deselectInvestment();
         setSelectedInvestmentType(createdType);
       }
-      navigate("/investments");
+      navigate('/investments');
     } catch (err) {
-      console.error("Failed to create investment type:", err);
+      console.error('Failed to create investment type:', err);
     }
   };
   
@@ -91,7 +91,7 @@ export default function CreateInvestmentType() {
             <option value="normal">Normal Distribution</option>
           </select>
 
-          {newTypeData.return_mode === "fixed" ? (
+          {newTypeData.return_mode === 'fixed' ? (
             <input
               type="text"
               name="return_fixed"
@@ -130,7 +130,7 @@ export default function CreateInvestmentType() {
             <option value="normal">Normal Distribution</option>
           </select>
 
-          {newTypeData.income_mode === "fixed" ? (
+          {newTypeData.income_mode === 'fixed' ? (
             <input
               type="text"
               name="income_fixed"

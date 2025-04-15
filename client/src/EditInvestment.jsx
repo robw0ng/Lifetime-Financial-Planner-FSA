@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import "./CreateScenario.css";
-import { useNavigate } from "react-router-dom";
-import { useData } from "./DataContext";
-import { useSelected } from "./SelectedContext";
-import { get_type_from_id } from "./Investments";
+import { useState, useEffect } from 'react';
+import './CreateScenario.css';
+import { useNavigate } from 'react-router-dom';
+import { useData } from './DataContext';
+import { useSelected } from './SelectedContext';
+import { get_type_from_id } from './Investments';
 
 export default function EditInvestment() {
   const { selectedScenario, selectedInvestment, setSelectedInvestment, setSelectedInvestmentType } = useSelected();
@@ -13,10 +13,10 @@ export default function EditInvestment() {
   const investmentTypes = Array.from(selectedScenario.InvestmentTypes || []);
 
   const [formData, setFormData] = useState({
-    id: "",
-    selectedType: "",
-    value: "",
-    account: "taxable",
+    id: '',
+    selectedType: '',
+    value: '',
+    account: 'taxable',
   });
 
   useEffect(() => {
@@ -24,8 +24,8 @@ export default function EditInvestment() {
       setFormData({
         id: selectedInvestment.id,
         selectedType: get_type_from_id(selectedInvestment.investment_type_id, selectedScenario).name,
-        value: selectedInvestment.value || "",
-        account: selectedInvestment.account || "taxable",
+        value: selectedInvestment.value || '',
+        account: selectedInvestment.account || 'taxable',
       });
     }
   }, [selectedInvestment]);
@@ -46,7 +46,7 @@ export default function EditInvestment() {
     );
 
     if (!selectedTypeData) {
-      console.error("No valid investment type selected.");
+      console.error('No valid investment type selected.');
       return;
     }
 
@@ -61,11 +61,11 @@ export default function EditInvestment() {
       const editedInvestment = await editInvestment(selectedScenario.id, updatedInvestment);
       if (editedInvestment){
         setSelectedInvestment(editedInvestment);
-        setSelectedInvestmentType(get_type_from_id(editedInvestment.investment_type_id, selectedScenario))  
+        setSelectedInvestmentType(get_type_from_id(editedInvestment.investment_type_id, selectedScenario));  
       }
-      navigate("/investments");
+      navigate('/investments');
     } catch (error) {
-      console.error("Failed to update investment:", error);
+      console.error('Failed to update investment:', error);
     }
   };
 

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useSelected } from './SelectedContext';
-import yaml from "js-yaml";
+import yaml from 'js-yaml';
 
 const DataContext = createContext();
 
@@ -18,17 +18,17 @@ export const DataProvider = ({ children }) => {
     try {
       // setLoading(true);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios`, {
-        method: "GET",
-        credentials: "include",
+        method: 'GET',
+        credentials: 'include',
       });
 
       if (res.status === 401) {
         logout();
-        throw new Error("Unauthorized");
+        throw new Error('Unauthorized');
       }
 
       if (!res.ok) {
-        throw new Error("Failed to fetch scenarios");
+        throw new Error('Failed to fetch scenarios');
       }
   
       const data = await res.json();
@@ -41,7 +41,7 @@ export const DataProvider = ({ children }) => {
       // }
       return data;
     } catch (error) {
-      console.error("Error fetching scenarios:", error);
+      console.error('Error fetching scenarios:', error);
     } 
     // finally {
       // setLoading(false);
@@ -52,16 +52,16 @@ export const DataProvider = ({ children }) => {
   const fetchShared = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/shared`, {
-        method: "GET",
-        credentials: "include",
+        method: 'GET',
+        credentials: 'include',
       });
 
       if (res.status === 401) {
-        throw new Error("Unauthorized");
+        throw new Error('Unauthorized');
       }
 
       if (!res.ok) {
-        throw new Error("Failed to fetch scenarios");
+        throw new Error('Failed to fetch scenarios');
       }
       const data = await res.json();
       setSharedScenarios(data);
@@ -74,7 +74,7 @@ export const DataProvider = ({ children }) => {
       return data;
     }
     catch (error){
-      console.error("Error fetching shared scenarios:", error);
+      console.error('Error fetching shared scenarios:', error);
     }
     return null;
   };
@@ -82,12 +82,12 @@ export const DataProvider = ({ children }) => {
   const fetchScenarios = async () => {
     let owned = await fetchOwned();
     let shared = await fetchShared();
-    let new_all_scenarios = [...owned, ...shared]
+    let new_all_scenarios = [...owned, ...shared];
     setAllScenarios(new_all_scenarios);
     if (selectedScenario) {
       const updatedSelectedScenario = new_all_scenarios.find((scenario) => String(scenario.id) === String(selectedScenario.id));
       if (updatedSelectedScenario) {
-        console.log("updating selected scenario to", updatedSelectedScenario);
+        console.log('updating selected scenario to', updatedSelectedScenario);
         setSelectedScenario(updatedSelectedScenario);
       }
     }
@@ -97,13 +97,13 @@ export const DataProvider = ({ children }) => {
   const fetchAccessList = async (scenarioId) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/access/${scenarioId}`, {
-        credentials: "include",
+        credentials: 'include',
       });
-      if (!res.ok) throw new Error("Failed to fetch access list");
+      if (!res.ok) throw new Error('Failed to fetch access list');
       const data = await res.json();
       setAccessList(data);
     } catch (err) {
-      console.error("Error fetching access list:", err.message);
+      console.error('Error fetching access list:', err.message);
     }
   };
 
@@ -111,17 +111,17 @@ export const DataProvider = ({ children }) => {
     try {
       if (user?.email){
         const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
-          credentials: "include",
+          credentials: 'include',
           body: JSON.stringify(newScenario),
         });
 
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }    
     
         if (!res.ok) {
@@ -135,12 +135,12 @@ export const DataProvider = ({ children }) => {
         return createdScenario;
       }
       else{
-        const createdScenario = { ...newScenario, id: `${Date.now()}` }
+        const createdScenario = { ...newScenario, id: `${Date.now()}` };
         setScenarios((prev) => [...prev, createdScenario]);
         return createdScenario;
       }
     } catch (error) {
-      console.error("Error creating scenario:", error);
+      console.error('Error creating scenario:', error);
     }
     return null;
   };
@@ -149,19 +149,19 @@ export const DataProvider = ({ children }) => {
 		try {
 			if (user?.email) {
 				const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/edit/${editedScenario.id}`, {
-					method: "PUT",
-					headers: { "Content-Type": "application/json" },
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(editedScenario),
-					credentials: "include",
+					credentials: 'include',
 				});
 
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
 
 				if (res.status !== 200) {
-					throw new Error("Failed to edit scenario");
+					throw new Error('Failed to edit scenario');
 				}
 
 				const data = await res.json();
@@ -175,7 +175,7 @@ export const DataProvider = ({ children }) => {
         return editedScenario;
 			}
 		} catch (error) {
-			console.error("Error editing scenario:", error);
+			console.error('Error editing scenario:', error);
 		}
     return null;
 	};
@@ -184,14 +184,14 @@ export const DataProvider = ({ children }) => {
     try {
       if (user?.email) {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/delete/${scenarioId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
         });
 
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }    
 
         if (!res.ok) {
@@ -199,13 +199,13 @@ export const DataProvider = ({ children }) => {
           throw new Error(`Failed to delete scenario: ${errorText}`);
         }
   
-        console.log("Scenario deleted from backend");
+        console.log('Scenario deleted from backend');
         await fetchScenarios();
       } else {
         setScenarios((prev) => prev.filter((scenario) => scenario.id !== scenarioId));
       }
     } catch (error) {
-      console.error("Error deleting scenario:", error);
+      console.error('Error deleting scenario:', error);
     }
   };
   
@@ -213,9 +213,9 @@ export const DataProvider = ({ children }) => {
     try {
       const scenarioToDuplicate = scenarios.find((scenario) => scenario.id === scenarioId) || 
                   sharedScenarios.find((sharedScenario) => sharedScenario.id === scenarioId);
-      console.log("scenario to dup", scenarioToDuplicate);
+      console.log('scenario to dup', scenarioToDuplicate);
       if (!scenarioToDuplicate) {
-        console.error("Scenario not found for duplication");
+        console.error('Scenario not found for duplication');
         return null;
       }
   
@@ -223,15 +223,15 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/scenarios/duplicate/${scenarioId}`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
           }
         );
 
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }          
 
         if (!res.ok){
@@ -255,7 +255,7 @@ export const DataProvider = ({ children }) => {
         return duplicatedScenario;
       }
     } catch (error) {
-      console.error("Error duplicating scenario:", error);
+      console.error('Error duplicating scenario:', error);
       return null;
     }
   };
@@ -266,9 +266,9 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/scenarios/leave/${scenarioId}`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
           }
         );
         console.log(res.json);
@@ -276,21 +276,21 @@ export const DataProvider = ({ children }) => {
       }  
     }
     catch (error){
-      console.error("Error leaving scenario:", error);
+      console.error('Error leaving scenario:', error);
     }
   };
 
   const shareScenario = async (scenarioId, email, permission) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/share/${scenarioId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, permission }), // 👈 send the payload
       });
   
       if (res.status === 401) {
-        throw new Error("Unauthorized");
+        throw new Error('Unauthorized');
       }
   
       if (!res.ok) {
@@ -298,10 +298,10 @@ export const DataProvider = ({ children }) => {
         throw new Error(`Failed to share scenario: ${errorText}`);
       }
   
-      console.log("Scenario shared successfully!");
-      return {success: true, message: "Success!"};
+      console.log('Scenario shared successfully!');
+      return {success: true, message: 'Success!'};
     } catch (err) {
-      console.error("Error sharing scenario:", err.message);
+      console.error('Error sharing scenario:', err.message);
       return { success: false, message: err.message };
     }
   };  
@@ -309,8 +309,8 @@ export const DataProvider = ({ children }) => {
   const removeScenarioAccess = async (scenarioId, userIdToRemove) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/unshare/${scenarioId}/${userIdToRemove}`, {
-        method: "DELETE",
-        credentials: "include",
+        method: 'DELETE',
+        credentials: 'include',
       });
   
       if (!res.ok) {
@@ -321,7 +321,7 @@ export const DataProvider = ({ children }) => {
       fetchAccessList(scenarioId);
       return true;
     } catch (error) {
-      console.error("Error removing scenario access:", error);
+      console.error('Error removing scenario access:', error);
       return false;
     }
   };
@@ -331,15 +331,15 @@ export const DataProvider = ({ children }) => {
       if (user?.email) {
         // Authenticated user: send to backend
         const res = await fetch(`${import.meta.env.VITE_API_URL}/investmenttypes/${scenarioId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(newInvestmentType),
         });
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
         if (!res.ok) {
@@ -365,7 +365,7 @@ export const DataProvider = ({ children }) => {
         return newTypeWithId;
       }
     } catch (err) {
-      console.error("Error creating investment type:", err);
+      console.error('Error creating investment type:', err);
       return null;
     }
   };
@@ -377,16 +377,16 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/investmenttypes/edit/${scenarioId}/${updatedType.id}`,
           {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify(updatedType),
           }
         );
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
         if (!res.ok) {
@@ -433,7 +433,7 @@ export const DataProvider = ({ children }) => {
         return updatedType;
       }
     } catch (err) {
-      console.error("Error editing investment type:", err);
+      console.error('Error editing investment type:', err);
       return null;
     }
   };
@@ -445,14 +445,14 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/investmenttypes/duplicate/${scenarioId}/${investmentTypeId}`,
           {
-            method: "POST",
-            credentials: "include",
+            method: 'POST',
+            credentials: 'include',
           }
         );
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
         if (!res.ok) {
@@ -504,7 +504,7 @@ export const DataProvider = ({ children }) => {
         return duplicatedType;
       }
     } catch (error) {
-      console.error("Error duplicating investment type:", error);
+      console.error('Error duplicating investment type:', error);
       return null;
     }
   };
@@ -516,14 +516,14 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/investmenttypes/delete/${scenarioId}/${investmentTypeId}`,
           {
-            method: "DELETE",
-            credentials: "include",
+            method: 'DELETE',
+            credentials: 'include',
           }
         );
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
         if (!res.ok) {
@@ -577,7 +577,7 @@ export const DataProvider = ({ children }) => {
         return true;
       }
     } catch (error) {
-      console.error("Error deleting investment type:", error);
+      console.error('Error deleting investment type:', error);
       return false;
     }
   };
@@ -596,15 +596,15 @@ export const DataProvider = ({ children }) => {
         };
   
         const res = await fetch(`${import.meta.env.VITE_API_URL}/investments/${scenarioId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(payload),
         });
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
         if (!res.ok) {
@@ -639,11 +639,11 @@ export const DataProvider = ({ children }) => {
               Investments: updatedInvestments,
               expense_withdrawl_strategy: [...scenario.expense_withdrawl_strategy, guestInvestment],
               roth_conversion_strategy:
-                guestInvestment.tax_status === "PTR"
+                guestInvestment.tax_status === 'PTR'
                   ? [...scenario.roth_conversion_strategy, guestInvestment]
                   : scenario.roth_conversion_strategy,
               rmd_strategy:
-                guestInvestment.tax_status === "PTR"
+                guestInvestment.tax_status === 'PTR'
                   ? [...scenario.rmd_strategy, guestInvestment]
                   : scenario.rmd_strategy,
             };
@@ -661,7 +661,7 @@ export const DataProvider = ({ children }) => {
         return guestInvestment;
       }
     } catch (error) {
-      console.error("Error creating investment:", error);
+      console.error('Error creating investment:', error);
       return null;
     }
   };
@@ -679,16 +679,16 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/investments/edit/${scenarioId}/${updatedInvestment.id}`,
           {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify(payload),
           }
         );
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
         if (!res.ok) {
@@ -724,14 +724,14 @@ export const DataProvider = ({ children }) => {
               updatedInvestmentTypes.add(updatedInvestment.type);
             }
   
-            const isPTR = updatedInvestment.account === "PTR";
+            const isPTR = updatedInvestment.account === 'PTR';
   
             const updatedExpenseStrategy = Array.from(updatedInvestments);
             const updatedRothStrategy = isPTR
-              ? updatedExpenseStrategy.filter((inv) => inv.account === "PTR")
+              ? updatedExpenseStrategy.filter((inv) => inv.account === 'PTR')
               : scenario.roth_conversion_strategy.filter((inv) => inv.id !== updatedInvestment.id);
             const updatedRmdStrategy = isPTR
-              ? updatedExpenseStrategy.filter((inv) => inv.account === "PTR")
+              ? updatedExpenseStrategy.filter((inv) => inv.account === 'PTR')
               : scenario.rmd_strategy.filter((inv) => inv.id !== updatedInvestment.id);
   
             const updatedScenario = {
@@ -756,7 +756,7 @@ export const DataProvider = ({ children }) => {
         return updatedInvestment;
       }
     } catch (error) {
-      console.error("Error editing investment:", error);
+      console.error('Error editing investment:', error);
       return null;
     }
   };  
@@ -774,15 +774,15 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/investments/duplicate/${scenarioId}/${investmentId}`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
           }
         );
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
         if (!res.ok) {
@@ -806,7 +806,7 @@ export const DataProvider = ({ children }) => {
         return duplicated;
       }
     } catch (error) {
-      console.error("Error duplicating investment:", error);
+      console.error('Error duplicating investment:', error);
       return null;
     }
   };  
@@ -818,14 +818,14 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/investments/delete/${scenarioId}/${investmentId}`,
           {
-            method: "DELETE",
-            credentials: "include",
+            method: 'DELETE',
+            credentials: 'include',
           }
         );
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
         if (!res.ok) {
@@ -871,7 +871,7 @@ export const DataProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.error("Error deleting investment:", error);
+      console.error('Error deleting investment:', error);
     }
   };
   
@@ -879,18 +879,18 @@ export const DataProvider = ({ children }) => {
     try {
       if (user?.email) {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/events/${scenarioId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(newEventSeries),
         });
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
-        if (!res.ok) throw new Error("Failed to create event series");
+        if (!res.ok) throw new Error('Failed to create event series');
   
         const { eventSeries: created } = await res.json();
         await fetchScenarios();
@@ -907,7 +907,7 @@ export const DataProvider = ({ children }) => {
         return guestEventSeries;
       }
     } catch (error) {
-      console.error("Error creating event series:", error);
+      console.error('Error creating event series:', error);
       return null;
     }
   };
@@ -918,19 +918,19 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/events/edit/${scenarioId}/${updatedEventSeries.id}`,
           {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify(updatedEventSeries),
           }
         );
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
-        if (!res.ok) throw new Error("Failed to update event series");
+        if (!res.ok) throw new Error('Failed to update event series');
   
         const { eventSeries: updated } = await res.json();
         await fetchScenarios();
@@ -948,7 +948,7 @@ export const DataProvider = ({ children }) => {
         return updatedEventSeries;
       }
     } catch (err) {
-      console.error("Error editing event series:", err);
+      console.error('Error editing event series:', err);
       return null;
     }
   };
@@ -965,17 +965,17 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/events/duplicate/${scenarioId}/${eventSeriesId}`,
           {
-            method: "POST",
-            credentials: "include",
+            method: 'POST',
+            credentials: 'include',
           }
         );
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
-        if (!res.ok) throw new Error("Failed to duplicate event series");
+        if (!res.ok) throw new Error('Failed to duplicate event series');
   
         const { eventSeries: duplicated } = await res.json();
         await fetchScenarios();
@@ -998,7 +998,7 @@ export const DataProvider = ({ children }) => {
         return duplicated;
       }
     } catch (err) {
-      console.error("Error duplicating event series:", err);
+      console.error('Error duplicating event series:', err);
       return null;
     }
   };  
@@ -1009,17 +1009,17 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/events/delete/${scenarioId}/${eventSeriesId}`,
           {
-            method: "DELETE",
-            credentials: "include",
+            method: 'DELETE',
+            credentials: 'include',
           }
         );
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
-        if (!res.ok) throw new Error("Failed to delete event series");
+        if (!res.ok) throw new Error('Failed to delete event series');
   
         await fetchScenarios();
         return true;
@@ -1034,7 +1034,7 @@ export const DataProvider = ({ children }) => {
         return true;
       }
     } catch (err) {
-      console.error("Error deleting event series:", err);
+      console.error('Error deleting event series:', err);
       return false;
     }
   };
@@ -1081,24 +1081,24 @@ export const DataProvider = ({ children }) => {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/strategy/${scenarioId}/${strategyKey}`,
           {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ strategy: updatedScenarioToSelect[strategyKey] }),
           }
         );
   
         if (res.status === 401) {
           logout();
-          throw new Error("Unauthorized");
+          throw new Error('Unauthorized');
         }
   
         if (!res.ok) {
           const errorText = await res.text();
-          console.error("Failed to update strategy order:", errorText);
+          console.error('Failed to update strategy order:', errorText);
         }
       } catch (err) {
-        console.error("Error syncing strategy to backend:", err);
+        console.error('Error syncing strategy to backend:', err);
       }
     }
   };
@@ -1106,23 +1106,23 @@ export const DataProvider = ({ children }) => {
   const fetchUserTaxYAML = async (userId) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/user/get-yaml`, {
-        method: "GET",
-        credentials: "include",
+        method: 'GET',
+        credentials: 'include',
       });
   
       if (res.status === 401) {
-        console.warn("Unauthorized access while fetching YAML.");
+        console.warn('Unauthorized access while fetching YAML.');
         return null;
       }
   
       if (!res.ok) {
-        throw new Error("Failed to fetch YAML file");
+        throw new Error('Failed to fetch YAML file');
       }
   
       const data = await res.json();
       return data.yaml;
     } catch (error) {
-      console.error("Error fetching YAML file:", error);
+      console.error('Error fetching YAML file:', error);
       return null;
     }
   };
@@ -1130,19 +1130,19 @@ export const DataProvider = ({ children }) => {
   const uploadUserYaml = async (file) => {
     try {
       const formData = new FormData();
-      formData.append("file", file); // must match the field name expected by multer: 'file'
+      formData.append('file', file); // must match the field name expected by multer: 'file'
   
       const res = await fetch(`${import.meta.env.VITE_API_URL}/user/upload-yaml`, {
-        method: "POST",
-        credentials: "include",
+        method: 'POST',
+        credentials: 'include',
         body: formData, // no need to set Content-Type — browser will handle it
       });
   
-      if (!res.ok) throw new Error("Failed to upload YAML");
+      if (!res.ok) throw new Error('Failed to upload YAML');
   
       return true;
     } catch (err) {
-      console.error("Error uploading YAML:", err);
+      console.error('Error uploading YAML:', err);
       return false;
     }
   };
@@ -1150,55 +1150,55 @@ export const DataProvider = ({ children }) => {
 const exportScenario = async (scenarioId) => {
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/export-yaml/${scenarioId}`, {
-      method: "GET",
-      credentials: "include",
+      method: 'GET',
+      credentials: 'include',
     });
 
-    if (!res.ok) throw new Error("Failed to export scenario");
+    if (!res.ok) throw new Error('Failed to export scenario');
 
     const yamlText = await res.text();
 
     // Trigger file download
-    const blob = new Blob([yamlText], { type: "application/x-yaml" });
+    const blob = new Blob([yamlText], { type: 'application/x-yaml' });
     const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = url;
-    link.setAttribute("download", "scenario.yaml");
+    link.setAttribute('download', 'scenario.yaml');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   } catch (err) {
-    console.error("Error exporting scenario:", err);
+    console.error('Error exporting scenario:', err);
   }
   };
 
 const importScenario = async () => {
     return new Promise((resolve, reject) => {
-      const fileInput = document.createElement("input");
-      fileInput.type = "file";
-      fileInput.accept = ".yaml,.yml";
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.yaml,.yml';
   
       fileInput.onchange = async (e) => {
         const file = e.target.files[0];
-        if (!file) return reject("No file selected");
+        if (!file) return reject('No file selected');
   
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append('file', file);
   
         try {
           const res = await fetch(`${import.meta.env.VITE_API_URL}/scenarios/import-yaml`, {
-            method: "POST",
-            credentials: "include",
+            method: 'POST',
+            credentials: 'include',
             body: formData,
           });
   
-          if (!res.ok) throw new Error("Failed to import scenario");
+          if (!res.ok) throw new Error('Failed to import scenario');
   
           const { scenario: importedScenario } = await res.json();
           fetchScenarios(); // Refresh scenario list
           resolve(importedScenario);
         } catch (error) {
-          console.error("Error importing scenario:", error);
+          console.error('Error importing scenario:', error);
           reject(error);
         }
       };
@@ -1211,15 +1211,15 @@ const importScenario = async () => {
 const removeUserYaml = async () => {
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/user/remove-yaml`, {
-      method: "DELETE",
-      credentials: "include",
+      method: 'DELETE',
+      credentials: 'include',
     });
 
-    if (!res.ok) throw new Error("Failed to delete YAML");
+    if (!res.ok) throw new Error('Failed to delete YAML');
 
     return true;
   } catch (err) {
-    console.error("Error removing YAML:", err);
+    console.error('Error removing YAML:', err);
     return false;
   }
 };

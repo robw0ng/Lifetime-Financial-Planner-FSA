@@ -1,9 +1,9 @@
-import { useState } from "react";
-import "./CreateScenario.css";
-import { useNavigate } from "react-router-dom";
-import { useData } from "./DataContext";
-import { useSelected } from "./SelectedContext";
-import { get_type_from_id } from "./Investments";
+import { useState } from 'react';
+import './CreateScenario.css';
+import { useNavigate } from 'react-router-dom';
+import { useData } from './DataContext';
+import { useSelected } from './SelectedContext';
+import { get_type_from_id } from './Investments';
 
 export default function CreateInvestment() {
   const { selectedScenario, selectedInvestmentType, setSelectedInvestment, setSelectedInvestmentType} = useSelected();
@@ -13,9 +13,9 @@ export default function CreateInvestment() {
   const investmentTypes = Array.from(selectedScenario.InvestmentTypes || []);
 
   const [formData, setFormData] = useState({
-    selectedType: selectedInvestmentType?.name || "",
-    value: "",
-    account: "taxable",
+    selectedType: selectedInvestmentType?.name || '',
+    value: '',
+    account: 'taxable',
   });
 
   const handleChange = (e) => {
@@ -34,7 +34,7 @@ export default function CreateInvestment() {
     );
 
     if (!selectedTypeData) {
-      console.error("No valid investment type selected.");
+      console.error('No valid investment type selected.');
       return;
     }
 
@@ -48,11 +48,11 @@ export default function CreateInvestment() {
       const created_investment = await createInvestment(selectedScenario.id, newInvestment);
       if (created_investment){
         setSelectedInvestment(created_investment);
-        setSelectedInvestmentType(get_type_from_id(created_investment.investment_type_id, selectedScenario))  
+        setSelectedInvestmentType(get_type_from_id(created_investment.investment_type_id, selectedScenario));  
       }
-      navigate("/investments");
+      navigate('/investments');
     } catch (error) {
-      console.error("Failed to create investment:", error);
+      console.error('Failed to create investment:', error);
     }
 
     resetForm();
@@ -60,9 +60,9 @@ export default function CreateInvestment() {
 
   const resetForm = () => {
     setFormData({
-      selectedType: "",
-      value: "",
-      account: "taxable",
+      selectedType: '',
+      value: '',
+      account: 'taxable',
     });
   };
 

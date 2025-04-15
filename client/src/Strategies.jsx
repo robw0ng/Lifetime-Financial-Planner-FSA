@@ -1,7 +1,7 @@
-import { useSelected } from "./SelectedContext";
-import { useData } from "./DataContext";
-import styles from "./Strategies.module.css";
-import { get_type_from_id } from "./Investments";
+import { useSelected } from './SelectedContext';
+import { useData } from './DataContext';
+import styles from './Strategies.module.css';
+import { get_type_from_id } from './Investments';
 
 // function get_investment_from_special_id(investment_special_id, selectedScenario){
 //   if (selectedScenario === null || (selectedScenario && selectedScenario.Investments === null)){
@@ -81,23 +81,23 @@ function ScenarioList() {
   }
 
   if (scenariosList.length <= 0) {
-    scenariosList = [{ name: "No scenarios available...", id: null }];
+    scenariosList = [{ name: 'No scenarios available...', id: null }];
   }
 
   if (sharedScenariosList.length <= 0){
-    sharedScenariosList = [{ name: "No scenarios available...", id: null }];
+    sharedScenariosList = [{ name: 'No scenarios available...', id: null }];
   }
 
   return (
     <section
-      className={`${styles["outer-container"]} ${styles["scenario-list-container"]}`}>
-      <div className={`${styles["inner-container"]} ${styles["scenario-list"]}`}>
-        <div className={`${styles["scenario-shared-button-container"]}`}>
+      className={`${styles['outer-container']} ${styles['scenario-list-container']}`}>
+      <div className={`${styles['inner-container']} ${styles['scenario-list']}`}>
+        <div className={`${styles['scenario-shared-button-container']}`}>
           <button 
           className={
             shared === false
-            ? `${styles["share-button"]} ${styles["selected"]}`
-            : styles["share-button"]          
+            ? `${styles['share-button']} ${styles['selected']}`
+            : styles['share-button']          
           }
           onClick={selectOwned}
           >
@@ -105,23 +105,23 @@ function ScenarioList() {
           <button 
           className={
             shared === true
-            ? `${styles["share-button"]} ${styles["selected"]}`
-            : styles["share-button"]          
+            ? `${styles['share-button']} ${styles['selected']}`
+            : styles['share-button']          
           }
           onClick={selectShared}
           >
             Shared</button>
         </div>
-        <h2 className={styles["scenario-list-title"]}>Scenarios:</h2>
-        <div className={styles["scenario-item-list"]}>
+        <h2 className={styles['scenario-list-title']}>Scenarios:</h2>
+        <div className={styles['scenario-item-list']}>
           {shared === true ? 
             (sharedScenariosList.map((shared_scenario, index) => (
               <div
                 key={shared_scenario.id}
                 className={
                   selectedScenario && shared_scenario.id === selectedScenario.id
-                    ? `${styles["selected"]} ${styles["scenario-item"]}`
-                    : styles["scenario-item"]
+                    ? `${styles['selected']} ${styles['scenario-item']}`
+                    : styles['scenario-item']
                 }
                 onClick={
                   shared_scenario.id !== null ? () => selectScenario(shared_scenario) : undefined
@@ -136,8 +136,8 @@ function ScenarioList() {
                 key={scenario.id}
                 className={
                   selectedScenario && scenario.id === selectedScenario.id
-                    ? `${styles["selected"]} ${styles["scenario-item"]}`
-                    : styles["scenario-item"]
+                    ? `${styles['selected']} ${styles['scenario-item']}`
+                    : styles['scenario-item']
                 }
                 onClick={
                   scenario.id !== null ? () => selectScenario(scenario) : undefined
@@ -158,55 +158,55 @@ function StrategyList({ title, strategyKey, strategyItems }) {
   const { reorderStrategy } = useData();
 
   function handleMove(index, direction) {
-    const toIndex = direction === "up" ? index - 1 : index + 1;
+    const toIndex = direction === 'up' ? index - 1 : index + 1;
     reorderStrategy(selectedScenario.id, strategyKey, index, toIndex);
   }
 
   return (
-    <div className={`${styles["outer-container"]} ${styles["strategies-list-container"]}`}>
-      <div className={`${styles["inner-container"]} ${styles["strategies-list"]}`}>
-        <h2 className={styles["title"]}>{title}</h2>
-        <div className={styles["strategy-list-header"]}>
-          <span className={styles["strategy-span"]}>Move</span>
-          <span className={styles["strategy-span"]}>Name</span>
-          <span className={styles["strategy-span"]}>Value</span>
+    <div className={`${styles['outer-container']} ${styles['strategies-list-container']}`}>
+      <div className={`${styles['inner-container']} ${styles['strategies-list']}`}>
+        <h2 className={styles['title']}>{title}</h2>
+        <div className={styles['strategy-list-header']}>
+          <span className={styles['strategy-span']}>Move</span>
+          <span className={styles['strategy-span']}>Name</span>
+          <span className={styles['strategy-span']}>Value</span>
         </div>
         {strategyItems.length === 0 ? (
-          <div className={styles["strategy-item"]}>
-            <span className={styles["strategy-span"]}>—</span>
-            <span className={styles["strategy-span"]}>—</span>
-            <span className={styles["strategy-span"]}>—</span>
+          <div className={styles['strategy-item']}>
+            <span className={styles['strategy-span']}>—</span>
+            <span className={styles['strategy-span']}>—</span>
+            <span className={styles['strategy-span']}>—</span>
           </div>
         ) : (
           strategyItems.map((item, index) => (
-            <div key={index} className={styles["strategy-item"]}>
-              <span className={`${styles["strategy-span"]} ${styles["move-controls"]}`}>
+            <div key={index} className={styles['strategy-item']}>
+              <span className={`${styles['strategy-span']} ${styles['move-controls']}`}>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleMove(index, "up");
+                    handleMove(index, 'up');
                   }}
-                  disabled={index <= 0 || (selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw")}
-                  className={styles["move-button"]}
+                  disabled={index <= 0 || (selectedScenario && selectedScenario.permission && selectedScenario.permission !== 'rw')}
+                  className={styles['move-button']}
                 >
                   ⬆️
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleMove(index, "down");
+                    handleMove(index, 'down');
                   }}
-                  disabled={index >= strategyItems.length - 1 || (selectedScenario && selectedScenario.permission && selectedScenario.permission !== "rw")}
-                  className={styles["move-button"]}
+                  disabled={index >= strategyItems.length - 1 || (selectedScenario && selectedScenario.permission && selectedScenario.permission !== 'rw')}
+                  className={styles['move-button']}
                 >
                   ⬇️
                 </button>
               </span>
-              <span className={styles["strategy-span"]}>
-                {get_type_from_investment_id(item, selectedScenario)?.name || get_expense_from_id(item, selectedScenario)?.name || "—"}
+              <span className={styles['strategy-span']}>
+                {get_type_from_investment_id(item, selectedScenario)?.name || get_expense_from_id(item, selectedScenario)?.name || '—'}
               </span>
-              <span className={styles["strategy-span"]}>
-                ${get_investment_from_id(item, selectedScenario)?.value?.toLocaleString() || get_expense_from_id(item, selectedScenario)?.initial_amount || "—"}
+              <span className={styles['strategy-span']}>
+                ${get_investment_from_id(item, selectedScenario)?.value?.toLocaleString() || get_expense_from_id(item, selectedScenario)?.initial_amount || '—'}
               </span>
             </div>
           ))
@@ -220,12 +220,12 @@ export default function Strategies() {
   const { selectedScenario } = useSelected();
 
   return (
-    <main className={`${styles["strategies"]}`}>
-      <section className={`${styles['column']} ${styles["actions"]}`}>
+    <main className={`${styles['strategies']}`}>
+      <section className={`${styles['column']} ${styles['actions']}`}>
         <ScenarioList />
       </section>
 
-      <section className={`${styles['column']} ${styles["spending"]}`}>
+      <section className={`${styles['column']} ${styles['spending']}`}>
         <StrategyList
           title="Spending"
           strategyKey="spending_strategy"
@@ -233,7 +233,7 @@ export default function Strategies() {
         />
       </section>
 
-      <section className={`${styles['column']} ${styles["expense"]}`}>
+      <section className={`${styles['column']} ${styles['expense']}`}>
         <StrategyList
           title="Expense Withdrawal"
           strategyKey="expense_withdrawl_strategy"
@@ -241,7 +241,7 @@ export default function Strategies() {
         />
       </section>
 
-      <section className={`${styles['column']} ${styles["roth"]}`}>
+      <section className={`${styles['column']} ${styles['roth']}`}>
         <StrategyList
           title="Roth Conversion"
           strategyKey="roth_conversion_strategy"
@@ -249,7 +249,7 @@ export default function Strategies() {
         />
       </section>
 
-      <section className={`${styles['column']} ${styles["rmd"]}`}>
+      <section className={`${styles['column']} ${styles['rmd']}`}>
         <StrategyList
           title="RMD"
           strategyKey="rmd_strategy"

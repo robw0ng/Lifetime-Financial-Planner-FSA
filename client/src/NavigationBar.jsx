@@ -1,11 +1,11 @@
-import * as React from "react";
-import styles from "./NavigationBar.module.css";
+import * as React from 'react';
+import styles from './NavigationBar.module.css';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from "./AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from './AuthContext';
+import { useNavigate } from 'react-router-dom';
 import defaultAvatar from './assets/nopfp.webp';
-import { useData } from "./DataContext";
-import { useSelected } from "./SelectedContext";
+import { useData } from './DataContext';
+import { useSelected } from './SelectedContext';
 
 function NavigationUser() {
   const { user, logout } = useAuth();
@@ -27,8 +27,8 @@ function NavigationUser() {
       <div className={styles.profileColumn}>
         <div className={styles.profileContainer}>
           <Link 
-            className={styles["user-profile-link"]} 
-            to={user.email === null ? "#" : "/profile"}
+            className={styles['user-profile-link']} 
+            to={user.email === null ? '#' : '/profile'}
           >
             <img
               src={
@@ -61,22 +61,22 @@ function NavigationButtons() {
   return (
     <div className={styles.navColumn}>
     <div className={styles.buttonContainer}>
-      <Link to="/" className={location.pathname === "/" ? `${styles["active"]} ${styles["navButton"]}` : styles["navButton"]}>
+      <Link to="/" className={location.pathname === '/' ? `${styles['active']} ${styles['navButton']}` : styles['navButton']}>
         Dashboard
       </Link>
-      <Link to="/scenarios" className={location.pathname === "/scenarios" ? `${styles["active"]} ${styles["navButton"]}` : styles["navButton"]}>
+      <Link to="/scenarios" className={location.pathname === '/scenarios' ? `${styles['active']} ${styles['navButton']}` : styles['navButton']}>
         Scenarios
       </Link>
-      <Link to="/investments" className={location.pathname === "/investments" ? `${styles["active"]} ${styles["navButton"]}` : styles["navButton"]}>
+      <Link to="/investments" className={location.pathname === '/investments' ? `${styles['active']} ${styles['navButton']}` : styles['navButton']}>
         Investments
       </Link>
-      <Link to="/eventseries" className={location.pathname === "/eventseries" ? `${styles["active"]} ${styles["navButton"]}` : styles["navButton"]}>
+      <Link to="/eventseries" className={location.pathname === '/eventseries' ? `${styles['active']} ${styles['navButton']}` : styles['navButton']}>
         Event Series
       </Link>
-      <Link to="/strategies" className={location.pathname === "/strategies" ? `${styles["active"]} ${styles["navButton"]}` : styles["navButton"]}>
+      <Link to="/strategies" className={location.pathname === '/strategies' ? `${styles['active']} ${styles['navButton']}` : styles['navButton']}>
         Strategies
       </Link>
-      <Link to="/simulations" className={location.pathname === "/simulations" ? `${styles["active"]} ${styles["navButton"]}` : styles["navButton"]}>
+      <Link to="/simulations" className={location.pathname === '/simulations' ? `${styles['active']} ${styles['navButton']}` : styles['navButton']}>
         Simulations
       </Link>
     </div>

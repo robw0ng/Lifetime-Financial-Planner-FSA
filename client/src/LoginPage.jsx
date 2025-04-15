@@ -1,7 +1,7 @@
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
-import styles from "./LoginPage.module.css"
+import styles from './LoginPage.module.css';
 import { useEffect } from 'react';
 
 const LoginPage = () => {
@@ -22,28 +22,28 @@ const LoginPage = () => {
 		try {
 			const token = credentialResponse.credential;
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth`, {
-				method: "POST",
+				method: 'POST',
 				headers: {
-					"Content-Type": "application/json",
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({ token }),
-				credentials: "include",
+				credentials: 'include',
 			});
 
 			const data = await response.json();
 			if (response.status == 201) {
 				const userInfo = data.user;
-				console.log("User Authenticated:", userInfo);
-				console.log("User Token: ", token);
+				console.log('User Authenticated:', userInfo);
+				console.log('User Token: ', token);
 				// Save user info in context
 				login(userInfo);
 				// Redirect to home page after login
-				navigate("/");
+				navigate('/');
 			} else {
-				console.log("Authentication failure:", data);
+				console.log('Authentication failure:', data);
 			}
 		} catch (err) {
-			console.log("Error during Google login:", err.message);
+			console.log('Error during Google login:', err.message);
 		}
 	};
 
@@ -53,7 +53,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/");
+      navigate('/');
     }
   }, [user, navigate]);
 
@@ -61,7 +61,7 @@ const LoginPage = () => {
     <div>
       <div>
         <h1>Sign In</h1>
-        <div className={styles["login-button-container"]}>
+        <div className={styles['login-button-container']}>
           <GoogleOAuthProvider  clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
             <GoogleLogin onSuccess={handleSuccess} onError={handleError} />
           </GoogleOAuthProvider>

@@ -19,30 +19,30 @@ export const SelectedProvider = ({ children }) => {
         setSelectedInvestment(null);
         setSelectedEventSeries(null);
         setSelectedStrategy(null);
-        setSelectedStrategyItem(null)
+        setSelectedStrategyItem(null);
     };
 
     const deselectInvestmentType = () => {
         setSelectedInvestmentType(null);
-    }
+    };
 
     const deselectInvestment = () => {
         setSelectedInvestment(null);
         // setSelectedInvestmentType(null);
-    }
+    };
 
     const deselectEventSeries = () =>{
         setSelectedEventSeries(null);
-    }
+    };
 
     const deselectStrategy = () => {
         setSelectedStrategy(null);
-        setSelectedStrategyItem(null)
-    }
+        setSelectedStrategyItem(null);
+    };
 
     const deselectStrategyItem = () => {
-        setSelectedStrategyItem(null)
-    }
+        setSelectedStrategyItem(null);
+    };
     return (
         <SelectedContext.Provider value={{ 
         shared,
