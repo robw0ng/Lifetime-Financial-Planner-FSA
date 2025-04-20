@@ -85,9 +85,9 @@ async function loadRMDTable() {
         const filePath = path.join(__dirname, 'scrapers', 'uniform_lifetime_table.yaml');
         
         // Execute the Python script to scrape RMD tables
-        console.log('Running scrapeIRS.py...');
-        await execPromise(`python ${scriptPath}`);
-
+        
+        const pythonPath = 'C:/Users/dklim/AppData/Local/Programs/Python/Python313/python.exe';
+        await execPromise(`${pythonPath} ${scriptPath}`);
         // Ensure the file exists after scraping
         if (!fs.existsSync(filePath)) {
             throw new Error('RMD table not found after scraping.');
@@ -213,12 +213,12 @@ async function simulateScenario(scenario) {
     }
 
     console.log("Initial Investments")
-    console.log(state.investments)
-
+    
     //need to change back to endYear***
     for (let year = currentYear; year < endYear; year++) {
         console.log(`\n=== Processing Year ${year} ===`);
-        
+        console.log(state.investments)
+        console.log(state.events)
         //check for mortality of spouse only
         if (state.is_married && year >= spouseEndYear) {
             console.log(`Spouse passed away in year ${year}`);
@@ -240,6 +240,7 @@ async function simulateScenario(scenario) {
             console.log("Income and expense events after death.")
             console.log(incomeOrExpenseEvents)
         }
+    
         // 1. Preliminaries
         //get the inflation assumption for the year
         state.inflationRate = sampleInflationRate(scenario);

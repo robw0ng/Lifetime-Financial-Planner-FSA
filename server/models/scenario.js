@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
 			Scenario.hasMany(models.EventSeries, { foreignKey: "scenario_id", as: "EventSeries", onDelete:"CASCADE", hooks: true,});
 		}
 	}
+
 	Scenario.init(
 		{
 			id: {
