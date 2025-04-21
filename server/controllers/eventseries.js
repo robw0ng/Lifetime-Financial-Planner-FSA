@@ -93,6 +93,7 @@ router.post("/:id", async (req, res) => {
 				inflation_adjusted,
 				user_percentage,
 				is_social,
+				expected_change_numtype,
 			} = req.body;
 			const newIncomeEvent = await IncomeEventSeries.create({
 				// Associate with event series
@@ -108,6 +109,7 @@ router.post("/:id", async (req, res) => {
 				inflation_adjusted,
 				user_percentage: Number(user_percentage),
 				is_social,
+				expected_change_numtype,
 			});
 		} else if (type === "expense") {
 			const {
@@ -121,6 +123,7 @@ router.post("/:id", async (req, res) => {
 				inflation_adjusted,
 				user_percentage,
 				is_discretionary,
+				expected_change_numtype,
 			} = req.body;
 			const newExpenseEvent = await ExpenseEventSeries.create({
 				// Associate with event series
@@ -136,14 +139,14 @@ router.post("/:id", async (req, res) => {
 				inflation_adjusted,
 				user_percentage: Number(user_percentage),
 				is_discretionary,
+				expected_change_numtype,
 			});
 
-			if (is_discretionary){
+			if (is_discretionary) {
 				const currentStrategy = canUser.spending_strategy || []; // Ensure it's an array
 				const updatedStrategy = [...currentStrategy, newExpenseEvent.id]; // Add the new ID
 				await canUser.update({ spending_strategy: updatedStrategy });
 			}
-
 		} else if (type === "invest") {
 			const { is_glide_path, asset_allocation, asset_allocation2, max_cash } = req.body;
 			const newInvestEvent = await InvestEventSeries.create({
@@ -175,7 +178,12 @@ router.post("/:id", async (req, res) => {
 		});
 
 		const eventData = createdEventSeries.toJSON();
-		const typeSpecific = eventData.IncomeEventSeries || eventData.ExpenseEventSeries || eventData.InvestEventSeries || eventData.RebalanceEventSeries || {};
+		const typeSpecific =
+			eventData.IncomeEventSeries ||
+			eventData.ExpenseEventSeries ||
+			eventData.InvestEventSeries ||
+			eventData.RebalanceEventSeries ||
+			{};
 
 		const flattened_event_series = {
 			...eventData,
@@ -184,7 +192,7 @@ router.post("/:id", async (req, res) => {
 			ExpenseEventSeries: undefined,
 			InvestEventSeries: undefined,
 			RebalanceEventSeries: undefined,
-		}
+		};
 
 		res.status(201).json({ eventSeries: flattened_event_series });
 	} catch (err) {
@@ -250,7 +258,9 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 
 		await eventSeries.update(eventSeriesFields);
 		// pull strat from spending
-		let updated_spending = (canUser.spending_strategy || []).filter((spending_id) => String(spending_id) !== String(id))
+		let updated_spending = (canUser.spending_strategy || []).filter(
+			(spending_id) => String(spending_id) !== String(id)
+		);
 
 		// based on type, edit corresponding EventSeries Type
 		if (type === "income") {
@@ -265,6 +275,7 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 				inflation_adjusted,
 				user_percentage,
 				is_social,
+				expected_change_numtype,
 			} = req.body;
 			const incomeFields = {
 				initial_amount,
@@ -277,6 +288,7 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 				inflation_adjusted,
 				user_percentage,
 				is_social,
+				expected_change_numtype,
 			};
 			const incomeSeries = await IncomeEventSeries.findOne({ where: { id } });
 			await incomeSeries.update(incomeFields);
@@ -292,6 +304,7 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 				inflation_adjusted,
 				user_percentage,
 				is_discretionary,
+				expected_change_numtype,
 			} = req.body;
 			const expenseFields = {
 				initial_amount,
@@ -304,9 +317,10 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 				inflation_adjusted,
 				user_percentage,
 				is_discretionary,
+				expected_change_numtype,
 			};
 
-			if (is_discretionary){
+			if (is_discretionary) {
 				updated_spending.push(String(id));
 			}
 
@@ -326,9 +340,9 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 
 		await Scenario.update(
 			{
-				spending_strategy: updated_spending
+				spending_strategy: updated_spending,
 			},
-			{where: {id: scenario_id}}
+			{ where: { id: scenario_id } }
 		);
 
 		const populatedEventSeries = await EventSeries.findOne({
@@ -342,7 +356,12 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 		});
 
 		const eventData = populatedEventSeries.toJSON();
-		const typeSpecific = eventData.IncomeEventSeries || eventData.ExpenseEventSeries || eventData.InvestEventSeries || eventData.RebalanceEventSeries || {};
+		const typeSpecific =
+			eventData.IncomeEventSeries ||
+			eventData.ExpenseEventSeries ||
+			eventData.InvestEventSeries ||
+			eventData.RebalanceEventSeries ||
+			{};
 		const flattened_event_series = {
 			...eventData,
 			...typeSpecific,
@@ -350,7 +369,7 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 			ExpenseEventSeries: undefined,
 			InvestEventSeries: undefined,
 			RebalanceEventSeries: undefined,
-		}
+		};
 
 		res.status(200).json({ eventSeries: flattened_event_series });
 	} catch (err) {
@@ -382,7 +401,9 @@ router.delete("/delete/:scenarioId/:id", async (req, res) => {
 		await eventSeries.destroy();
 		if (canUser.spending_strategy.includes(String(eventSeriesId))) {
 			const currentStrategy = canUser.spending_strategy || [];
-			const updatedStrategy = currentStrategy.filter(strategyId => String(strategyId) !== String(eventSeriesId));
+			const updatedStrategy = currentStrategy.filter(
+				(strategyId) => String(strategyId) !== String(eventSeriesId)
+			);
 			await canUser.update({ spending_strategy: updatedStrategy });
 		}
 		// corresponding Event Series Type automatically deleted, FK=CASCADE
@@ -441,13 +462,11 @@ router.post("/duplicate/:scenarioId/:id", async (req, res) => {
 				id: duplicatedEventSeries.id,
 			});
 
-			if (expenseSeries.is_discretionary){
+			if (expenseSeries.is_discretionary) {
 				const currentStrategy = canUser.spending_strategy || []; // Ensure it's an array
 				const updatedStrategy = [...currentStrategy, duplicatedExpenseSeries.id]; // Add the new ID
 				await canUser.update({ spending_strategy: updatedStrategy });
 			}
-
-
 		} else if (eventSeries.type === "invest") {
 			const investSeries = await InvestEventSeries.findOne({ where: { id } });
 			const duplicatedInvestSeries = await InvestEventSeries.create({

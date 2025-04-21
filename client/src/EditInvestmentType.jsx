@@ -4,7 +4,8 @@ import { useData } from './DataContext';
 import { useSelected } from './SelectedContext';
 
 export default function EditInvestmentType() {
-  const { selectedScenario, setSelectedInvestmentType, editedInvestmentType } = useSelected();
+  const { selectedScenario, setSelectedInvestmentType, editedInvestmentType } =
+    useSelected();
   const { editInvestmentType } = useData();
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,11 +22,13 @@ export default function EditInvestmentType() {
     income_stddev: '',
     expense_ratio: '',
     taxability: 'taxable',
+    expected_change_numtype: 'percent',
+    expected_income_numtype: 'percent',
   });
 
   useEffect(() => {
     if (!selectedScenario || !id) return;
-    
+
     const type = Array.from(selectedScenario.InvestmentTypes).find(
       (t) => `${t.id}` === `${id}`
     );
@@ -37,15 +40,27 @@ export default function EditInvestmentType() {
       name: type.name || '',
       description: type.description || '',
       return_mode: type.expected_change_type,
-      return_fixed: type.expected_change_type === 'fixed' ? type.expected_change_value : '',
-      return_mean: type.expected_change_type === 'normal' ? type.expected_change_mean : '',
-      return_stddev: type.expected_change_type === 'normal' ? type.expected_change_std_dev : '',
+      return_fixed:
+        type.expected_change_type === 'fixed' ? type.expected_change_value : '',
+      return_mean:
+        type.expected_change_type === 'normal' ? type.expected_change_mean : '',
+      return_stddev:
+        type.expected_change_type === 'normal'
+          ? type.expected_change_std_dev
+          : '',
       income_mode: type.expected_income_type,
-      income_fixed: type.expected_income_type === 'fixed' ? type.expected_income_value : '',
-      income_mean: type.expected_income_type === 'normal' ? type.expected_income_mean : '',
-      income_stddev: type.expected_income_type === 'normal' ? type.expected_income_std_dev : '',
+      income_fixed:
+        type.expected_income_type === 'fixed' ? type.expected_income_value : '',
+      income_mean:
+        type.expected_income_type === 'normal' ? type.expected_income_mean : '',
+      income_stddev:
+        type.expected_income_type === 'normal'
+          ? type.expected_income_std_dev
+          : '',
       expense_ratio: type.expense_ratio || '',
       taxability: type.taxability || 'taxable',
+      expected_change_numtype: type.expected_change_numtype || 'percent',
+      expected_income_numtype: type.expected_income_numtype || 'percent',
     });
   }, [selectedScenario, id]);
 
@@ -63,28 +78,40 @@ export default function EditInvestmentType() {
       console.error('No scenario selected.');
       return;
     }
-  
+
     // Backend-compatible payload
     const updatedType = {
       id: id,
       name: formData.name,
       description: formData.description || null,
       expected_change_type: formData.return_mode,
-      expected_change_value: formData.return_mode === 'fixed' ? Number(formData.return_fixed) : null,
-      expected_change_mean: formData.return_mode === 'normal' ? Number(formData.return_mean) : null,
-      expected_change_std_dev: formData.return_mode === 'normal' ? Number(formData.return_stddev) : null,
+      expected_change_value:
+        formData.return_mode === 'fixed' ? Number(formData.return_fixed) : null,
+      expected_change_mean:
+        formData.return_mode === 'normal' ? Number(formData.return_mean) : null,
+      expected_change_std_dev:
+        formData.return_mode === 'normal'
+          ? Number(formData.return_stddev)
+          : null,
       expected_income_type: formData.income_mode,
-      expected_income_value: formData.income_mode === 'fixed' ? Number(formData.income_fixed) : null,
-      expected_income_mean: formData.income_mode === 'normal' ? Number(formData.income_mean) : null,
-      expected_income_std_dev: formData.income_mode === 'normal' ? Number(formData.income_stddev) : null,
+      expected_income_value:
+        formData.income_mode === 'fixed' ? Number(formData.income_fixed) : null,
+      expected_income_mean:
+        formData.income_mode === 'normal' ? Number(formData.income_mean) : null,
+      expected_income_std_dev:
+        formData.income_mode === 'normal'
+          ? Number(formData.income_stddev)
+          : null,
       expense_ratio: Number(formData.expense_ratio),
       taxability: formData.taxability,
+      expected_change_numtype: formData.expected_change_numtype,
+      expected_income_numtype: formData.expected_income_numtype,
     };
-  
+
     try {
       const edited = await editInvestmentType(selectedScenario.id, updatedType);
       console.log('edited investment returned', edited);
-      if (edited){
+      if (edited) {
         setSelectedInvestmentType(edited);
       }
       navigate('/investments');
@@ -92,7 +119,7 @@ export default function EditInvestmentType() {
       console.error('Failed to edit investment type:', err);
     }
   };
-  
+
   return (
     <main>
       <form onSubmit={handleSubmit} className="form-container">
@@ -100,18 +127,34 @@ export default function EditInvestmentType() {
 
         <div className="form-group">
           <label>Asset Type Name:</label>
-          <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         <div className="form-group">
           <label>Description:</label>
-          <textarea name="description" value={formData.description} onChange={handleChange} rows="4" required/>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows="4"
+            required
+          />
         </div>
 
         {/* Expected Return */}
         <div className="form-group">
           <label>Expected Annual Return:</label>
-          <select name="return_mode" value={formData.return_mode} onChange={handleChange}>
+          <select
+            name="return_mode"
+            value={formData.return_mode}
+            onChange={handleChange}
+          >
             <option value="fixed">Fixed</option>
             <option value="normal">Normal Distribution</option>
           </select>
@@ -150,7 +193,11 @@ export default function EditInvestmentType() {
         {/* Expected Income */}
         <div className="form-group">
           <label>Expected Annual Income:</label>
-          <select name="income_mode" value={formData.income_mode} onChange={handleChange}>
+          <select
+            name="income_mode"
+            value={formData.income_mode}
+            onChange={handleChange}
+          >
             <option value="fixed">Fixed</option>
             <option value="normal">Normal Distribution</option>
           </select>
@@ -199,13 +246,43 @@ export default function EditInvestmentType() {
 
         <div className="form-group">
           <label>Taxability:</label>
-          <select name="taxability" value={formData.taxability} onChange={handleChange}>
+          <select
+            name="taxability"
+            value={formData.taxability}
+            onChange={handleChange}
+          >
             <option value="taxable">Taxable</option>
             <option value="tax-exempt">Tax-Exempt</option>
           </select>
         </div>
 
-        <button type="submit" className="submit-btn">Save Changes</button>
+        <div className="form-group">
+          <label>Expected Return (Amt or Pct):</label>
+          <select
+            name="expected_change_numtype"
+            value={formData.expected_change_numtype}
+            onChange={handleChange}
+          >
+            <option value="percent">Percent</option>
+            <option value="amount">Amount</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Expected Income (Amt or Pct):</label>
+          <select
+            name="expected_income_numtype"
+            value={formData.expected_income_numtype}
+            onChange={handleChange}
+          >
+            <option value="percent">Percent</option>
+            <option value="amount">Amount</option>
+          </select>
+        </div>
+
+        <button type="submit" className="submit-btn">
+          Save Changes
+        </button>
       </form>
     </main>
   );

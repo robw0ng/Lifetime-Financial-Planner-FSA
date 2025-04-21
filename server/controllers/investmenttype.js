@@ -44,6 +44,8 @@ router.post("/:scenarioId", async (req, res) => {
 		expected_income_mean,
 		expected_income_std_dev,
 		taxability,
+		expected_change_numtype,
+		expected_income_numtype,
 	} = req.body;
 
 	try {
@@ -62,6 +64,8 @@ router.post("/:scenarioId", async (req, res) => {
 			expected_income_mean: expected_income_type === "normal" ? Number(expected_income_mean) : null,
 			expected_income_std_dev: expected_income_type === "normal" ? Number(expected_income_std_dev) : null,
 			taxability,
+			expected_change_numtype,
+			expected_income_numtype,
 			// Associate with scenario
 			scenario_id: canUser.id,
 		});
@@ -96,7 +100,7 @@ router.put("/edit/:scenarioId/:id", async (req, res) => {
 		if (!investmentType) {
 			return res.status(404).json("Investment type not found");
 		}
-		if (investmentType.is_locked){
+		if (investmentType.is_locked) {
 			return res.status(403).json("Investment Type is locked and cannot be edited");
 		}
 
@@ -128,7 +132,7 @@ router.delete("/delete/:scenarioId/:id", async (req, res) => {
 			where: { id: typeId, scenario_id },
 		});
 		if (!investmentType) return res.status(404).json("Investment type not found");
-		if (investmentType.is_locked){
+		if (investmentType.is_locked) {
 			return res.status(403).json("Investment Type is locked and cannot be edited");
 		}
 

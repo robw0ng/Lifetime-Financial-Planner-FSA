@@ -1,5 +1,5 @@
 "use strict";
-const { Model } = require("sequelize");
+const { Model, DatabaseError } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
 	class InvestmentType extends Model {
 		/**
@@ -79,7 +79,15 @@ module.exports = (sequelize, DataTypes) => {
 			is_locked: {
 				type: DataTypes.BOOLEAN,
 				defaultValue: false,
-			},			  
+			},
+			expected_change_numtype: {
+				type: DataTypes.STRING,
+				allowNull: false,
+			},
+			expected_income_numtype: {
+				type: DataTypes.STRING,
+				allowNull: false,
+			},
 			scenario_id: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
