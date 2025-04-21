@@ -682,52 +682,8 @@ router.get("/export-yaml/:id", async (req, res) => {
 
 		const data = scenario.toJSON();
 
-		// 1. Core fields
-		const exportObj = {
-			name: data.name,
-			maritalStatus: data.is_married ? "couple" : "individual",
-			birthYears: data.is_married ? [data.birth_year, data.spouse_birth_year] : [data.birth_year],
-			lifeExpectancy: data.is_married
-				? [
-						{
-							type: data.life_expectancy_type,
-							...(data.life_expectancy_type === "fixed"
-								? { value: data.life_expectancy_value }
-								: { mean: data.life_expectancy_mean, stdev: data.life_expectancy_std_dev }),
-						},
-						{
-							type: data.spouse_life_expectancy_type,
-							...(data.spouse_life_expectancy_type === "fixed"
-								? { value: data.spouse_life_expectancy_value }
-								: {
-										mean: data.spouse_life_expectancy_mean,
-										stdev: data.spouse_life_expectancy_std_dev,
-								  }),
-						},
-				  ]
-				: [
-						{
-							type: data.life_expectancy_type,
-							...(data.life_expectancy_type === "fixed"
-								? { value: data.life_expectancy_value }
-								: { mean: data.life_expectancy_mean, stdev: data.life_expectancy_std_dev }),
-						},
-				  ],
-			inflationAssumption: {
-				type: data.inflation_assumption_type,
-				...(data.inflation_assumption_type === "fixed"
-					? { value: data.inflation_assumption_value }
-					: data.inflation_assumption_type === "normal"
-					? { mean: data.inflation_assumption_mean, stdev: data.inflation_assumption_std_dev }
-					: { lower: data.inflation_assumption_lower, upper: data.inflation_assumption_upper }),
-			},
-			afterTaxContributionLimit: data.after_tax_contribution_limit,
-			financialGoal: data.financial_goal,
-			residenceState: data.state_of_residence,
-		};
-
 		// 2. InvestmentTypes
-		exportObj.investmentTypes = data.InvestmentTypes.map((t) => ({
+		const invTypes = data.InvestmentTypes.map((t) => ({
 			name: t.name,
 			description: t.description,
 			returnAmtOrPct: t.expected_change_numtype,
@@ -745,7 +701,7 @@ router.get("/export-yaml/:id", async (req, res) => {
 		}));
 
 		// 3. Investments
-		exportObj.investments = data.Investments.map((inv) => ({
+		const investments = data.Investments.map((inv) => ({
 			investmentType: data.InvestmentTypes.find((t) => t.id === inv.investment_type_id).name,
 			value: inv.value,
 			taxStatus: inv.tax_status,
@@ -753,13 +709,12 @@ router.get("/export-yaml/:id", async (req, res) => {
 		}));
 
 		// 4. EventSeries
-		exportObj.eventSeries = data.EventSeries.map((ev) => {
+		const eventSeries = data.EventSeries.map((ev) => {
 			// pick the subtype record
 			const subtype =
 				ev.IncomeEventSeries || ev.ExpenseEventSeries || ev.InvestEventSeries || ev.RebalanceEventSeries;
 			const base = {
 				name: ev.name,
-				type: ev.type,
 				start: (() => {
 					if (ev.start_year_type === "fixed") return { type: "fixed", value: ev.start_year_value };
 					if (ev.start_year_type === "normal")
@@ -778,13 +733,14 @@ router.get("/export-yaml/:id", async (req, res) => {
 						return { type: "normal", mean: ev.duration_mean, stdev: ev.duration_std_dev };
 					return { type: "uniform", lower: ev.duration_lower, upper: ev.duration_upper };
 				})(),
+				type: ev.type,
 			};
 
 			// merge subtype fields
 			if (ev.type === "income" || ev.type === "expense") {
 				Object.assign(base, {
 					initialAmount: subtype.initial_amount,
-					changeAmtOrPct: subtype.expected_change_type === "fixed" ? "amount" : "percent",
+					changeAmtOrPct: subtype.expected_change_numtype,
 					changeDistribution:
 						subtype.expected_change_type === "fixed"
 							? { type: "fixed", value: subtype.expected_change_value }
@@ -810,7 +766,7 @@ router.get("/export-yaml/:id", async (req, res) => {
 			} else if (ev.type === "invest" || ev.type === "rebalance") {
 				Object.assign(base, {
 					assetAllocation: subtype.asset_allocation,
-					isGlidePath: subtype.is_glide_path,
+					glidePath: subtype.is_glide_path,
 				});
 				if (subtype.is_glide_path) {
 					base.assetAllocation2 = subtype.asset_allocation2;
@@ -823,33 +779,92 @@ router.get("/export-yaml/:id", async (req, res) => {
 			return base;
 		});
 
-		const flatEventSeries = (scenarioData.EventSeries || []).map((event) => {
-			const ext =
-				event.IncomeEventSeries ||
-				event.ExpenseEventSeries ||
-				event.InvestEventSeries ||
-				event.RebalanceEventSeries ||
-				{};
-			return {
-				...event,
-				...ext,
-				IncomeEventSeries: undefined,
-				ExpenseEventSeries: undefined,
-				InvestEventSeries: undefined,
-				RebalanceEventSeries: undefined,
-			};
-		});
+		// Build the export object in one literal, in order:
+		const exportObj = {
+			// 1) Scenario identity + demographics
+			name: data.name,
+			maritalStatus: data.is_married ? "couple" : "individual",
+			birthYears: data.is_married ? [data.birth_year, data.spouse_birth_year] : [data.birth_year],
+			lifeExpectancy: data.is_married
+				? [
+						{
+							type: data.life_expectancy_type,
+							...(data.life_expectancy_type === "fixed"
+								? { value: data.life_expectancy_value }
+								: {
+										mean: data.life_expectancy_mean,
+										stdev: data.life_expectancy_std_dev,
+								  }),
+						},
+						{
+							type: data.spouse_life_expectancy_type,
+							...(data.spouse_life_expectancy_type === "fixed"
+								? { value: data.spouse_life_expectancy_value }
+								: {
+										mean: data.spouse_life_expectancy_mean,
+										stdev: data.spouse_life_expectancy_std_dev,
+								  }),
+						},
+				  ]
+				: [
+						{
+							type: data.life_expectancy_type,
+							...(data.life_expectancy_type === "fixed"
+								? { value: data.life_expectancy_value }
+								: {
+										mean: data.life_expectancy_mean,
+										stdev: data.life_expectancy_std_dev,
+								  }),
+						},
+				  ],
 
-		// Assemble clean export object
-		const exportObject = {
-			...scenarioData,
-			Investments: scenarioData.Investments,
-			InvestmentTypes: scenarioData.InvestmentTypes,
-			EventSeries: flatEventSeries,
+			// 2) investmentTypes
+			investmentTypes: invTypes,
+
+			// 3) investments
+			investments: investments,
+
+			// 4) eventSeries
+			eventSeries: eventSeries,
+
+			// 5) inflation assumption
+			inflationAssumption: {
+				type: data.inflation_assumption_type,
+				...(data.inflation_assumption_type === "fixed"
+					? { value: data.inflation_assumption_value }
+					: data.inflation_assumption_type === "normal"
+					? { mean: data.inflation_assumption_mean, stdev: data.inflation_assumption_std_dev }
+					: {
+							lower: data.inflation_assumption_lower,
+							upper: data.inflation_assumption_upper,
+					  }),
+			},
+
+			// 6) after‑tax contribution limit
+			afterTaxContributionLimit: data.after_tax_contribution_limit,
+
+			// 7) strategies
+			spendingStrategy: data.spending_strategy,
+			expenseWithdrawalStrategy: data.expense_withdrawl_strategy,
+			RMDStrategy: data.rmd_strategy,
+
+			// 8) Roth conversion settings
+			RothConversionOpt: data.is_roth_optimizer_enabled,
+			...(data.is_roth_optimizer_enabled && {
+				RothConversionStart: data.roth_start_year,
+				RothConversionEnd: data.roth_end_year,
+				RothConversionStrategy: data.roth_conversion_strategy,
+			}),
+
+			// 9) financial goal
+			financialGoal: data.financial_goal,
+
+			// 10) residence state
+			residenceState: data.state_of_residence,
 		};
 
-		// Convert to YAML
-		const yamlString = yaml.dump(exportObject);
+		// then dump as YAML:
+		const yamlString = yaml.dump(exportObj);
 
 		// Send YAML to client
 		res.setHeader("Content-Type", "application/x-yaml");
@@ -867,195 +882,243 @@ router.post("/import-yaml", upload.single("file"), async (req, res) => {
 	if (!req.file) return res.status(400).json("No file uploaded");
 
 	try {
-		const yamlText = req.file.buffer.toString("utf-8");
-		const data = yaml.load(yamlText);
+		// 1) Parse YAML
+		const doc = yaml.load(req.file.buffer.toString("utf8"));
 
+		// 2) Destructure exactly your format
 		const {
-			Investments = [],
-			InvestmentTypes = [],
-			EventSeries: EventSeriesList = [], // alias EventSeries becomes EventSeriesList
-			...scenarioCore
-		} = data;
+			name,
+			maritalStatus,
+			birthYears = [],
+			lifeExpectancy = [],
+			investmentTypes = [],
+			investments = [],
+			eventSeries: eventSeriesList = [],
+			inflationAssumption = {},
+			afterTaxContributionLimit,
+			spendingStrategy = [],
+			expenseWithdrawalStrategy = [],
+			RMDStrategy = [],
+			RothConversionOpt = false,
+			RothConversionStart = null,
+			RothConversionEnd = null,
+			RothConversionStrategy = [],
+			financialGoal,
+			residenceState,
+		} = doc;
 
+		// 3) Create core Scenario
 		const newScenario = await Scenario.create({
-			...scenarioCore,
-			id: undefined,
+			name: `${name} (Imported)`,
 			user_id: user.id,
-			name: `${scenarioCore.name} (Imported)`,
+
+			// marriage + birth years
+			is_married: maritalStatus === "couple",
+			birth_year: birthYears[0] || null,
+			spouse_birth_year: maritalStatus === "couple" ? birthYears[1] : null,
+
+			// life expectancy
+			life_expectancy_type: lifeExpectancy[0]?.type,
+			life_expectancy_value: lifeExpectancy[0]?.type === "fixed" ? lifeExpectancy[0].value : null,
+			life_expectancy_mean: lifeExpectancy[0]?.type === "normal" ? lifeExpectancy[0].mean : null,
+			life_expectancy_std_dev: lifeExpectancy[0]?.type === "normal" ? lifeExpectancy[0].stdev : null,
+
+			spouse_life_expectancy_type: maritalStatus === "couple" ? lifeExpectancy[1]?.type : null,
+			spouse_life_expectancy_value:
+				maritalStatus === "couple" && lifeExpectancy[1]?.type === "fixed" ? lifeExpectancy[1].value : null,
+			spouse_life_expectancy_mean:
+				maritalStatus === "couple" && lifeExpectancy[1]?.type === "normal" ? lifeExpectancy[1].mean : null,
+			spouse_life_expectancy_std_dev:
+				maritalStatus === "couple" && lifeExpectancy[1]?.type === "normal" ? lifeExpectancy[1].stdev : null,
+
+			// inflation assumption
+			inflation_assumption_type: inflationAssumption.type,
+			inflation_assumption_value: inflationAssumption.type === "fixed" ? inflationAssumption.value : null,
+			inflation_assumption_mean: inflationAssumption.type === "normal" ? inflationAssumption.mean : null,
+			inflation_assumption_std_dev: inflationAssumption.type === "normal" ? inflationAssumption.stdev : null,
+			inflation_assumption_lower: inflationAssumption.type === "uniform" ? inflationAssumption.lower : null,
+			inflation_assumption_upper: inflationAssumption.type === "uniform" ? inflationAssumption.upper : null,
+
+			// after‑tax limit & goal & state
+			after_tax_contribution_limit: afterTaxContributionLimit,
+			financial_goal: financialGoal,
+			state_of_residence: residenceState,
+
+			// strategies
+			spending_strategy: spendingStrategy,
+			expense_withdrawl_strategy: expenseWithdrawalStrategy,
+			rmd_strategy: RMDStrategy,
+
+			// Roth conversion
+			is_roth_optimizer_enabled: RothConversionOpt,
+			roth_start_year: RothConversionOpt ? RothConversionStart : null,
+			roth_end_year: RothConversionOpt ? RothConversionEnd : null,
+			roth_conversion_strategy: RothConversionOpt ? RothConversionStrategy : null,
 		});
 
+		// 4) InvestmentTypes → DB + build name→id map
 		const typeMap = {};
-		for (const type of InvestmentTypes) {
+		for (const t of investmentTypes) {
+			const {
+				name: tName,
+				description,
+				returnAmtOrPct,
+				returnDistribution,
+				expenseRatio,
+				incomeAmtOrPct,
+				incomeDistribution,
+				taxability,
+			} = t;
+
 			const newType = await InvestmentType.create({
-				...type,
-				id: undefined,
+				name: tName,
+				description: description || null,
+
+				expected_change_type: returnDistribution.type,
+				expected_change_numtype: returnAmtOrPct,
+				expected_change_value: returnDistribution.type === "fixed" ? returnDistribution.value : null,
+				expected_change_mean: returnDistribution.type === "normal" ? returnDistribution.mean : null,
+				expected_change_std_dev: returnDistribution.type === "normal" ? returnDistribution.stdev : null,
+
+				expense_ratio: expenseRatio,
+
+				expected_income_type: incomeDistribution.type,
+				expected_income_numtype: incomeAmtOrPct,
+				expected_income_value: incomeDistribution.type === "fixed" ? incomeDistribution.value : null,
+				expected_income_mean: incomeDistribution.type === "normal" ? incomeDistribution.mean : null,
+				expected_income_std_dev: incomeDistribution.type === "normal" ? incomeDistribution.stdev : null,
+
+				taxability: Boolean(taxability),
 				scenario_id: newScenario.id,
 			});
-			typeMap[String(type.id)] = newType.id;
+
+			typeMap[tName] = newType.id;
 		}
 
-		let expenseStrategy = scenarioCore.expense_withdrawl_strategy || [];
-		let rothStrategy = scenarioCore.roth_conversion_strategy || [];
-		let rmdStrategy = scenarioCore.rmd_strategy || [];
-
+		// 5) Investments → DB + build oldID→newID map
 		const investmentMap = {};
-
-		for (const inv of Investments) {
-			const mappedTypeId = typeMap[String(inv.investment_type_id)];
-
-			const newInvestment = await Investment.create({
-				...inv,
-				id: undefined,
-				special_id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+		for (const inv of investments) {
+			const { investmentType, value, taxStatus, id: oldId } = inv;
+			const newInv = await Investment.create({
+				special_id: oldId,
+				value,
+				tax_status: taxStatus,
 				scenario_id: newScenario.id,
-				investment_type_id: mappedTypeId,
+				investment_type_id: typeMap[investmentType],
 			});
-
-			investmentMap[String(inv.id)] = newInvestment.id;
+			investmentMap[oldId] = newInv.id;
 		}
 
-		const mapStrategy = (strategy) => {
-			return strategy
-				.map((item) => {
-					const newInvestmentId = investmentMap[String(item)];
-					if (!newInvestmentId) {
-						console.warn(`Investment ID ${item} not found in the map`);
-					}
-					return newInvestmentId;
-				})
-				.filter(Boolean);
-		};
-
-		expenseStrategy = mapStrategy(expenseStrategy);
-		rothStrategy = mapStrategy(rothStrategy);
-		rmdStrategy = mapStrategy(rmdStrategy);
-
+		// 6) Remap strategies (IDs)
+		const remap = (arr) => arr.map((old) => investmentMap[old]).filter(Boolean);
 		await Scenario.update(
 			{
-				expense_withdrawl_strategy: expenseStrategy,
-				roth_conversion_strategy: rothStrategy,
-				rmd_strategy: rmdStrategy,
+				expense_withdrawl_strategy: remap(expenseWithdrawalStrategy),
+				roth_conversion_strategy: remap(RothConversionStrategy),
+				rmd_strategy: remap(RMDStrategy),
+				// spending_strategy is event‑based, handled below
 			},
 			{ where: { id: newScenario.id } }
 		);
 
-		const spendingStrategy = [];
-		console.log("eventseries list", EventSeriesList);
-		for (const event of EventSeriesList) {
+		// 7) EventSeries + sub‑tables
+		const spendingByEvent = [];
+		for (const ev of eventSeriesList) {
 			const {
-				id,
-				name,
+				name: evName,
 				description,
+				start,
+				duration,
 				type,
-				start_year_type,
-				start_year_value,
-				start_year_mean,
-				start_year_std_dev,
-				start_year_lower,
-				start_year_upper,
-				start_year_other_event,
-				duration_type,
-				duration_value,
-				duration_mean,
-				duration_std_dev,
-				duration_lower,
-				duration_upper,
-				initial_amount,
-				expected_change_type,
-				expected_change_value,
-				expected_change_mean,
-				expected_change_std_dev,
-				expected_change_lower,
-				expected_change_upper,
-				inflation_adjusted,
-				user_percentage,
-				is_social,
-				is_discretionary,
-				is_glide_path,
-				asset_allocation,
-				asset_allocation2,
-				max_cash,
-			} = event;
+				initialAmount,
+				changeAmtOrPct,
+				changeDistribution,
+				inflationAdjusted,
+				userFraction,
+				socialSecurity,
+				discretionary,
+				assetAllocation,
+				glidePath,
+				assetAllocation2,
+				maxCash,
+			} = ev;
 
-			const newEvent = await EventSeries.create({
-				name,
+			// base EventSeries row
+			const row = await EventSeries.create({
+				name: evName,
 				description: description || null,
 				type,
-				start_year_type,
-				start_year_value: start_year_type === "fixed" ? Number(start_year_value) : null,
-				start_year_mean: start_year_type === "normal" ? Number(start_year_mean) : null,
-				start_year_std_dev: start_year_type === "normal" ? Number(start_year_std_dev) : null,
-				start_year_lower: start_year_type === "uniform" ? Number(start_year_lower) : null,
-				start_year_upper: start_year_type === "uniform" ? Number(start_year_upper) : null,
-				start_year_other_event:
-					start_year_type === "sameYearAs" || start_year_type === "yearAfter" ? start_year_other_event : null,
-				duration_type,
-				duration_value: duration_type === "fixed" ? Number(duration_value) : null,
-				duration_mean: duration_type === "normal" ? Number(duration_mean) : null,
-				duration_std_dev: duration_type === "normal" ? Number(duration_std_dev) : null,
-				duration_lower: duration_type === "uniform" ? Number(duration_lower) : null,
-				duration_upper: duration_type === "uniform" ? Number(duration_upper) : null,
+				start_year_type: start.type,
+				start_year_value: start.type === "fixed" ? start.value : null,
+				start_year_mean: start.type === "normal" ? start.mean : null,
+				start_year_std_dev: start.type === "normal" ? start.stdev : null,
+				start_year_lower: start.type === "uniform" ? start.lower : null,
+				start_year_upper: start.type === "uniform" ? start.upper : null,
+				start_year_other_event: ["startWith", "startAfter"].includes(start.type) ? start.eventSeries : null,
+				duration_type: duration.type,
+				duration_value: duration.type === "fixed" ? duration.value : null,
+				duration_mean: duration.type === "normal" ? duration.mean : null,
+				duration_std_dev: duration.type === "normal" ? duration.stdev : null,
+				duration_lower: duration.type === "uniform" ? duration.lower : null,
+				duration_upper: duration.type === "uniform" ? duration.upper : null,
 				scenario_id: newScenario.id,
 			});
 
-			if (type === "income") {
-				await IncomeEventSeries.create({
-					id: newEvent.id,
-					initial_amount,
-					expected_change_type,
-					expected_change_value: expected_change_type === "fixed" ? Number(expected_change_value) : null,
-					expected_change_mean: expected_change_type === "normal" ? Number(expected_change_mean) : null,
-					expected_change_std_dev: expected_change_type === "normal" ? Number(expected_change_std_dev) : null,
-					expected_change_lower: expected_change_type === "uniform" ? Number(expected_change_lower) : null,
-					expected_change_upper: expected_change_type === "uniform" ? Number(expected_change_upper) : null,
-					inflation_adjusted,
-					user_percentage: Number(user_percentage),
-					is_social,
-				});
-			} else if (type === "expense") {
-				await ExpenseEventSeries.create({
-					id: newEvent.id,
-					initial_amount,
-					expected_change_type,
-					expected_change_value: expected_change_type === "fixed" ? Number(expected_change_value) : null,
-					expected_change_mean: expected_change_type === "normal" ? Number(expected_change_mean) : null,
-					expected_change_std_dev: expected_change_type === "normal" ? Number(expected_change_std_dev) : null,
-					expected_change_lower: expected_change_type === "uniform" ? Number(expected_change_lower) : null,
-					expected_change_upper: expected_change_type === "uniform" ? Number(expected_change_upper) : null,
-					inflation_adjusted,
-					user_percentage: Number(user_percentage),
-					is_discretionary,
-				});
+			// subtype
+			if (type === "income" || type === "expense") {
+				const common = {
+					id: row.id,
+					initial_amount: initialAmount,
+					expected_change_type: changeDistribution.type,
+					expected_change_numtype: changeAmtOrPct,
+					expected_change_value: changeDistribution.type === "fixed" ? changeDistribution.value : null,
+					expected_change_mean: changeDistribution.type === "normal" ? changeDistribution.mean : null,
+					expected_change_std_dev: changeDistribution.type === "normal" ? changeDistribution.stdev : null,
+					expected_change_lower: changeDistribution.type === "uniform" ? changeDistribution.lower : null,
+					expected_change_upper: changeDistribution.type === "uniform" ? changeDistribution.upper : null,
+					inflation_adjusted: inflationAdjusted,
+					user_percentage: userFraction,
+				};
 
-				if (is_discretionary) {
-					spendingStrategy.push(newEvent.id);
+				if (type === "income") {
+					await IncomeEventSeries.create({
+						...common,
+						is_social: Boolean(socialSecurity),
+					});
+				} else {
+					await ExpenseEventSeries.create({
+						...common,
+						is_discretionary: Boolean(discretionary),
+					});
+					if (discretionary) spendingByEvent.push(row.id);
 				}
 			} else if (type === "invest") {
 				await InvestEventSeries.create({
-					id: newEvent.id,
-					is_glide_path,
-					asset_allocation,
-					asset_allocation2: is_glide_path ? asset_allocation2 : null,
-					max_cash: Number(max_cash),
+					id: row.id,
+					is_glide_path: glidePath,
+					asset_allocation: assetAllocation,
+					asset_allocation2: glidePath ? assetAllocation2 : null,
+					max_cash: maxCash,
 				});
 			} else if (type === "rebalance") {
 				await RebalanceEventSeries.create({
-					id: newEvent.id,
-					is_glide_path,
-					asset_allocation,
-					asset_allocation2: is_glide_path ? asset_allocation2 : null,
+					id: row.id,
+					is_glide_path: glidePath,
+					asset_allocation: assetAllocation,
+					asset_allocation2: glidePath ? assetAllocation2 : null,
 				});
 			}
 		}
 
-		await Scenario.update({ spending_strategy: spendingStrategy }, { where: { id: newScenario.id } });
+		// 8) Finally, save the spending_strategy by event IDs
+		await Scenario.update({ spending_strategy: spendingByEvent }, { where: { id: newScenario.id } });
 
-		// Re-fetch populated scenario with includes
-		const populatedScenario = await Scenario.findOne({
+		// 9) Return the fully populated scenario
+		const populated = await Scenario.findOne({
 			where: { id: newScenario.id },
 			include: [
-				{ model: Investment, as: "Investments" },
 				{ model: InvestmentType, as: "InvestmentTypes" },
+				{ model: Investment, as: "Investments" },
 				{
 					model: EventSeries,
 					as: "EventSeries",
@@ -1063,7 +1126,10 @@ router.post("/import-yaml", upload.single("file"), async (req, res) => {
 						{ model: IncomeEventSeries, as: "IncomeEventSeries" },
 						{ model: ExpenseEventSeries, as: "ExpenseEventSeries" },
 						{ model: InvestEventSeries, as: "InvestEventSeries" },
-						{ model: RebalanceEventSeries, as: "RebalanceEventSeries" },
+						{
+							model: RebalanceEventSeries,
+							as: "RebalanceEventSeries",
+						},
 					],
 				},
 			],
@@ -1071,10 +1137,10 @@ router.post("/import-yaml", upload.single("file"), async (req, res) => {
 
 		res.status(201).json({
 			message: "Scenario imported successfully",
-			scenario: populatedScenario,
+			scenario: populated,
 		});
 	} catch (err) {
-		console.error("YAML import failed:", err.message);
+		console.error("YAML import failed:", err);
 		res.status(400).json("Invalid YAML structure or data");
 	}
 });
