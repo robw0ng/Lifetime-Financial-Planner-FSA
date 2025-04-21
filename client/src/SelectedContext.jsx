@@ -6,6 +6,7 @@ const SelectedContext = createContext();
 // Create a provider component
 export const SelectedProvider = ({ children }) => {
     const [shared, setShared] = useState(false);
+    const [oneDim, setOneDim] = useState(true);
     const [selectedScenario, setSelectedScenario] = useState(null);
     const [selectedInvestment, setSelectedInvestment] = useState(null);
     const [selectedInvestmentType, setSelectedInvestmentType] = useState(null);
@@ -35,7 +36,7 @@ export const SelectedProvider = ({ children }) => {
         setSelectedEventSeries(null);
     };
 
-    const deselectStrategy = () => {
+    const deselectStrategy = () => { 
         setSelectedStrategy(null);
         setSelectedStrategyItem(null);
     };
@@ -47,6 +48,8 @@ export const SelectedProvider = ({ children }) => {
         <SelectedContext.Provider value={{ 
         shared,
         setShared,
+        oneDim,
+        setOneDim,
         selectedScenario, 
         setSelectedScenario, 
         selectedInvestmentType,
