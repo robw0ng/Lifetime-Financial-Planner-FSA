@@ -57,17 +57,72 @@ function ScenarioList() {
 function Summary(){
 
   const { 
-    oneDim,
-    setOneDim,
+    simStyle,
+    setSimStyle,
     selectedScenario
   } = useSelected();
 
+  function selectRegular(){
+    setSimStyle(0);
+  }
   function selectOneDim(){
-    setOneDim(true);
+    setSimStyle(1);
   }
 
   function selectTwoDim(){
-    setOneDim(false);
+    setSimStyle(2);
+  }
+
+
+  const renderSimOptions = () => {
+    switch (simStyle) {
+      case 0:
+        return (
+          <div className={styles['options']}>
+            {/* put your “Regular” options here */}
+            <label>
+              <input type="checkbox" /> Include taxes
+            </label>
+            <label>
+              <input type="checkbox" /> Include inflation
+            </label>
+          </div>
+        );
+      case 1:
+        return (
+          <div className={styles['options']}>
+            {/* your “One Dimension” options */}
+            <label>
+              <input type="radio" name="dim" /> Show only income
+            </label>
+            <label>
+              <input type="radio" name="dim" /> Show only expenses
+            </label>
+          </div>
+        );
+      case 2:
+        return (
+          <div className={styles['options']}>
+            {/* your “Two Dimension” options */}
+            <label>
+              X-axis:
+              <select>
+                <option value="time">Time</option>
+                <option value="age">Age</option>
+              </select>
+            </label>
+            <label>
+              Y-axis:
+              <select>
+                <option value="wealth">Wealth</option>
+                <option value="spending">Spending</option>
+              </select>
+            </label>
+          </div>
+        );
+      default:
+        return null;
+    }
   }
 
   return (
@@ -82,7 +137,16 @@ function Summary(){
           <div className={`${styles['scenario-shared-button-container']}`}>
           <button 
           className={
-            oneDim === true
+            simStyle === 0
+            ? `${styles['share-button']} ${styles['selected']}`
+            : styles['share-button']          
+          }
+          onClick={selectRegular}
+          >
+          Regular</button>
+          <button 
+          className={
+            simStyle === 1
             ? `${styles['share-button']} ${styles['selected']}`
             : styles['share-button']          
           }
@@ -91,13 +155,18 @@ function Summary(){
           One Dimension</button>
           <button 
           className={
-            oneDim === false
+            simStyle === 2
             ? `${styles['share-button']} ${styles['selected']}`
             : styles['share-button']          
           }
           onClick={selectTwoDim}
           >
-          Two Dimension</button>
+          Two Dimension
+          </button>
+          
+          <div className={styles['simulation-options-container']}>
+            {renderSimOptions()}
+          </div>
         </div> 
         </div>
       </div>
