@@ -5,6 +5,8 @@ import { useSelected } from './SelectedContext';
 import styles from './Simulations.module.css';
 import { sampleBarData } from './data/sampleData';
 import * as d3 from 'd3';
+import EventSeriesList from './EventSeries.jsx';
+
 function ScenarioList() {
   const { selectedScenario, setSelectedScenario, deselectScenario } =
     useSelected();
@@ -59,13 +61,16 @@ function Summary(){
 
   const { 
     simStyle,
+    simStyle2,
     setSimStyle,
+    setSimStyle2,
     selectedScenario
   } = useSelected();
 
   function selectRegular(){
     setSimStyle(0);
   }
+  
   function selectOneDim(){
     setSimStyle(1);
   }
@@ -74,12 +79,40 @@ function Summary(){
     setSimStyle(2);
   }
 
+  function selectRO1(){
+    setSimStyle2(0);
+  }
+
+  function selectStartYear1(){
+    setSimStyle2(1);
+  }
+
+  function selectYearDuration1(){
+    setSimStyle2(2);
+  }
+
+  function selectInitialIncome(){
+    setSimStyle2(3);
+  }
+
+  function selectPercentage(){
+    setSimStyle2(4);
+  }
+
+
   const[regularData, setRegularData] = useState({
     numRuns:'',
   });
 
   const[oneData, setOneData] = useState({
     numRuns:'',
+    rmdSelect: '', //boolean whether or not the user chose the rmd as the parameter
+    numericType: '', //0, 1, or 2, depending on the type of numeric value being used as the dimension
+    lowerBound: '',
+    upperBound: '',
+    stepSize: '',
+    //also an event series would be selected
+
   });
 
   const[twoData, setTwoData] = useState({
@@ -112,6 +145,11 @@ function Summary(){
   const handleSubmit = async (e) => {
     e.preventDefault();   
   }
+  const renderOneSimOptions = () =>{
+    switch(simStyle2){
+      
+    }
+  }
   const renderSimOptions = () => {
     switch (simStyle) {
       case 0:
@@ -120,12 +158,11 @@ function Summary(){
             <div>
               Number of Sims to run:
             </div>
-            <input              type="number"
+            <input             
+              type="number"
               value={regularData.numRuns}
-        
               name="numRuns"
               onChange={handleRegChange}>
-
             </input>
             <button type="submit" className="submit-btn">
 					    Run Simulations
@@ -142,17 +179,55 @@ function Summary(){
         // </div>
         );
       case 1:
-        return (
-          <div className={styles['options']}>
-            {/* your “One Dimension” options */}
-            <label>
-              <input type="radio" name="dim" /> Show only income
-            </label>
-            <label>
-              <input type="radio" name="dim" /> Show only expenses
-            </label>
-          </div>
-        );
+          return (
+              <div className={styles['options']}>
+              <div className={`${styles['scenario-shared-button-container']}`}>
+              <button 
+              className={
+                simStyle2 === 0
+                ? `${styles['share-button']} ${styles['selected']}`
+                : styles['share-button']          
+                }
+                onClick={selectRO1}
+              >
+              Roth Optimizer</button>
+              
+              <button 
+              className={
+                simStyle2 === 1
+                ? `${styles['share-button']} ${styles['selected']}`
+                : styles['share-button']          
+              }
+              onClick={selectStartYear1}
+              >
+              Years</button>
+              <button 
+              className={
+                simStyle2 === 3
+                ? `${styles['share-button']} ${styles['selected']}`
+                : styles['share-button']          
+              }
+              onClick={selectInitialIncome}
+              >
+              Income
+              </button>
+              <button 
+              className={
+                simStyle2 === 4
+                ? `${styles['share-button']} ${styles['selected']}`
+                : styles['share-button']          
+              }
+              onClick={selectPercentage}
+              >
+              Percentage
+              </button>
+              
+              <div className={styles['simulation-options-container']}>
+                {renderOneSimOptions()}
+              </div>
+              </div> 
+              </div>
+            );
       case 2:
         return (
           <div className={styles['options']}>
@@ -220,7 +295,7 @@ function Summary(){
           <div className={styles['simulation-options-container']}>
             {renderSimOptions()}
           </div>
-        </div> 
+          </div> 
         </div>
       </div>
     </div>

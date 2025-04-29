@@ -7,6 +7,7 @@ const SelectedContext = createContext();
 export const SelectedProvider = ({ children }) => {
     const [shared, setShared] = useState(false);
     const [simStyle, setSimStyle] = useState(0);
+    const [simStyle2, setSimStyle2] = useState(0);
     const [selectedScenario, setSelectedScenario] = useState(null);
     const [selectedInvestment, setSelectedInvestment] = useState(null);
     const [selectedInvestmentType, setSelectedInvestmentType] = useState(null);
@@ -50,6 +51,8 @@ export const SelectedProvider = ({ children }) => {
         setShared,
         simStyle,
         setSimStyle,
+        simStyle2,
+        setSimStyle2,
         selectedScenario, 
         setSelectedScenario, 
         selectedInvestmentType,
