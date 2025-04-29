@@ -1,4 +1,5 @@
 import { useData } from './DataContext';
+import { useState } from 'react';
 import React, { useRef, useEffect } from 'react';
 import { useSelected } from './SelectedContext';
 import styles from './Simulations.module.css';
@@ -73,20 +74,72 @@ function Summary(){
     setSimStyle(2);
   }
 
+  const[regularData, setRegularData] = useState({
+    numRuns:'',
+  });
 
+  const[oneData, setOneData] = useState({
+    numRuns:'',
+  });
+
+  const[twoData, setTwoData] = useState({
+    numRuns:'',
+  });
+
+  const handleRegChange = (e) => {
+		const { name, value, type, checked } = e.target;
+		setRegularData((prev) => ({
+			...prev,
+			[name]: type === 'checkbox' ? checked : value,
+		}));
+  }
+
+  const handleOneChange = (e) => {
+      const { name, value, type, checked } = e.target;
+      setOneData((prev) => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      }));
+  };
+
+  const handleTwoChange = (e) => {
+      const { name, value, type, checked } = e.target;
+      setTwoData((prev) => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      }));
+    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();   
+  }
   const renderSimOptions = () => {
     switch (simStyle) {
       case 0:
         return (
-          <div className={styles['options']}>
-            {/* put your “Regular” options here */}
-            <label>
-              <input type="checkbox" /> Include taxes
-            </label>
-            <label>
-              <input type="checkbox" /> Include inflation
-            </label>
-          </div>
+          <form onSubmit = {handleSubmit} className ="form-container">
+            <div>
+              Number of Sims to run:
+            </div>
+            <input              type="number"
+              value={regularData.numRuns}
+        
+              name="numRuns"
+              onChange={handleRegChange}>
+
+            </input>
+            <button type="submit" className="submit-btn">
+					    Run Simulations
+				    </button>
+          </form>
+        //   <div className={styles['options']}>
+        //   {/* your “One Dimension” options */}
+        //   <label>
+        //     <input type="radio" name="dim" /> Show only income
+        //   </label>
+        //   <label>
+        //     <input type="radio" name="dim" /> Show only expenses
+        //   </label>
+        // </div>
         );
       case 1:
         return (
