@@ -108,6 +108,7 @@ function EventSeriesListShort() {
 
 
 
+
 function Summary(){
 
   const { 
@@ -117,6 +118,7 @@ function Summary(){
     setSimStyle2,
     selectedScenario
   } = useSelected();
+  // guard in case there’s no scenario yet:
 
   function selectRegular(){
     setSimStyle(0);
@@ -157,7 +159,7 @@ function Summary(){
 
   const[oneData, setOneData] = useState({
     numRuns:'',
-    rmdSelect: '', //boolean whether or not the user chose the rmd as the parameter
+    rmdSelect: false, //boolean whether or not the user chose the rmd as the parameter
     numericType: '', //0, 1, or 2, depending on the type of numeric value being used as the dimension
     lowerBound: '',
     upperBound: '',
@@ -196,34 +198,49 @@ function Summary(){
   const handleRegSubmit = async (e) => {
     e.preventDefault();   
   }
+  const handleOneRMDSubmit = async (e) => {
+    e.preventDefault();   
+  }
 
+  const handleOneSubmit = async (e) => {
+    e.preventDefault();   
+  }
   const handleSubmit = async (e) => {
     e.preventDefault();   
   }
   
-  
-  const renderOneSimOptions = () =>{
-    switch(simStyle2){
+  const renderOneSimOptions = () => {
+    switch (simStyle2) {
       case 0:
-       //roth optimizer true false setup here
-        return(
-        <form onSubmit = {handleSubmit} className ="form-container">
-          <div>
-            This option will run two sets of simulations, one with the Roth Optimizer enabled and one without
-          </div>
-          <div>
-            Number of Sims to run:
-          </div>
-          <input             
-            type="number"
-            value={regularData.numRuns}
-            name="numRuns"
-            onChange={handleRegChange}>
-          </input>
-          <button type="submit" className="submit-btn">
-            Run Simulations
-          </button>
-        </form>
+        return (
+          <form onSubmit={handleOneRMDSubmit} className="form-container">
+            <div>
+              This option will run two sets of simulations, one with the Roth
+              Optimizer enabled and one without.
+            </div>
+            <div>
+            { !(selectedScenario?.is_roth_optimizer_enabled) ? (
+              <div style={{ color: 'crimson' }}>
+                To use this parameter, the scenario must have the roth optimizer enabled.
+              </div>
+            ) : (
+              <>
+                <div>
+                  Number of Sims to run:
+                </div>
+                <input
+                  type="number"
+                  value={oneData.numRuns}
+                  name="numRuns"
+                  onChange={handleOneChange}
+                />
+                <button type="submit" className="submit-btn">
+                  Run Simulations
+                </button>
+              </>
+            ) }
+            </div>
+          </form>
         );
 
       case 1:
@@ -250,6 +267,7 @@ function Summary(){
         //Initial income selector
         return(
           <form onSubmit = {handleRegSubmit} className ="form-container">
+          
           <EventSeriesListShort/>
           <div>
             Number of Sims to run:
@@ -460,68 +478,73 @@ function Summary(){
   );
 }
 
-export function SuccessGraph({ data = sampleBarData }) {
-  const containerRef = useRef(null);
+// export function SuccessGraph({ data = sampleBarData }) {
+//   const containerRef = useRef(null);
 
-  useEffect(() => {
-    if (data && containerRef.current) {
-      // Clear any previous content
-      d3.select(containerRef.current).selectAll("*").remove();
+//   useEffect(() => {
+//     if (data && containerRef.current) {
+//       // Clear any previous content
+//       d3.select(containerRef.current).selectAll("*").remove();
 
-      // Set up SVG canvas
-      const svg = d3.select(containerRef.current)
-                    .append("svg")
-                    .attr("width", 500)
-                    .attr("height", 300);
+//       // Set up SVG canvas
+//       const svg = d3.select(containerRef.current)
+//                     .append("svg")
+//                     .attr("width", 500)
+//                     .attr("height", 300);
 
-      const margin = { top: 20, right: 30, bottom: 30, left: 40 };
-      const width = 500 - margin.left - margin.right;
-      const height = 300 - margin.top - margin.bottom;
+//       const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+//       const width = 500 - margin.left - margin.right;
+//       const height = 300 - margin.top - margin.bottom;
 
-      const g = svg.append("g")
-                   .attr("transform", `translate(${margin.left},${margin.top})`);
+//       const g = svg.append("g")
+//                    .attr("transform", `translate(${margin.left},${margin.top})`);
 
-      // Create scales
-      const x = d3.scaleBand()
-                  .domain(data.map(d => d.name))
-                  .range([0, width])
-                  .padding(0.1);
+//       // Create scales
+//       const x = d3.scaleBand()
+//                   .domain(data.map(d => d.name))
+//                   .range([0, width])
+//                   .padding(0.1);
 
-      const y = d3.scaleLinear()
-                  .domain([0, d3.max(data, d => d.value)])
-                  .nice()
-                  .range([height, 0]);
+//       const y = d3.scaleLinear()
+//                   .domain([0, d3.max(data, d => d.value)])
+//                   .nice()
+//                   .range([height, 0]);
 
-      // Append axes
-      g.append("g")
-       .attr("transform", `translate(0,${height})`)
-       .call(d3.axisBottom(x));
+//       // Append axes
+//       g.append("g")
+//        .attr("transform", `translate(0,${height})`)
+//        .call(d3.axisBottom(x));
 
-      g.append("g")
-       .call(d3.axisLeft(y));
+//       g.append("g")
+//        .call(d3.axisLeft(y));
 
-      // Append bars
-      g.selectAll(".bar")
-       .data(data)
-       .enter()
-       .append("rect")
-         .attr("class", "bar")
-         .attr("x", d => x(d.name))
-         .attr("y", d => y(d.value))
-         .attr("width", x.bandwidth())
-         .attr("height", d => height - y(d.value));
-    }
-  }, [data]);
+//       // Append bars
+//       g.selectAll(".bar")
+//        .data(data)
+//        .enter()
+//        .append("rect")
+//          .attr("class", "bar")
+//          .attr("x", d => x(d.name))
+//          .attr("y", d => y(d.value))
+//          .attr("width", x.bandwidth())
+//          .attr("height", d => height - y(d.value));
+//     }
+//   }, [data]);
 
-  return (
-    <div className={styles["success-graph"]}>
-      <div className={styles["outer-container"]}>
-        <div className={styles["inner-container"]} ref={containerRef}>
-          {/* D3 will render the bar chart here */}
-        </div>
-      </div>
-    </div>
-  );
+//   return (
+//     <div className={styles["success-graph"]}>
+//       <div className={styles["outer-container"]}>
+//         <div className={styles["inner-container"]} ref={containerRef}>
+//           {/* D3 will render the bar chart here */}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+function SuccessGraph(){
+  
 }
 
 function InvestmentsGraph(){
