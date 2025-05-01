@@ -57,6 +57,57 @@ function ScenarioList() {
   );
 }
 
+function EventSeriesListShort() {
+  const { selectedEventSeries, setSelectedEventSeries, deselectEventSeries, selectedScenario } =
+    useSelected();
+
+
+  let seriesArray = selectedScenario ? Array.from(selectedScenario.EventSeries || []) : [];
+
+  if (seriesArray.length === 0) {
+    seriesArray.push({ id: null, name: null, type: null, startYear: { value: null } });
+  }
+
+  const selectEvent = (event) => {
+    if (selectedEventSeries && event.id === selectedEventSeries.id) {
+      deselectEventSeries();
+    } else {
+      setSelectedEventSeries(event);
+    }
+  };
+
+
+  return (
+    <section
+      className={`${styles['outer-container']} ${styles['scenario-list-container']}`}
+    >
+      <div
+        className={`${styles['inner-container']} ${styles['scenario-list']}`}
+      >
+        <h2 className={styles['scenario-list-title']}>Event Series:</h2>
+        <div className={styles['scenario-item-list']}>
+          {seriesArray.map((event, index) => (
+            <div
+              key={event.id ?? index}
+              className={
+                selectedEventSeries?.id === event.id
+                  ? `${styles['selected']} ${styles['event-series-item']}`
+                  : styles['event-series-item']
+              }
+              onClick={event.id !== null ? () => selectEvent(event) : undefined}
+            >
+              <span>{event.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+
+
 function Summary(){
 
   const { 
@@ -142,12 +193,97 @@ function Summary(){
         [name]: type === 'checkbox' ? checked : value,
       }));
     };
+  const handleRegSubmit = async (e) => {
+    e.preventDefault();   
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();   
   }
+  
+  
   const renderOneSimOptions = () =>{
     switch(simStyle2){
-      
+      case 0:
+       //roth optimizer true false setup here
+        return(
+        <form onSubmit = {handleSubmit} className ="form-container">
+          <div>
+            This option will run two sets of simulations, one with the Roth Optimizer enabled and one without
+          </div>
+          <div>
+            Number of Sims to run:
+          </div>
+          <input             
+            type="number"
+            value={regularData.numRuns}
+            name="numRuns"
+            onChange={handleRegChange}>
+          </input>
+          <button type="submit" className="submit-btn">
+            Run Simulations
+          </button>
+        </form>
+        );
+
+      case 1:
+        return(
+          <form onSubmit = {handleSubmit} className ="form-container">
+          <EventSeriesListShort/>
+          <div>
+            Number of Sims to run:
+          </div>
+          <input             
+            type="number"
+            value={regularData.numRuns}
+            name="numRuns"
+            onChange={handleRegChange}>
+          </input>
+          <button type="submit" className="submit-btn">
+            Run Simulations
+          </button>
+        </form>
+      );
+      case 2:
+        //supposed to be reserved for duration but idk I think this is stupid
+      case 3:
+        //Initial income selector
+        return(
+          <form onSubmit = {handleRegSubmit} className ="form-container">
+          <EventSeriesListShort/>
+          <div>
+            Number of Sims to run:
+          </div>
+          <input             
+            type="number"
+            value={regularData.numRuns}
+            name="numRuns"
+            onChange={handleRegChange}>
+          </input>
+          <button type="submit" className="submit-btn">
+            Run Simulations
+          </button>
+        </form>
+      );
+      case 4:
+        return(
+          <form onSubmit = {handleSubmit} className ="form-container">
+          <EventSeriesListShort/>
+          <div>
+            Number of Sims to run:
+          </div>
+          <input             
+            type="number"
+            value={regularData.numRuns}
+            name="numRuns"
+            onChange={handleRegChange}>
+          </input>
+          <button type="submit" className="submit-btn">
+            Run Simulations
+          </button>
+        </form>
+      );
+        //percentage selector
     }
   }
   const renderSimOptions = () => {
@@ -162,7 +298,11 @@ function Summary(){
               type="number"
               value={regularData.numRuns}
               name="numRuns"
-              onChange={handleRegChange}>
+              onChange={handleRegChange}
+              required
+            >
+              
+
             </input>
             <button type="submit" className="submit-btn">
 					    Run Simulations
@@ -226,6 +366,7 @@ function Summary(){
                 {renderOneSimOptions()}
               </div>
               </div> 
+
               </div>
             );
       case 2:
@@ -253,6 +394,23 @@ function Summary(){
     }
   }
 
+  if (!selectedScenario) {
+    return (
+      <div className={styles['summary']}>
+        <div className={styles['outer-container']}>
+          <div className={styles['inner-container']}>
+            <div className={styles['active-scenario']}>
+              <span>📊 Active Scenario: </span>
+              <span>None Selected!</span>
+            </div>
+            <div className={styles['no-selection-message']}>
+              you must select a scenario to proceed
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={styles['summary']}>
       <div className={styles['outer-container']}>
