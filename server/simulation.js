@@ -298,7 +298,7 @@ async function simulateScenario(scenario) {
         }
 
         // 6. Process Non-discretionary Expenses and Taxes
-        await processNonDiscretionaryExpensesAndTax(state, scenario, year, currentYear, yearData);
+        await processNonDiscretionaryExpensesAndTax(state, scenario, year, currentYear, yearData, returnData);
 
         // 7. Process Discretionary Expenses
         await processDiscretionaryExpenses(state, scenario, year, yearData);
@@ -538,6 +538,9 @@ async function processRMD(state, scenario, year) {
                 purchase_price: original_price_transfer_amt
             });
         }
+        
+        // add to income
+        state.curYearIncome += transferAmount
     }
 }
 
@@ -695,7 +698,7 @@ async function processRothConversion(state, scenario, year) {
     state.curYearIncome += rothConversionAmount;
 }
 
-async function processNonDiscretionaryExpensesAndTax(state, scenario, year, startYear, yearData) {
+async function processNonDiscretionaryExpensesAndTax(state, scenario, year, startYear, yearData, returnData) {
     console.log('\nProcessing non-discretionary expenses and taxes...');
     const userAge = year - scenario.birth_year;
 
