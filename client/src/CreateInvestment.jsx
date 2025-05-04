@@ -6,7 +6,12 @@ import { useSelected } from './SelectedContext';
 import { get_type_from_id } from './Investments';
 
 export default function CreateInvestment() {
-  const { selectedScenario, selectedInvestmentType, setSelectedInvestment, setSelectedInvestmentType} = useSelected();
+  const {
+    selectedScenario,
+    selectedInvestmentType,
+    setSelectedInvestment,
+    setSelectedInvestmentType,
+  } = useSelected();
   const { createInvestment } = useData();
   const navigate = useNavigate();
 
@@ -45,10 +50,19 @@ export default function CreateInvestment() {
     };
 
     try {
-      const created_investment = await createInvestment(selectedScenario.id, newInvestment);
-      if (created_investment){
+      const created_investment = await createInvestment(
+        selectedScenario.id,
+        newInvestment,
+        formData.selectedType
+      );
+      if (created_investment) {
         setSelectedInvestment(created_investment);
-        setSelectedInvestmentType(get_type_from_id(created_investment.investment_type_id, selectedScenario));  
+        setSelectedInvestmentType(
+          get_type_from_id(
+            created_investment.investment_type_id,
+            selectedScenario
+          )
+        );
       }
       navigate('/investments');
     } catch (error) {

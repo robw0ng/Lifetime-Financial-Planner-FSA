@@ -6,7 +6,8 @@ import { get_type_from_id } from './Investments';
 
 export default function EditEventSeries() {
   const navigate = useNavigate();
-  const { selectedScenario, selectedEventSeries, setSelectedEventSeries } = useSelected();
+  const { selectedScenario, selectedEventSeries, setSelectedEventSeries } =
+    useSelected();
   const { editEventSeries } = useData();
 
   const [formData, setFormData] = useState({
@@ -43,6 +44,7 @@ export default function EditEventSeries() {
     userPercentage: '',
     isSocialSecurity: false,
     isDiscretionary: false,
+    expectedChangeNumtype: 'percent',
 
     // Invest/Rebalance Specific
     allocationType: 'fixed', // "fixed" or "glide"
@@ -129,6 +131,8 @@ export default function EditEventSeries() {
         // Income/Expense fields
         initialAmount: selectedEventSeries.initial_amount || '',
         expectedChangeType: selectedEventSeries.expected_change_type || 'fixed',
+        expectedChangeNumtype:
+          selectedEventSeries.expected_change_numtype || 'percent',
         expectedChangeValue:
           selectedEventSeries.expected_change_type === 'fixed'
             ? selectedEventSeries.expected_change_value
@@ -236,24 +240,32 @@ export default function EditEventSeries() {
           0
         );
         if (totalFixed !== 100) {
-          alert('The fixed allocation percentages must add up to 100. Currently they add up to ' + totalFixed);
+          alert(
+            'The fixed allocation percentages must add up to 100. Currently they add up to ' +
+              totalFixed
+          );
           return;
         }
       } else if (formData.allocationType === 'glide') {
-        const totalInitial = Object.values(formData.allocationGlideInitial).reduce(
-          (sum, val) => sum + Number(val || 0),
-          0
-        );
+        const totalInitial = Object.values(
+          formData.allocationGlideInitial
+        ).reduce((sum, val) => sum + Number(val || 0), 0);
         const totalFinal = Object.values(formData.allocationGlideFinal).reduce(
           (sum, val) => sum + Number(val || 0),
           0
         );
         if (totalInitial !== 100) {
-          alert('The initial glide allocation percentages must add up to 100. Currently they add up to ' + totalInitial);
+          alert(
+            'The initial glide allocation percentages must add up to 100. Currently they add up to ' +
+              totalInitial
+          );
           return;
         }
         if (totalFinal !== 100) {
-          alert('The final glide allocation percentages must add up to 100. Currently they add up to ' + totalFinal);
+          alert(
+            'The final glide allocation percentages must add up to 100. Currently they add up to ' +
+              totalFinal
+          );
           return;
         }
       }
@@ -279,7 +291,10 @@ export default function EditEventSeries() {
       formData.startYearType === 'sameAsEvent' ||
       formData.startYearType === 'yearAfterEvent'
     ) {
-      startYear = { eventId: formData.startYearEventId, type: formData.startYearType };
+      startYear = {
+        eventId: formData.startYearEventId,
+        type: formData.startYearType,
+      };
     }
 
     // Build duration object
@@ -304,18 +319,24 @@ export default function EditEventSeries() {
     let expectedChange = null;
     if (formData.type === 'income' || formData.type === 'expense') {
       if (formData.expectedChangeType === 'fixed') {
-        expectedChange = { value: Number(formData.expectedChangeValue), type: 'fixed' };
+        expectedChange = {
+          value: Number(formData.expectedChangeValue),
+          type: 'fixed',
+          numtype: formData.expectedChangeNumtype,
+        };
       } else if (formData.expectedChangeType === 'uniform') {
         expectedChange = {
           min: Number(formData.expectedChangeMin),
           max: Number(formData.expectedChangeMax),
           type: 'uniform',
+          numtype: formData.expectedChangeNumtype,
         };
       } else if (formData.expectedChangeType === 'normal') {
         expectedChange = {
           mean: Number(formData.expectedChangeMean),
           std: Number(formData.expectedChangeStd),
           type: 'normal',
+          numtype: formData.expectedChangeNumtype,
         };
       }
     }
@@ -342,23 +363,54 @@ export default function EditEventSeries() {
 
       // Start Year
       start_year_type: formData.startYearType,
-      start_year_value: formData.startYearType === 'fixed' ? Number(formData.startYearValue) : null,
-      start_year_mean: formData.startYearType === 'normal' ? Number(formData.startYearMean) : null,
-      start_year_std_dev: formData.startYearType === 'normal' ? Number(formData.startYearStd) : null,
-      start_year_lower: formData.startYearType === 'uniform' ? Number(formData.startYearMin) : null,
-      start_year_upper: formData.startYearType === 'uniform' ? Number(formData.startYearMax) : null,
+      start_year_value:
+        formData.startYearType === 'fixed'
+          ? Number(formData.startYearValue)
+          : null,
+      start_year_mean:
+        formData.startYearType === 'normal'
+          ? Number(formData.startYearMean)
+          : null,
+      start_year_std_dev:
+        formData.startYearType === 'normal'
+          ? Number(formData.startYearStd)
+          : null,
+      start_year_lower:
+        formData.startYearType === 'uniform'
+          ? Number(formData.startYearMin)
+          : null,
+      start_year_upper:
+        formData.startYearType === 'uniform'
+          ? Number(formData.startYearMax)
+          : null,
       start_year_other_event:
-        formData.startYearType === 'sameAsEvent' || formData.startYearType === 'yearAfterEvent'
+        formData.startYearType === 'sameAsEvent' ||
+        formData.startYearType === 'yearAfterEvent'
           ? formData.startYearEventId
           : null,
 
       // Duration
       duration_type: formData.durationType,
-      duration_value: formData.durationType === 'fixed' ? Number(formData.durationValue) : null,
-      duration_mean: formData.durationType === 'normal' ? Number(formData.durationMean) : null,
-      duration_std_dev: formData.durationType === 'normal' ? Number(formData.durationStd) : null,
-      duration_lower: formData.durationType === 'uniform' ? Number(formData.durationMin) : null,
-      duration_upper: formData.durationType === 'uniform' ? Number(formData.durationMax) : null,
+      duration_value:
+        formData.durationType === 'fixed'
+          ? Number(formData.durationValue)
+          : null,
+      duration_mean:
+        formData.durationType === 'normal'
+          ? Number(formData.durationMean)
+          : null,
+      duration_std_dev:
+        formData.durationType === 'normal'
+          ? Number(formData.durationStd)
+          : null,
+      duration_lower:
+        formData.durationType === 'uniform'
+          ? Number(formData.durationMin)
+          : null,
+      duration_upper:
+        formData.durationType === 'uniform'
+          ? Number(formData.durationMax)
+          : null,
     };
 
     //   initialAmount:
@@ -382,48 +434,67 @@ export default function EditEventSeries() {
     //       : null,
     //   maxCash: formData.type === "invest" ? Number(formData.maxCash) : null,
     // };
-      // Income or Expense
-      if (formData.type === 'income' || formData.type === 'expense') {
-        updatedEventSeries.initial_amount = Number(formData.initialAmount);
-        updatedEventSeries.expected_change_type = formData.expectedChangeType;
-  
-        if (formData.expectedChangeType === 'fixed') {
-          updatedEventSeries.expected_change_value = Number(formData.expectedChangeValue);
-        } else if (formData.expectedChangeType === 'uniform') {
-          updatedEventSeries.expected_change_lower = Number(formData.expectedChangeMin);
-          updatedEventSeries.expected_change_upper = Number(formData.expectedChangeMax);
-        } else if (formData.expectedChangeType === 'normal') {
-          updatedEventSeries.expected_change_mean = Number(formData.expectedChangeMean);
-          updatedEventSeries.expected_change_std_dev = Number(formData.expectedChangeStd);
-        }
-  
-        updatedEventSeries.inflation_adjusted = formData.inflationAdjusted;
-        updatedEventSeries.user_percentage =
-          selectedScenario && selectedScenario.is_married && formData.userPercentage
-            ? Number(formData.userPercentage)
-            : 100; // default to 100 if not provided
-        if (formData.type === 'income') {
-          updatedEventSeries.is_social = formData.isSocialSecurity;
-        }
-        if (formData.type === 'expense') {
-          updatedEventSeries.is_discretionary = formData.isDiscretionary;
-        }
-      }
-  
-      // Invest or Rebalance
-      if (formData.type === 'invest' || formData.type === 'rebalance') {
-        const isGlide = formData.allocationType === 'glide';
-        updatedEventSeries.is_glide_path = isGlide;
-        updatedEventSeries.asset_allocation = isGlide ? formData.allocationGlideInitial : formData.allocationFixed;
-        if (isGlide) {
-          updatedEventSeries.asset_allocation2 = formData.allocationGlideFinal;
-        }
-        if (formData.type === 'invest') {
-          updatedEventSeries.max_cash = Number(formData.maxCash);
-        }
+    // Income or Expense
+    if (formData.type === 'income' || formData.type === 'expense') {
+      updatedEventSeries.initial_amount = Number(formData.initialAmount);
+      updatedEventSeries.expected_change_type = formData.expectedChangeType;
+      updatedEventSeries.expected_change_numtype =
+        formData.expectedChangeNumtype;
+
+      if (formData.expectedChangeType === 'fixed') {
+        updatedEventSeries.expected_change_value = Number(
+          formData.expectedChangeValue
+        );
+      } else if (formData.expectedChangeType === 'uniform') {
+        updatedEventSeries.expected_change_lower = Number(
+          formData.expectedChangeMin
+        );
+        updatedEventSeries.expected_change_upper = Number(
+          formData.expectedChangeMax
+        );
+      } else if (formData.expectedChangeType === 'normal') {
+        updatedEventSeries.expected_change_mean = Number(
+          formData.expectedChangeMean
+        );
+        updatedEventSeries.expected_change_std_dev = Number(
+          formData.expectedChangeStd
+        );
       }
 
-    const edited_event_series = await editEventSeries(selectedScenario.id, updatedEventSeries);
+      updatedEventSeries.inflation_adjusted = formData.inflationAdjusted;
+      updatedEventSeries.user_percentage =
+        selectedScenario &&
+        selectedScenario.is_married &&
+        formData.userPercentage
+          ? Number(formData.userPercentage)
+          : 100; // default to 100 if not provided
+      if (formData.type === 'income') {
+        updatedEventSeries.is_social = formData.isSocialSecurity;
+      }
+      if (formData.type === 'expense') {
+        updatedEventSeries.is_discretionary = formData.isDiscretionary;
+      }
+    }
+
+    // Invest or Rebalance
+    if (formData.type === 'invest' || formData.type === 'rebalance') {
+      const isGlide = formData.allocationType === 'glide';
+      updatedEventSeries.is_glide_path = isGlide;
+      updatedEventSeries.asset_allocation = isGlide
+        ? formData.allocationGlideInitial
+        : formData.allocationFixed;
+      if (isGlide) {
+        updatedEventSeries.asset_allocation2 = formData.allocationGlideFinal;
+      }
+      if (formData.type === 'invest') {
+        updatedEventSeries.max_cash = Number(formData.maxCash);
+      }
+    }
+
+    const edited_event_series = await editEventSeries(
+      selectedScenario.id,
+      updatedEventSeries
+    );
     console.log('edited event series', edited_event_series);
     setSelectedEventSeries(edited_event_series);
     navigate('/eventseries');
@@ -469,7 +540,11 @@ export default function EditEventSeries() {
           <legend>Start Year</legend>
           <label>
             Start Year Type:
-            <select name="startYearType" value={formData.startYearType} onChange={handleChange}>
+            <select
+              name="startYearType"
+              value={formData.startYearType}
+              onChange={handleChange}
+            >
               <option value="fixed">Fixed</option>
               <option value="uniform">Uniform Distribution</option>
               <option value="normal">Normal Distribution</option>
@@ -571,7 +646,8 @@ export default function EditEventSeries() {
                       event.duration_type === 'fixed'
                     ) {
                       displayYear =
-                        Number(event.start_year_value) + Number(event.duration_value);
+                        Number(event.start_year_value) +
+                        Number(event.duration_value);
                     }
                   }
                   return (
@@ -590,7 +666,11 @@ export default function EditEventSeries() {
           <legend>Duration (years)</legend>
           <label>
             Duration Type:
-            <select name="durationType" value={formData.durationType} onChange={handleChange}>
+            <select
+              name="durationType"
+              value={formData.durationType}
+              onChange={handleChange}
+            >
               <option value="fixed">Fixed</option>
               <option value="uniform">Uniform Distribution</option>
               <option value="normal">Normal Distribution</option>
@@ -671,7 +751,9 @@ export default function EditEventSeries() {
         {/* Income/Expense Specific Section */}
         {(formData.type === 'income' || formData.type === 'expense') && (
           <fieldset>
-            <legend>{formData.type === 'income' ? 'Income' : 'Expense'} Details</legend>
+            <legend>
+              {formData.type === 'income' ? 'Income' : 'Expense'} Details
+            </legend>
             <label>
               Initial Amount:
               <input
@@ -685,10 +767,25 @@ export default function EditEventSeries() {
             </label>
             <label>
               Expected Change Type:
-              <select name="expectedChangeType" value={formData.expectedChangeType} onChange={handleChange}>
+              <select
+                name="expectedChangeType"
+                value={formData.expectedChangeType}
+                onChange={handleChange}
+              >
                 <option value="fixed">Fixed</option>
                 <option value="uniform">Uniform Distribution</option>
                 <option value="normal">Normal Distribution</option>
+              </select>
+            </label>
+            <label>
+              Expected Change (Amt or Pct):
+              <select
+                name="expectedChangeNumtype"
+                value={formData.expectedChangeNumtype}
+                onChange={handleChange}
+              >
+                <option value="percent">Percent</option>
+                <option value="amount">Amount</option>
               </select>
             </label>
             {formData.expectedChangeType === 'fixed' && (
@@ -810,7 +907,9 @@ export default function EditEventSeries() {
         {/* Invest/Rebalance Specific Section */}
         {(formData.type === 'invest' || formData.type === 'rebalance') && (
           <fieldset>
-            <legend>{formData.type === 'invest' ? 'Invest' : 'Rebalance'} Details</legend>
+            <legend>
+              {formData.type === 'invest' ? 'Invest' : 'Rebalance'} Details
+            </legend>
             <p>Choose allocation mode:</p>
             <label>
               <input
@@ -840,13 +939,24 @@ export default function EditEventSeries() {
                     {scenarioInvestments.map((inv) => (
                       <div key={inv.id} style={{ marginBottom: '0.5rem' }}>
                         <label>
-                          {get_type_from_id(inv.investment_type_id, selectedScenario).name} (%):
+                          {
+                            get_type_from_id(
+                              inv.investment_type_id,
+                              selectedScenario
+                            ).name
+                          }{' '}
+                          (%):
                           <input
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
                             value={formData.allocationFixed[inv.id] || ''}
-                            onChange={(e) => handleAllocationFixedChange(inv.id, e.target.value)}
+                            onChange={(e) =>
+                              handleAllocationFixedChange(
+                                inv.id,
+                                e.target.value
+                              )
+                            }
                           />
                         </label>
                       </div>
@@ -860,13 +970,26 @@ export default function EditEventSeries() {
                       {scenarioInvestments.map((inv) => (
                         <div key={inv.id} style={{ marginBottom: '0.5rem' }}>
                           <label>
-                            {get_type_from_id(inv.investment_type_id, selectedScenario).name}:
+                            {
+                              get_type_from_id(
+                                inv.investment_type_id,
+                                selectedScenario
+                              ).name
+                            }
+                            :
                             <input
                               type="text"
                               inputMode="numeric"
                               pattern="[0-9]*"
-                              value={formData.allocationGlideInitial[inv.id] || ''}
-                              onChange={(e) => handleAllocationGlideInitialChange(inv.id, e.target.value)}
+                              value={
+                                formData.allocationGlideInitial[inv.id] || ''
+                              }
+                              onChange={(e) =>
+                                handleAllocationGlideInitialChange(
+                                  inv.id,
+                                  e.target.value
+                                )
+                              }
                             />
                           </label>
                         </div>
@@ -877,13 +1000,26 @@ export default function EditEventSeries() {
                       {scenarioInvestments.map((inv) => (
                         <div key={inv.id} style={{ marginBottom: '0.5rem' }}>
                           <label>
-                            {get_type_from_id(inv.investment_type_id, selectedScenario).name}:
+                            {
+                              get_type_from_id(
+                                inv.investment_type_id,
+                                selectedScenario
+                              ).name
+                            }
+                            :
                             <input
                               type="text"
                               inputMode="numeric"
                               pattern="[0-9]*"
-                              value={formData.allocationGlideFinal[inv.id] || ''}
-                              onChange={(e) => handleAllocationGlideFinalChange(inv.id, e.target.value)}
+                              value={
+                                formData.allocationGlideFinal[inv.id] || ''
+                              }
+                              onChange={(e) =>
+                                handleAllocationGlideFinalChange(
+                                  inv.id,
+                                  e.target.value
+                                )
+                              }
                             />
                           </label>
                         </div>
@@ -916,4 +1052,3 @@ export default function EditEventSeries() {
     </div>
   );
 }
-

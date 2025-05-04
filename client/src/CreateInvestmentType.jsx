@@ -4,7 +4,8 @@ import { useSelected } from './SelectedContext';
 import { useData } from './DataContext';
 
 export default function CreateInvestmentType() {
-  const { selectedScenario, setSelectedInvestmentType, deselectInvestment } = useSelected();
+  const { selectedScenario, setSelectedInvestmentType, deselectInvestment } =
+    useSelected();
   const { createInvestmentType } = useData();
   const navigate = useNavigate();
 
@@ -21,6 +22,8 @@ export default function CreateInvestmentType() {
     income_stddev: '',
     expense_ratio: '',
     taxability: 'taxable',
+    expected_change_numtype: 'percent',
+    expected_income_numtype: 'percent',
   });
 
   const handleChange = (e) => {
@@ -37,25 +40,48 @@ export default function CreateInvestmentType() {
       console.error('No scenario selected.');
       return;
     }
-  
+
     // Build backend-compatible payload
     const payload = {
       name: newTypeData.name,
       description: newTypeData.description || null,
       expected_change_type: newTypeData.return_mode,
-      expected_change_value: newTypeData.return_mode === 'fixed' ? Number(newTypeData.return_fixed) : null,
-      expected_change_mean: newTypeData.return_mode === 'normal' ? Number(newTypeData.return_mean) : null,
-      expected_change_std_dev: newTypeData.return_mode === 'normal' ? Number(newTypeData.return_stddev) : null,
+      expected_change_value:
+        newTypeData.return_mode === 'fixed'
+          ? Number(newTypeData.return_fixed)
+          : null,
+      expected_change_mean:
+        newTypeData.return_mode === 'normal'
+          ? Number(newTypeData.return_mean)
+          : null,
+      expected_change_std_dev:
+        newTypeData.return_mode === 'normal'
+          ? Number(newTypeData.return_stddev)
+          : null,
       expected_income_type: newTypeData.income_mode,
-      expected_income_value: newTypeData.income_mode === 'fixed' ? Number(newTypeData.income_fixed) : null,
-      expected_income_mean: newTypeData.income_mode === 'normal' ? Number(newTypeData.income_mean) : null,
-      expected_income_std_dev: newTypeData.income_mode === 'normal' ? Number(newTypeData.income_stddev) : null,
+      expected_income_value:
+        newTypeData.income_mode === 'fixed'
+          ? Number(newTypeData.income_fixed)
+          : null,
+      expected_income_mean:
+        newTypeData.income_mode === 'normal'
+          ? Number(newTypeData.income_mean)
+          : null,
+      expected_income_std_dev:
+        newTypeData.income_mode === 'normal'
+          ? Number(newTypeData.income_stddev)
+          : null,
       expense_ratio: Number(newTypeData.expense_ratio),
       taxability: newTypeData.taxability,
+      expected_change_numtype: newTypeData.expected_change_numtype,
+      expected_income_numtype: newTypeData.expected_income_numtype,
     };
-  
+
     try {
-      const createdType = await createInvestmentType(selectedScenario.id, payload);
+      const createdType = await createInvestmentType(
+        selectedScenario.id,
+        payload
+      );
       console.log('created investment returned', createdType);
       if (createdType) {
         deselectInvestment();
@@ -66,7 +92,6 @@ export default function CreateInvestmentType() {
       console.error('Failed to create investment type:', err);
     }
   };
-  
 
   return (
     <main>
@@ -75,18 +100,34 @@ export default function CreateInvestmentType() {
 
         <div className="form-group">
           <label>Asset Type Name:</label>
-          <input type="text" name="name" value={newTypeData.name} onChange={handleChange} required />
+          <input
+            type="text"
+            name="name"
+            value={newTypeData.name}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         <div className="form-group">
           <label>Description:</label>
-          <textarea name="description" value={newTypeData.description} onChange={handleChange} rows="4" required/>
+          <textarea
+            name="description"
+            value={newTypeData.description}
+            onChange={handleChange}
+            rows="4"
+            required
+          />
         </div>
 
         {/* Expected Annual Return Mode */}
         <div className="form-group">
           <label>Expected Annual Return:</label>
-          <select name="return_mode" value={newTypeData.return_mode} onChange={handleChange}>
+          <select
+            name="return_mode"
+            value={newTypeData.return_mode}
+            onChange={handleChange}
+          >
             <option value="fixed">Fixed</option>
             <option value="normal">Normal Distribution</option>
           </select>
@@ -125,7 +166,11 @@ export default function CreateInvestmentType() {
         {/* Expected Annual Income Mode */}
         <div className="form-group">
           <label>Expected Annual Income:</label>
-          <select name="income_mode" value={newTypeData.income_mode} onChange={handleChange}>
+          <select
+            name="income_mode"
+            value={newTypeData.income_mode}
+            onChange={handleChange}
+          >
             <option value="fixed">Fixed</option>
             <option value="normal">Normal Distribution</option>
           </select>
@@ -174,13 +219,43 @@ export default function CreateInvestmentType() {
 
         <div className="form-group">
           <label>Taxability:</label>
-          <select name="taxability" value={newTypeData.taxability} onChange={handleChange}>
+          <select
+            name="taxability"
+            value={newTypeData.taxability}
+            onChange={handleChange}
+          >
             <option value="taxable">Taxable</option>
             <option value="tax-exempt">Tax-Exempt</option>
           </select>
         </div>
 
-        <button type="submit" className="submit-btn">Create Type</button>
+        <div className="form-group">
+          <label>Expected Return (Amt or Pct):</label>
+          <select
+            name="expected_change_numtype"
+            value={newTypeData.expected_change_numtype}
+            onChange={handleChange}
+          >
+            <option value="percent">Percent</option>
+            <option value="amount">Amount</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Expected Income (Amt or Pct):</label>
+          <select
+            name="expected_income_numtype"
+            value={newTypeData.expected_income_numtype}
+            onChange={handleChange}
+          >
+            <option value="percent">Percent</option>
+            <option value="amount">Amount</option>
+          </select>
+        </div>
+
+        <button type="submit" className="submit-btn">
+          Create Type
+        </button>
       </form>
     </main>
   );
