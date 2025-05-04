@@ -6,6 +6,8 @@ import styles from './Simulations.module.css';
 import { sampleBarData } from './data/sampleData';
 import * as d3 from 'd3';
 import EventSeriesList from './EventSeries.jsx';
+import { Link } from 'react-router-dom';
+
 
 function ScenarioList() {
   const { selectedScenario, setSelectedScenario, deselectScenario } =
@@ -58,15 +60,25 @@ function ScenarioList() {
 }
 
 function EventSeriesListShort() {
-  const { selectedEventSeries, setSelectedEventSeries, deselectEventSeries, selectedScenario } =
+  const { selectedEventSeries, setSelectedEventSeries, deselectEventSeries, selectedScenario, simStyle2 } =
     useSelected();
 
+  useEffect(() => {
+    deselectEventSeries();
+  }, [selectedScenario]);
 
-  let seriesArray = selectedScenario ? Array.from(selectedScenario.EventSeries || []) : [];
+  let rawSeries = selectedScenario ? Array.from(selectedScenario.EventSeries || []) : [];
 
-  if (seriesArray.length === 0) {
-    seriesArray.push({ id: null, name: null, type: null, startYear: { value: null } });
-  }
+  const filteredSeries = simStyle2 === 3
+  ? rawSeries.filter(ev => (ev.type === "income" || ev.type === "expense"))
+  : simStyle2 === 2
+  ? rawSeries.filter(ev => ev.startYear.value >= 2020)
+  : rawSeries;
+
+
+  const seriesArray = filteredSeries.length > 0
+    ? filteredSeries
+    : [{ id: null, name: null, type: null, startYear: { value: null } }];
 
   const selectEvent = (event) => {
     if (selectedEventSeries && event.id === selectedEventSeries.id) {
@@ -116,7 +128,8 @@ function Summary(){
     simStyle2,
     setSimStyle,
     setSimStyle2,
-    selectedScenario
+    selectedScenario,
+    selectedEventSeries
   } = useSelected();
   // guard in case there’s no scenario yet:
 
@@ -164,6 +177,7 @@ function Summary(){
     lowerBound: '',
     upperBound: '',
     stepSize: '',
+    duration: false,
     //also an event series would be selected
 
   });
@@ -199,6 +213,9 @@ function Summary(){
     e.preventDefault();   
   }
   const handleOneRMDSubmit = async (e) => {
+    e.preventDefault();   
+  }
+  const handleOneYearSubmit = async (e) => {
     e.preventDefault();   
   }
 
@@ -245,7 +262,7 @@ function Summary(){
 
       case 1:
         return(
-          <form onSubmit = {handleSubmit} className ="form-container">
+          <form onSubmit = {handleOneYearSubmit} className ="form-container">
           <EventSeriesListShort/>
           <div>
             Number of Sims to run:
@@ -254,11 +271,51 @@ function Summary(){
             type="number"
             value={regularData.numRuns}
             name="numRuns"
-            onChange={handleRegChange}>
+            onChange={handleOneChange}>
           </input>
-          <button type="submit" className="submit-btn">
-            Run Simulations
-          </button>
+          <div>
+            Duration of series? If left unchecked, numeric value will be considered as start year.
+          </div>
+          <input             
+            type="checkbox"
+            value={regularData.duration}
+            name="duration"
+            onChange={handleOneChange}>
+          </input>
+          <div>
+            lower bound:
+          </div>
+          <input             
+            type="number"
+            value={regularData.lowerBound}
+            name="lowerBound"
+            onChange={handleOneChange}>
+          </input>
+          <div>
+            upper bound:
+          </div>
+          <input             
+            type="number"
+            value={regularData.upperBound}
+            name="upperBound"
+            onChange={handleOneChange}>
+          </input>
+          <div>
+            step size:
+          </div>
+          <input             
+            type="number"
+            value={regularData.stepSize}
+            name="stepSize"
+            onChange={handleOneChange}>
+          </input>
+          {selectedEventSeries !== null && (
+            <button type="submit" className="submit-btn">
+              Run Simulations
+            </button>
+            )
+          }
+
         </form>
       );
       case 2:
@@ -266,8 +323,7 @@ function Summary(){
       case 3:
         //Initial income selector
         return(
-          <form onSubmit = {handleRegSubmit} className ="form-container">
-          
+          <form onSubmit = {handleOneYearSubmit} className ="form-container">
           <EventSeriesListShort/>
           <div>
             Number of Sims to run:
@@ -276,11 +332,42 @@ function Summary(){
             type="number"
             value={regularData.numRuns}
             name="numRuns"
-            onChange={handleRegChange}>
+            onChange={handleOneChange}>
           </input>
-          <button type="submit" className="submit-btn">
-            Run Simulations
-          </button>
+          <div>
+            lower bound:
+          </div>
+          <input             
+            type="number"
+            value={regularData.lowerBound}
+            name="lowerBound"
+            onChange={handleOneChange}>
+          </input>
+          <div>
+            upper bound:
+          </div>
+          <input             
+            type="number"
+            value={regularData.upperBound}
+            name="upperBound"
+            onChange={handleOneChange}>
+          </input>
+          <div>
+            step size:
+          </div>
+          <input             
+            type="number"
+            value={regularData.stepSize}
+            name="stepSize"
+            onChange={handleOneChange}>
+          </input>
+          {selectedEventSeries !== null && (
+            <button type="submit" className="submit-btn">
+              Run Simulations
+            </button>
+            )
+          }
+
         </form>
       );
       case 4:
@@ -543,8 +630,51 @@ function Summary(){
 // }
 
 
-function SuccessGraph(){
+function SuccessGraph() {
   
+  const simStyle = 0;
+
+  const [chartList, setChartList] = useState([
+    'Monthly Revenue',
+    'Expense Breakdown',
+    'Cash Flow Projection'
+  ]);
+
+  const handleRemove = (indexToRemove) => {
+    setChartList(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  return (
+    <div>
+      <Link to="/create-chart" className={styles['action-button']}>
+        <button className={`${styles['action-button']} ${styles['create']}`}>
+          Add a chart to generate
+        </button>
+      </Link>
+
+      {/* only show the list if there’s at least one chart */}
+      {chartList.length > 0 && (
+        <ul className={styles['chart-list']}>
+          {chartList.map((chartName, idx) => (
+            <li key={idx} className={styles['chart-list-item']}>
+              {chartName}
+              <button
+                type="button"
+                className={styles['remove-button']}
+                onClick={() => handleRemove(idx)}
+                aria-label={`Remove ${chartName}`}
+              >
+                &times;
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+        <button className={`${styles['action-button']} ${styles['create']}`}>
+          generate charts
+        </button>
+    </div>
+  );
 }
 
 function InvestmentsGraph(){

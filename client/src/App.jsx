@@ -22,7 +22,7 @@ import CreateEventSeries from './CreateEventSeries';
 import EditEventSeries from './EditEventSeries';
 import Strategies from './Strategies';
 import UserProfile from './UserProfile';
-
+import CreateChartString from './CreateChartString';
 
 const AppContent = () => {
   const { user } = useAuth();
@@ -44,6 +44,9 @@ const AppContent = () => {
         <Route path="/simulations" element={<ProtectedRoute element={<Simulations />} />} />
         <Route path="/strategies" element={<ProtectedRoute element={<Strategies />} />} />
         <Route path="/profile" element={<ProtectedRoute element={<UserProfile />} />} />
+
+
+        <Route path="/create-chart" element={<ProtectedRoute element={<CreateChartString />} />} />
 
         <Route path="/create-scenario" element={<ProtectedRoute element={<CreateScenario />} />} />
         <Route path="/edit-scenario/:id" element={<ProtectedRoute element={<EditScenario />} />} />

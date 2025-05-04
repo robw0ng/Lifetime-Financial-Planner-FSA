@@ -361,7 +361,7 @@ function EventSeriesInfo({ event }) {
             <>
               <div className={styles['info-row']}>
                 <label className={styles['info-item']}>Allocation Type:</label>
-                <span className={styles['info-value']}>{event.allocationType}</span>
+                <span className={styles['info-value']}>{String(event.is_glide_path)}</span>
               </div>
 
               <div className={styles['info-row']}>
