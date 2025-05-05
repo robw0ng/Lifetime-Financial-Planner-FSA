@@ -226,7 +226,7 @@ async function simulateScenario(scenario) {
     for (let year = currentYear; year < endYear; year++) {
         // sample object to add to returnData each year
         const yearData = {
-            year: currentYear,
+            year: year,
             investments: [],
             eventSeries: [],
             totalIncome: 0,
