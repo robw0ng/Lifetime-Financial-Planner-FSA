@@ -325,7 +325,6 @@ async function simulateScenario(scenario) {
         state.curYearEarlyWithdrawals = Math.round(state.curYearEarlyWithdrawals * 100) / 100
 
         //set some values for yearData
-        yearData.year = currentYear
         yearData.investments = state.investments
         yearData.eventSeries = state.events
         yearData.totalIncome = state.curYearIncome
