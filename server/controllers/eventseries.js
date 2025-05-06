@@ -68,7 +68,9 @@ router.post("/:id", async (req, res) => {
 			start_year_lower: start_year_type === "uniform" ? Number(start_year_lower) : null,
 			start_year_upper: start_year_type === "uniform" ? Number(start_year_upper) : null,
 			start_year_other_event:
-				start_year_type === "sameYearAs" || start_year_type === "yearAfter" ? start_year_other_event : null,
+				start_year_type === "sameAsEvent" || start_year_type === "yearAfterEvent"
+					? start_year_other_event
+					: null,
 			// Duration
 			duration_type,
 			duration_value: duration_type === "fixed" ? Number(duration_value) : null,

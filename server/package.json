@@ -25,6 +25,7 @@
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.14.1",
     "pg-hstore": "^2.3.4",
+    "seedrandom": "^3.0.5",
     "sequelize": "^6.37.6",
     "sequelize-cli": "^6.6.2"
   },
