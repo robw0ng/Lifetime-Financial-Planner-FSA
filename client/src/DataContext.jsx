@@ -17,6 +17,7 @@ export const DataProvider = ({ children }) => {
     selectedInvestment,
     setSelectedInvestment,
   } = useSelected();
+  const [latestSimulation, setLatestSimulation] = useState([]);
 
   const fetchOwned = async () => {
     try {
@@ -1305,6 +1306,111 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  const fetchLatestSimulation = async (scenarioId) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/scenarios/${scenarioId}/latest-simulation`,
+        {
+          credentials: 'include',
+        }
+      );
+      if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+          throw new Error('Unauthorized');
+        }
+        throw new Error('Failed to fetch latest simulation');
+      }
+      const { latestSimulation } = await res.json();
+      setLatestSimulation(latestSimulation);
+      return latestSimulation;
+    } catch (err) {
+      console.error('Error fetching latest simulation:', err);
+      return [];
+    }
+  };
+
+  const updateChartConfigs = async (runId, chartConfigs) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/simulation-runs/${runId}/charts`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ chartConfigs }),
+        }
+      );
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Failed to update charts: ${text}`);
+      }
+      const data = await res.json();
+      return data.simulationRun;
+    } catch (err) {
+      console.error('Error updating chart configs:', err);
+      return null;
+    }
+  };
+
+  const runSimulation = async (scenarioId, simCount) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/simulate/${scenarioId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ simCount }),
+        }
+      );
+      if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+          throw new Error('Unauthorized');
+        }
+        const text = await res.text();
+        throw new Error(`Simulation failed: ${text}`);
+      }
+      const { latestSimulation } = await res.json();
+      setLatestSimulation(latestSimulation.results || latestSimulation);
+      return latestSimulation;
+    } catch (err) {
+      console.error('Error running simulation:', err);
+      return null;
+    }
+  };
+
+  const explore1d = async (scenarioId, param, lower, upper, step, simCount) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/explore-1d/${scenarioId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ param, lower, upper, step, simCount }),
+        }
+      );
+      if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+          throw new Error('Unauthorized');
+        }
+        const text = await res.text();
+        throw new Error(`1D exploration failed: ${text}`);
+      }
+      const { latestSimulation } = await res.json();
+      // latestSimulation.results or latestSimulation may differ depending on route response
+      const batches = latestSimulation.results || latestSimulation;
+      setLatestSimulation(batches);
+      return batches;
+    } catch (err) {
+      console.error('Error during 1D exploration:', err);
+      return [];
+    }
+  };
+
   useEffect(() => {
     if (user?.email) {
       fetchScenarios();
@@ -1352,6 +1458,11 @@ export const DataProvider = ({ children }) => {
         removeUserYaml,
         exportScenario,
         importScenario,
+        updateChartConfigs,
+        fetchLatestSimulation,
+        runSimulation,
+        explore1d,
+        //explore2d,
       }}
     >
       {children}
