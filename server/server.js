@@ -49,6 +49,7 @@ const investmentController = require("./controllers/investment");
 const investmentTypeController = require("./controllers/investmenttype");
 const strategiesController = require("./controllers/strategies");
 const userController = require("./controllers/user");
+const simController = require("./controllers/simulation");
 app.use("/scenarios", scenarioController);
 app.use("/auth", authController);
 app.use("/events", eventController);

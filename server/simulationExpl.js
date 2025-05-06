@@ -3,16 +3,6 @@ const yaml = require("js-yaml");
 const path = require("path");
 const { exec } = require("child_process");
 const util = require("util");
-const {
-	Scenario,
-	Investment,
-	InvestmentType,
-	EventSeries,
-	IncomeEventSeries,
-	ExpenseEventSeries,
-	InvestEventSeries,
-	RebalanceEventSeries,
-} = require("./models");
 
 // Constants
 const RMD_AGE = 74;
@@ -120,79 +110,8 @@ async function loadRMDTable() {
 	}
 }
 
-async function simulateScenario(scenarioId) {
+async function simulateScenario(scenario) {
 	console.log("\n=== Starting Financial Simulation ===");
-
-	// 1. Load the core scenario record
-	const scenarioRec = await Scenario.findByPk(scenarioId);
-	if (!scenarioRec) {
-		throw new Error(`Scenario ${scenarioId} not found`);
-	}
-	// pull out plain fields
-	const scenario = scenarioRec.get({ plain: true });
-	// 2. Load investments for this scenario
-	const invRecs = await Investment.findAll({
-		where: { scenario_id: scenarioId },
-	});
-	const investments = invRecs.map((r) => ({ ...r.get({ plain: true }), purchase_price: r.value }));
-
-	// 3. Load investment types
-	const typeRecs = await InvestmentType.findAll({
-		where: { scenario_id: scenarioId },
-	});
-	const investmentTypes = typeRecs.map((r) => r.get({ plain: true }));
-
-	// 4. Load event‐series, then their subtype rows
-	const evRecs = await EventSeries.findAll({
-		where: { scenario_id: scenarioId },
-	});
-	const events = [];
-	for (const ev of evRecs) {
-		const base = ev.get({ plain: true });
-		let sub;
-		switch (base.type) {
-			case "income":
-				sub = await IncomeEventSeries.findByPk(base.id);
-				base.initial_amount = sub.initial_amount;
-				base.expected_change_type = sub.expected_change_type;
-				base.expected_change_lower = sub.expected_change_lower;
-				base.expected_change_upper = sub.expected_change_upper;
-				base.expected_change_mean = sub.expected_change_mean;
-				base.expected_change_std_dev = sub.expected_change_std_dev;
-				base.inflation_adjusted = sub.inflation_adjusted;
-				base.user_percentage = sub.user_percentage;
-				base.is_social = sub.is_social;
-				base.expected_change_numtype = sub.expected_change_numtype;
-				break;
-			case "expense":
-				sub = await ExpenseEventSeries.findByPk(base.id);
-				base.initial_amount = sub.initial_amount;
-				base.expected_change_type = sub.expected_change_type;
-				base.expected_change_lower = sub.expected_change_lower;
-				base.expected_change_upper = sub.expected_change_upper;
-				base.expected_change_mean = sub.expected_change_mean;
-				base.expected_change_std_dev = sub.expected_change_std_dev;
-				base.inflation_adjusted = sub.inflation_adjusted;
-				base.user_percentage = sub.user_percentage;
-				base.is_discretionary = sub.is_discretionary;
-				base.expected_change_numtype = sub.expected_change_numtype;
-				break;
-			case "invest":
-				sub = await InvestEventSeries.findByPk(base.id);
-				base.is_glide_path = sub.is_glide_path;
-				base.asset_allocation = sub.asset_allocation;
-				base.asset_allocation2 = sub.asset_allocation2;
-				base.max_cash = sub.max_cash;
-				break;
-			case "rebalance":
-				sub = await RebalanceEventSeries.findByPk(base.id);
-				base.is_glide_path = sub.is_glide_path;
-				base.asset_allocation = sub.asset_allocation;
-				base.asset_allocation2 = sub.asset_allocation2;
-				break;
-		}
-		events.push(base);
-	}
 	console.log(`Scenario: ${scenario.name}`);
 	const currentYear = new Date().getFullYear();
 	const life_expectancy =
@@ -236,12 +155,56 @@ async function simulateScenario(scenarioId) {
 		prevYearSS: 0,
 		prevYearEarlyWithdrawals: 0,
 		prevYearGains: 0,
-		events,
-		investments,
-		investmentTypes,
+		events: [],
+		investments: [],
+		investmentTypes: [],
 		is_married: scenario.is_married,
 		inflationRate: 0,
 	};
+
+	// Get all investments, eventseries, investmenttypes and store in state
+	console.log("\nLoading scenario data into state...");
+	//store only essential dataValues
+	for (const investment of scenario.Investments) {
+		state.investments.push({
+			...investment.dataValues,
+			purchase_price: investment.dataValues.value, // Set initial purchase price
+		});
+	}
+
+	for (const investmenttype of scenario.InvestmentTypes) {
+		state.investmentTypes.push({
+			...investmenttype.dataValues,
+		});
+	}
+
+	for (const eventseries of scenario.EventSeries) {
+		// Extract the main event series data
+		let eventData = { ...eventseries.dataValues };
+
+		// Remove all event series references
+		delete eventData.IncomeEventSeries;
+		delete eventData.ExpenseEventSeries;
+		delete eventData.InvestEventSeries;
+		delete eventData.RebalanceEventSeries;
+
+		console.log(eventseries);
+
+		// Determine the specific event type and add only its dataValues
+		if (eventseries.IncomeEventSeries) {
+			console.log(eventseries.dataValues.IncomeEventSeries);
+			Object.assign(eventData, eventseries.dataValues.IncomeEventSeries.dataValues);
+		} else if (eventseries.ExpenseEventSeries) {
+			Object.assign(eventData, eventseries.dataValues.ExpenseEventSeries.dataValues);
+		} else if (eventseries.InvestEventSeries) {
+			Object.assign(eventData, eventseries.dataValues.InvestEventSeries.dataValues);
+		} else if (eventseries.RebalanceEventSeries) {
+			Object.assign(eventData, eventseries.dataValues.RebalanceEventSeries.dataValues);
+		}
+
+		// Push cleaned-up event data
+		state.events.push(eventData);
+	}
 
 	console.log("Calculating event start years and durations...");
 	// Calculate and store start years and durations for all events
