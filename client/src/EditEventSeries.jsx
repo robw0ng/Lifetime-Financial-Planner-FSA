@@ -304,7 +304,7 @@ export default function EditEventSeries() {
     } else if (formData.durationType === 'uniform') {
       duration = {
         min: Number(formData.durationMin),
-        max: Number(formData.durationMax),
+        max: Number(formData.durationMax),  
         type: 'uniform',
       };
     } else if (formData.durationType === 'normal') {

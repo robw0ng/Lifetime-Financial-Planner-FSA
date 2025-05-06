@@ -261,7 +261,7 @@ function EventSeriesInfo({ event }) {
 
   // Render allocation details for invest/rebalance
   const renderAllocation = () => {
-    const allocation = event.allocation;
+    const allocation = event.asset_allocation;
     if (!allocation) return '';
 
     if (typeof allocation === 'object') {

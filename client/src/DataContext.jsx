@@ -10,6 +10,7 @@ export const DataProvider = ({ children }) => {
   const [sharedScenarios, setSharedScenarios] = useState([]);
   const [allScenarios, setAllScenarios] = useState([]);
   const [accessList, setAccessList] = useState([]);
+  const [chartStrings, setChartStrings] = useState([]); 
   const [loading, setLoading] = useState(true);
   const {
     selectedScenario,
@@ -1318,6 +1319,8 @@ export const DataProvider = ({ children }) => {
         setScenarios,
         sharedScenarios,
         setSharedScenarios,
+        chartStrings,
+        setChartStrings,
         allScenarios,
         setAllScenarios,
         accessList,

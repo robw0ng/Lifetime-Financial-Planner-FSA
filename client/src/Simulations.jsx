@@ -3,11 +3,11 @@ import { useState } from 'react';
 import React, { useRef, useEffect } from 'react';
 import { useSelected } from './SelectedContext';
 import styles from './Simulations.module.css';
-import { sampleBarData } from './data/sampleData';
+
 import * as d3 from 'd3';
 import EventSeriesList from './EventSeries.jsx';
 import { Link } from 'react-router-dom';
-
+import parseChartString from './Charts';
 
 function ScenarioList() {
   const { selectedScenario, setSelectedScenario, deselectScenario } =
@@ -60,53 +60,70 @@ function ScenarioList() {
 }
 
 function EventSeriesListShort() {
-  const { selectedEventSeries, setSelectedEventSeries, deselectEventSeries, selectedScenario, simStyle2 } =
-    useSelected();
+  const {
+    selectedEventSeries,
+    setSelectedEventSeries,
+    deselectEventSeries,
+    selectedScenario,
+    simStyle,    // bring in simStyle too
+    simStyle2,
+  } = useSelected();
 
   useEffect(() => {
     deselectEventSeries();
   }, [selectedScenario]);
 
-  let rawSeries = selectedScenario ? Array.from(selectedScenario.EventSeries || []) : [];
+  // 1) raw array of event series
+  const rawSeries = selectedScenario
+    ? Array.from(selectedScenario.EventSeries || [])
+    : [];
 
-  const filteredSeries = simStyle2 === 3
-  ? rawSeries.filter(ev => (ev.type === "income" || ev.type === "expense"))
-  : simStyle2 === 2
-  ? rawSeries.filter(ev => ev.startYear.value >= 2020)
-  : rawSeries;
+  // 2) apply filters:
+  // - if simStyle === 3: only income or expense series
+  // - else if simStyle2 === 4: only invest series with exactly 2 assets
+  // - otherwise show all
+  const filteredSeries =
+    simStyle2 === 3
+      ? rawSeries.filter(ev =>
+          ev.type === 'income' || ev.type === 'expense'
+        )
+      : simStyle2 === 4
+      ? rawSeries.filter(
+          ev =>
+            ev.type === 'invest' &&
+            ev.asset_allocation &&
+            Object.keys(ev.asset_allocation).length === 2
+        )
+      : rawSeries;
 
-
-  const seriesArray = filteredSeries.length > 0
-    ? filteredSeries
-    : [{ id: null, name: null, type: null, startYear: { value: null } }];
+  // 3) fallback if empty
+  const seriesArray =
+    filteredSeries.length > 0
+      ? filteredSeries
+      : [{ id: null, name: null, type: null, startYear: { value: null } }];
 
   const selectEvent = (event) => {
-    if (selectedEventSeries && event.id === selectedEventSeries.id) {
+    if (selectedEventSeries?.id === event.id) {
       deselectEventSeries();
     } else {
       setSelectedEventSeries(event);
     }
   };
 
-
   return (
-    <section
-      className={`${styles['outer-container']} ${styles['scenario-list-container']}`}
-    >
-      <div
-        className={`${styles['inner-container']} ${styles['scenario-list']}`}
-      >
+    <section className={`${styles['outer-container']} ${styles['scenario-list-container']}`}>
+      <div className={`${styles['inner-container']} ${styles['scenario-list']}`}>
         <h2 className={styles['scenario-list-title']}>Event Series:</h2>
         <div className={styles['scenario-item-list']}>
-          {seriesArray.map((event, index) => (
+          {seriesArray.map((event, idx) => (
             <div
-              key={event.id ?? index}
+              key={event.id ?? idx}
               className={
                 selectedEventSeries?.id === event.id
                   ? `${styles['selected']} ${styles['event-series-item']}`
                   : styles['event-series-item']
               }
-              onClick={event.id !== null ? () => selectEvent(event) : undefined}
+              onClick={event.id != null ? () => selectEvent(event) : undefined}
             >
               <span>{event.name}</span>
             </div>
@@ -116,6 +133,7 @@ function EventSeriesListShort() {
     </section>
   );
 }
+
 
 
 
@@ -372,7 +390,7 @@ function Summary(){
       );
       case 4:
         return(
-          <form onSubmit = {handleSubmit} className ="form-container">
+          <form onSubmit = {handleOneYearSubmit} className ="form-container">
           <EventSeriesListShort/>
           <div>
             Number of Sims to run:
@@ -381,11 +399,42 @@ function Summary(){
             type="number"
             value={regularData.numRuns}
             name="numRuns"
-            onChange={handleRegChange}>
+            onChange={handleOneChange}>
           </input>
-          <button type="submit" className="submit-btn">
-            Run Simulations
-          </button>
+          <div>
+            lower bound:
+          </div>
+          <input             
+            type="number"
+            value={regularData.lowerBound}
+            name="lowerBound"
+            onChange={handleOneChange}>
+          </input>
+          <div>
+            upper bound:
+          </div>
+          <input             
+            type="number"
+            value={regularData.upperBound}
+            name="upperBound"
+            onChange={handleOneChange}>
+          </input>
+          <div>
+            step size:
+          </div>
+          <input             
+            type="number"
+            value={regularData.stepSize}
+            name="stepSize"
+            onChange={handleOneChange}>
+          </input>
+          {selectedEventSeries !== null && (
+            <button type="submit" className="submit-btn">
+              Run Simulations
+            </button>
+            )
+          }
+
         </form>
       );
         //percentage selector
@@ -634,17 +683,15 @@ function SuccessGraph() {
   
   const simStyle = 0;
 
-  const [chartList, setChartList] = useState([
-    'Monthly Revenue',
-    'Expense Breakdown',
-    'Cash Flow Projection'
-  ]);
+  const {chartStrings, setChartStrings} = useSelected();
 
   const handleRemove = (indexToRemove) => {
-    setChartList(prev => prev.filter((_, idx) => idx !== indexToRemove));
+    setChartStrings(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   return (
+    <div className={styles['outer-container']}>
+        <div className={styles['inner-container']}>
     <div>
       <Link to="/create-chart" className={styles['action-button']}>
         <button className={`${styles['action-button']} ${styles['create']}`}>
@@ -653,9 +700,9 @@ function SuccessGraph() {
       </Link>
 
       {/* only show the list if there’s at least one chart */}
-      {chartList.length > 0 && (
+      {chartStrings && chartStrings.length > 0 && (
         <ul className={styles['chart-list']}>
-          {chartList.map((chartName, idx) => (
+          {chartStrings.map((chartName, idx) => (
             <li key={idx} className={styles['chart-list-item']}>
               {chartName}
               <button
@@ -674,6 +721,8 @@ function SuccessGraph() {
           generate charts
         </button>
     </div>
+    </div>
+    </div>
   );
 }
 
@@ -690,7 +739,56 @@ function InvestmentsGraph(){
   );
 }
 
+function CustomDropdown({ items }) {
+  const [open, setOpen] = useState(false);
+  const {selectedChart, setSelectedChart} = useSelected();
+  const ref = useRef(null);
+
+  // close when clicking outside
+  useEffect(() => {
+    const onClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
+
+  return (
+    <div className={styles.dropdown} ref={ref}>
+      <button
+        type="button"
+        className={styles.toggle}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {selectedChart} ▾
+      </button>
+
+      {open && (
+        <ul className={styles.menu}>
+          {items.map((item) => (
+            <li
+              key={item}
+              className={styles.item}
+              onClick={() => {
+                setSelectedChart(item);
+                setOpen(false);
+              }}
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+
 export default function Simulations(){
+    const {chartStrings, setChartStrings, selectedChart} = useSelected();
+    
     return (
         <div className={styles['dashboard']}>
             <div className={`${styles['column']} ${styles['col-1']}`}> 
@@ -700,7 +798,15 @@ export default function Simulations(){
             </div>
             <div className={`${styles['column']} ${styles['col-2']}`}>
               
-              <SuccessGraph />
+              {/* <SuccessGraph /> */}
+              <div className={styles['outer-container']}>
+                <div className={styles['inner-container']}>
+                  <SuccessGraph />
+                  <CustomDropdown items = {chartStrings}/>
+                  {parseChartString(selectedChart)}
+                </div>
+              </div>
+              
             </div>
         </div>
     );

@@ -14,6 +14,8 @@ export const SelectedProvider = ({ children }) => {
     const [selectedEventSeries, setSelectedEventSeries] = useState(null);
     const [selectedStrategy, setSelectedStrategy] = useState(null);
     const [selectedStrategyItem, setSelectedStrategyItem] = useState(null);
+    const [selectedChart, setSelectedChart] = useState(null);
+    const [chartStrings, setChartStrings] = useState(new Array());
 
     const deselectScenario = () => {
         setSelectedScenario(null);
@@ -47,12 +49,16 @@ export const SelectedProvider = ({ children }) => {
     };
     return (
         <SelectedContext.Provider value={{ 
+        chartStrings,
+        setChartStrings,
         shared,
         setShared,
         simStyle,
         setSimStyle,
         simStyle2,
         setSimStyle2,
+        selectedChart,
+        setSelectedChart,
         selectedScenario, 
         setSelectedScenario, 
         selectedInvestmentType,
