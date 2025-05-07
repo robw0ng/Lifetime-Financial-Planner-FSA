@@ -96,7 +96,7 @@ async function loadRMDTable() {
 
 		// Execute the Python script to scrape RMD tables
 		console.log("Running scrapeIRS.py...");
-		await execPromise(`python ${scriptPath}`);
+		await execPromise(`python3 ${scriptPath}`);
 
 		// Ensure the file exists after scraping
 		if (!fs.existsSync(filePath)) {
@@ -155,6 +155,7 @@ async function simulateScenario(scenarioId) {
 				sub = await IncomeEventSeries.findByPk(base.id);
 				base.initial_amount = sub.initial_amount;
 				base.expected_change_type = sub.expected_change_type;
+				base.expected_change_value = sub.expected_change_value;
 				base.expected_change_lower = sub.expected_change_lower;
 				base.expected_change_upper = sub.expected_change_upper;
 				base.expected_change_mean = sub.expected_change_mean;
@@ -168,6 +169,7 @@ async function simulateScenario(scenarioId) {
 				sub = await ExpenseEventSeries.findByPk(base.id);
 				base.initial_amount = sub.initial_amount;
 				base.expected_change_type = sub.expected_change_type;
+				base.expected_change_value = sub.expected_change_value;
 				base.expected_change_lower = sub.expected_change_lower;
 				base.expected_change_upper = sub.expected_change_upper;
 				base.expected_change_mean = sub.expected_change_mean;
@@ -644,7 +646,7 @@ async function processInvestmentUpdates(state) {
 					valueChange = investmentType.expected_change_value;
 				} else {
 					expected_change_value = investmentType.expected_change_value / 100.0;
-					valueChange = investmentType.value * expected_change_value;
+					valueChange = investment.value * expected_change_value;
 				}
 				break;
 			case "normal":
@@ -1034,14 +1036,16 @@ async function processDiscretionaryExpenses(state, scenario, year, yearData) {
 
 	// Process each discretionary expense in order of spending strategy
 	const totalAmount = discExpenses.reduce((total, { amount }) => {
-		return total + amount;
+		return total + (isNaN(amount) ? 0 : amount);
 	}, 0);
 
 	// Determine how much of the expense we can afford
 	let affordableAmount = Math.min(totalAmount, maxSpendable);
 
 	//set discretionary exenses paid percentage
-	yearData.discretionaryExpensesPaidPercentage = affordableAmount / totalAmount;
+	if (totalAmount != 0) {
+		yearData.discretionaryExpensesPaidPercentage = affordableAmount / totalAmount;
+	}
 	//increment total expenses by affordableAmount
 	affordableAmount = Math.round(affordableAmount * 100) / 100;
 	yearData.totalExpenses += affordableAmount;

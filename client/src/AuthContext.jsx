@@ -18,9 +18,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const res = await fetch('https://lifetime-financial-planner-a805aa154150.herokuapp.com/auth/session', {
-          credentials: 'include',
-        });
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/auth/session`,
+          {
+            credentials: 'include',
+          }
+        );
         if (res.ok) {
           const data = await res.json();
           login(data.user); // your existing login() function
@@ -29,7 +32,7 @@ export const AuthProvider = ({ children }) => {
         console.log('Not logged in');
       }
     };
-  
+
     fetchSession();
   }, []);
 
