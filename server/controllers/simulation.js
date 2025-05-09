@@ -3,6 +3,7 @@ require("dotenv").config();
 const db = require("../models");
 const {
 	Scenario,
+	ScenarioAccess,
 	Investment,
 	InvestmentType,
 	EventSeries,
@@ -16,6 +17,8 @@ const { simulateScenario } = require("../simulation");
 const { simulateScenarioExp } = require("../simulationExpl");
 const { Op } = require("sequelize");
 const seedrandom = require("seedrandom");
+const cloneDeep = require("lodash/cloneDeep");
+const { writeSimulationLogs } = require("../utils/simulationLogger");
 
 // apply one parameter override
 function applyOverride(scn, param, value) {
@@ -24,11 +27,11 @@ function applyOverride(scn, param, value) {
 		return;
 	}
 	// event series duration or start
-	if (param.startsWith("duration") || param.startsWith("start:")) {
+	if (param.startsWith("duration:") || param.startsWith("start:")) {
 		const [field, evtName] = param.split(":");
 		const ev = scn.EventSeries.find((e) => e.name === evtName);
 		if (!ev) return;
-		if (field === "duration") {
+		if (field === "duration:") {
 			ev.duration_type = "fixed";
 			ev.duration_value = Number(value);
 		} else {
@@ -38,35 +41,12 @@ function applyOverride(scn, param, value) {
 		return;
 	}
 	// initial amount of income/expense event
-	if (param.startsWith("initial_amount")) {
+	if (param.startsWith("initial_amount:")) {
 		const [, evtName] = param.split(":");
 		const ev = scn.EventSeries.find((e) => e.name === evtName && (e.type === "income" || e.type === "expense"));
 		if (ev) ev.initial_amount = Number(value);
 		return;
 	}
-	// allocation percent for two-asset invest event: "alloc:EVENT:AssetA,AssetB"
-	if (param.startsWith("alloc:")) {
-		// format: alloc:<eventName>:AssetA,AssetB
-		const parts = param.split(":");
-		const name = parts[1];
-		const assets = parts[2].split(",");
-		if (assets.length !== 2) {
-			throw new Error("Allocation override requires exactly two assets");
-		}
-		const [a1, a2] = assets;
-		const ev = scn.EventSeries.find((e) => e.name === name && e.type === "invest");
-		if (!ev) return;
-		ev.asset_allocation = {};
-		const p1 = Number(value) / 100;
-		ev.asset_allocation[a1] = p1;
-		ev.asset_allocation[a2] = 1 - p1;
-		return;
-	}
-}
-
-// deep clone utility
-function cloneScenario(base) {
-	return JSON.parse(JSON.stringify(base));
 }
 
 // upon generating charts, update the chartsGenerated flag and store chart_configs (taking id of newly created simulation)
@@ -112,7 +92,7 @@ router.put("/simulation-runs/:runId/charts", async (req, res) => {
 	}
 });
 
-// get latest simulation for given scenario and logged-in user (taking scenario_id)
+// // get latest simulation for given scenario and logged-in user (taking scenario_id)
 router.get("/scenarios/:scenarioId/latest-simulation", async (req, res) => {
 	const { user } = req.session;
 	if (!user) return res.status(401).json({ error: "User not authenticated" });
@@ -136,13 +116,13 @@ router.get("/scenarios/:scenarioId/latest-simulation", async (req, res) => {
 			order: [["created_at", "DESC"]],
 		});
 
-		// If none found, return empty array
+		// If none found, return null
 		if (!latest) {
-			return res.json({ latestSimulation: [] });
+			return res.json({ isNotThere: true });
 		}
 
 		// latest.results is JSONB column: an array of batches, each batch = yearData[]
-		return res.json({ latestSimulation: latest.results });
+		return res.json({ latestSimulation: latest });
 	} catch (err) {
 		console.error("Error fetching latest simulation:", err);
 		return res.status(500).json({ error: "Server error" });
@@ -190,14 +170,23 @@ router.post("/simulate/:id", async (req, res) => {
 		const baseScenario = base.toJSON();
 
 		// run batch based on simulation count
-		const batches = await Promise.all(Array.from({ length: simCount }, () => simulateScenario(baseScenario)));
+		const batch = [];
+		for (let i = 0; i < simCount; i++) {
+			const { returnData } = await simulateScenario(baseScenario.id);
+			batch.push(returnData);
+		}
+
+		// log first sim in batch
+		const first = batch[0];
+		// await writeSimulationLogs(req.session.user, first.returnData, first.eventsLog);
 
 		const latest = await SimulationRun.create({
 			scenario_id: scenarioId,
-			results: batches,
+			results: batch,
 			charts_updated_flag: false,
 			chart_configs: null,
 			expl_param: null, // basic sim, no param
+			exploration_flag: 0, //for basic (no exploration)
 		});
 
 		return res.json({ latestSimulation: latest });
@@ -212,73 +201,85 @@ router.post("/explore-1d/:id", async (req, res) => {
 	const { user } = req.session;
 	if (!user) return res.status(401).json({ error: "Not authenticated" });
 
-	try {
-		const scenarioId = parseInt(req.params.id, 10);
-		const { param, lower, upper, step, simCount } = req.body;
+	const scenarioId = parseInt(req.params.id, 10);
+	const { param, lower, upper, step, simCount } = req.body;
 
-		// Verify user owns or has access to this scenario
-		const scenario = await Scenario.findOne({
-			where: {
-				id: scenarioId,
-				[Op.or]: [{ user_id: user.id }, { "$ScenarioAccesses.user_id$": user.id }],
+	// load
+	const scenario = await Scenario.findOne({
+		where: {
+			id: scenarioId,
+			[Op.or]: [{ user_id: user.id }, { "$ScenarioAccesses.user_id$": user.id }],
+		},
+		include: [{ model: ScenarioAccess, as: "ScenarioAccesses" }],
+	});
+	if (!scenario) return res.status(403).json({ error: "Not authorized for that scenario" });
+
+	// We need the full scenario + all its children when we call simulateScenario
+	const base = await Scenario.findByPk(scenarioId, {
+		include: [
+			{ model: Investment, as: "Investments" },
+			{ model: InvestmentType, as: "InvestmentTypes" },
+			{
+				model: EventSeries,
+				as: "EventSeries",
+				include: [
+					{ model: IncomeEventSeries, as: "IncomeEventSeries" },
+					{ model: ExpenseEventSeries, as: "ExpenseEventSeries" },
+					{ model: InvestEventSeries, as: "InvestEventSeries" },
+					{ model: RebalanceEventSeries, as: "RebalanceEventSeries" },
+				],
 			},
-			include: [{ model: ScenarioAccess, as: "ScenarioAccesses" }],
-		});
-		if (!scenario) return res.status(403).json({ error: "Not authorized for that scenario" });
+		],
+	});
+	if (!base) return res.status(404).json({ error: "Scenario not found" });
 
-		// load base scenario with includes
-		const base = await Scenario.findByPk(id, {
-			include: [
-				{ model: Investment, as: "Investments" },
-				{ model: InvestmentType, as: "InvestmentTypes" },
-				{
-					model: EventSeries,
-					as: "EventSeries",
-					include: [
-						{ model: IncomeEventSeries, as: "IncomeEventSeries" },
-						{ model: ExpenseEventSeries, as: "ExpenseEventSeries" },
-						{ model: InvestEventSeries, as: "InvestEventSeries" },
-						{ model: RebalanceEventSeries, as: "RebalanceEventSeries" },
-					],
-				},
-			],
-		});
-		if (!base) return res.status(404).json({ error: "Scenario not found" });
+	const baseObj = base.toJSON();
 
-		// build values
-		const values =
-			param === "is_roth_optimizer_enabled"
-				? [false, true] // only two step values of range - enabled and disabled
-				: // sequence from lower to upper in terms of step
-				  Array.from({ length: Math.floor((upper - lower) / step) + 1 }, (_, i) => lower + i * step);
+	// set of values from range
+	const values =
+		param === "is_roth_optimizer_enabled"
+			? [false, true]
+			: Array.from({ length: Math.floor((upper - lower) / step) + 1 }, (_, i) => lower + i * step);
 
-		const batches = [];
-		// run a batch per param value
-		for (const v of values) {
-			// seed rng once per batch
-			const rng = seedrandom("seed-1d");
-			// clone & override
-			const sc = cloneScenario(base);
-			applyOverride(sc, param, v);
-			// batch simulate
-			const batch = await Promise.all(Array.from({ length: simCount }, () => simulateScenarioExp(sc, rng)));
+	// run one batch per value
+	const batches = [];
+	for (const v of values) {
+		// a reproducible seed per parameter value
+		const rngSeed = `explore:${param}:${v}`;
 
-			batches.push(batch);
+		// Monkey-patch Math.random for this batch (so calls in simulateScenario are seeded)
+		const realRandom = Math.random;
+		Math.random = seedrandom(rngSeed);
+
+		// Deep clone & override the one field on our in-memory scenario
+		const scn = cloneDeep(baseObj);
+		applyOverride(scn, param, v);
+
+		// Run simCount runs in a plain loop
+		const batch = [];
+		for (let i = 0; i < simCount; i++) {
+			// simulateScenario accepts a plain JS scenario object
+			const yearDataArray = await simulateScenarioExp(scn);
+			batch.push(yearDataArray);
 		}
 
-		const latest = await SimulationRun.create({
-			scenario_id: scenarioId,
-			results: batches,
-			charts_updated_flag: false,
-			chart_configs: null,
-			expl_param: param,
-		});
+		// restore the real RNG
+		Math.random = realRandom;
 
-		res.json({ latestSimulation: latest });
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: err.message });
+		batches.push(batch);
 	}
+
+	// persist
+	const simRun = await SimulationRun.create({
+		scenario_id: scenarioId,
+		results: batches,
+		charts_updated_flag: false,
+		chart_configs: null,
+		expl_param: param,
+		exploration_flag: 1,
+	});
+
+	res.json({ latestSimulation: simRun });
 });
 
 module.exports = router;

@@ -27,6 +27,11 @@ module.exports = {
 				type: Sequelize.STRING,
 				allowNull: true,
 			},
+			expl_param2: {
+				type: Sequelize.STRING,
+				allowNull: true,
+			},
+			exploration_flag: { type: Sequelize.INTEGER, allowNull: false },
 			created_at: {
 				type: Sequelize.DATE,
 				allowNull: false,

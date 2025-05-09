@@ -110,7 +110,7 @@ async function loadRMDTable() {
 	}
 }
 
-async function simulateScenario(scenario) {
+async function simulateScenarioExp(scenario) {
 	console.log("\n=== Starting Financial Simulation ===");
 	console.log(`Scenario: ${scenario.name}`);
 	const currentYear = new Date().getFullYear();
@@ -233,7 +233,7 @@ async function simulateScenario(scenario) {
 	for (let year = currentYear; year < endYear; year++) {
 		// sample object to add to returnData each year
 		const yearData = {
-			year: year,
+			year: currentYear,
 			investments: [],
 			eventSeries: [],
 			totalIncome: 0,
@@ -280,13 +280,10 @@ async function simulateScenario(scenario) {
 			state.retirementLimits = Math.round(state.retirementLimits * (1 + state.inflationRate) * 100) / 100;
 
 			// Also calculate adflation adjustment for all income/expense events
-			const event = state.events
-				.filter((event) => event.type === "income" || event.type === "expense")
-				.forEach((e) => {
-					if (e.inflation_adjusted) {
-						e.amount *= 1 + state.inflationRate;
-					}
-				});
+			const event = state.events.filter((event) => event.type === "income" || event.type === "expense");
+			if (event.inflation_adjusted) {
+				event.amount *= 1 + state.inflationRate;
+			}
 		}
 
 		//reset curr year values
@@ -310,7 +307,7 @@ async function simulateScenario(scenario) {
 		}
 
 		// 6. Process Non-discretionary Expenses and Taxes
-		await processNonDiscretionaryExpensesAndTax(state, scenario, year, currentYear, yearData, returnData);
+		await processNonDiscretionaryExpensesAndTax(state, scenario, year, currentYear, yearData);
 
 		// 7. Process Discretionary Expenses
 		await processDiscretionaryExpenses(state, scenario, year, yearData);
@@ -337,6 +334,7 @@ async function simulateScenario(scenario) {
 		state.curYearEarlyWithdrawals = Math.round(state.curYearEarlyWithdrawals * 100) / 100;
 
 		//set some values for yearData
+		yearData.year = currentYear;
 		yearData.investments = state.investments;
 		yearData.eventSeries = state.events;
 		yearData.totalIncome = state.curYearIncome;
@@ -398,10 +396,10 @@ async function getEventStartYear(event, allEvents) {
 			return Math.round(sampleNormal(event.start_year_mean, event.start_year_std_dev));
 		case "uniform":
 			return Math.round(sampleUniform(event.start_year_lower, event.start_year_upper));
-		case "sameAsEvent":
+		case "with_event":
 			const otherEvent = allEvents.find((e) => e.name === event.start_year_other_event);
 			return otherEvent ? await getEventStartYear(otherEvent, allEvents) : null;
-		case "yearAfterEvent":
+		case "after_event":
 			const targetEvent = allEvents.find((e) => e.name === event.start_year_other_event);
 			if (!targetEvent) return null;
 			const targetStart = await getEventStartYear(targetEvent, allEvents);
@@ -454,34 +452,29 @@ async function processIncome(state, year) {
 
 		// Update running totals
 		state.curYearIncome += event.amount;
-		if (event.is_social) {
+		if (event.income_type === "social_security") {
 			state.curYearSS += event.amount;
 		}
 
 		// Apply expected annual change if any
 		// if values > 1 then amount else percentage
 		if (event.expected_change_type === "fixed") {
-			if (event.expected_change_numtype === "amount") {
+			if (event.expected_change_value > 1 || event.expected_change_value < -1) {
 				event.amount += event.expected_change_value;
 			} else {
-				expected_change_value = event.expected_change_value / 100.0;
-				event.amount *= 1 + expected_change_value;
+				event.amount *= 1 + event.expected_change_value;
 			}
 		} else if (event.expected_change_type === "normal") {
-			if (event.expected_change_numtype === "amount") {
+			if (event.expected_change_mean > 1 || event.expected_change_mean < -1) {
 				event.amount += sampleNormal(event.expected_change_mean, event.expected_change_std_dev);
 			} else {
-				expected_change_mean = event.expected_change_mean / 100.0;
-				expected_change_std_dev = event.expected_change_std_dev / 100.0;
-				event.amount *= 1 + sampleNormal(expected_change_mean, expected_change_std_dev);
+				event.amount *= 1 + sampleNormal(event.expected_change_mean, event.expected_change_std_dev);
 			}
 		} else if (event.expected_change_type === "uniform") {
-			if (event.expected_change_numtype === "amount") {
+			if (event.expected_change_lower > 1 || event.expected_change_lower < -1) {
 				event.amount += sampleUniform(event.expected_change_lower, event.expected_change_upper);
 			} else {
-				expected_change_lower = event.expected_change_lower / 100.0;
-				expected_change_upper = event.expected_change_upper / 100.0;
-				event.amount *= 1 + sampleUniform(expected_change_lower, expected_change_upper);
+				event.amount *= 1 + sampleUniform(event.expected_change_lower, event.expected_change_upper);
 			}
 		}
 	}
@@ -551,9 +544,6 @@ async function processRMD(state, scenario, year) {
 				purchase_price: original_price_transfer_amt,
 			});
 		}
-
-		// add to income
-		state.curYearIncome += transferAmount;
 	}
 }
 
@@ -571,23 +561,22 @@ async function processInvestmentUpdates(state) {
 		let generatedIncome = 0;
 		switch (investmentType.expected_income_type) {
 			case "fixed":
-				if (investmentType.expected_income_numtype === "amount") {
+				if (investmentType.expected_income_value > 1 || investmentType.expected_income_value < -1) {
 					generatedIncome = investmentType.expected_income_value;
 				} else {
-					expected_income_value = investmentType.expected_income_value / 100.0;
-					generatedIncome = startValue * expected_income_value;
+					generatedIncome = startValue * investmentType.expected_income_value;
 				}
 				break;
 			case "normal":
-				if (investmentType.expected_income_numtype === "amount") {
+				if (investmentType.expected_income_mean > 1 || investmentType.expected_income_mean < -1) {
 					generatedIncome = sampleNormal(
 						investmentType.expected_income_mean,
 						investmentType.expected_income_std_dev
 					);
 				} else {
-					expected_income_mean = investmentType.expected_income_mean / 100.0;
-					expected_income_std_dev = investmentType.expected_income_std_dev / 100.0;
-					generatedIncome = startValue * sampleNormal(expected_income_mean, expected_income_std_dev);
+					generatedIncome =
+						startValue *
+						sampleNormal(investmentType.expected_income_mean, investmentType.expected_income_std_dev);
 				}
 				break;
 		}
@@ -603,23 +592,22 @@ async function processInvestmentUpdates(state) {
 		let valueChange = 0;
 		switch (investmentType.expected_change_type) {
 			case "fixed":
-				if (investmentType.expected_change_numtype === "amount") {
+				if (investmentType.expected_change_value > 1 || investmentType.expected_change_value < -1) {
 					valueChange = investmentType.expected_change_value;
 				} else {
-					expected_change_value = investmentType.expected_change_value / 100.0;
-					valueChange = investmentType.value * expected_change_value;
+					valueChange = investment.value * investmentType.expected_change_value;
 				}
 				break;
 			case "normal":
-				if (investmentType.expected_change_numtype === "amount") {
+				if (investmentType.expected_change_mean > 1 || investmentType.expected_change_mean < -1) {
 					valueChange = sampleNormal(
 						investmentType.expected_change_mean,
 						investmentType.expected_change_std_dev
 					);
 				} else {
-					expected_change_mean = investmentType.expected_change_mean / 100.0;
-					expected_change_std_dev = investmentType.expected_change_std_dev / 100.0;
-					valueChange = investment.value * sampleNormal(expected_change_mean, expected_change_std_dev);
+					valueChange =
+						investment.value *
+						sampleNormal(investmentType.expected_change_mean, investmentType.expected_change_std_dev);
 				}
 				break;
 		}
@@ -711,7 +699,7 @@ async function processRothConversion(state, scenario, year) {
 	state.curYearIncome += rothConversionAmount;
 }
 
-async function processNonDiscretionaryExpensesAndTax(state, scenario, year, startYear, yearData, returnData) {
+async function processNonDiscretionaryExpensesAndTax(state, scenario, year, startYear, yearData) {
 	console.log("\nProcessing non-discretionary expenses and taxes...");
 	const userAge = year - scenario.birth_year;
 
@@ -726,10 +714,10 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
 		let remainingIncome = prevYearTaxableIncome;
 		let deduction;
 		for (const bracket of state.currentTaxBrackets.standardDeductions) {
-			if (state.is_married && bracket.filingStatus === "Married filing jointly or Qualifying surviving spouse") {
+			if (state.is_Married && bracket.filingStatus === "Married filing jointly or Qualifying surviving spouse") {
 				deduction = bracket.amount;
 				break;
-			} else if (!state.is_married && bracket.filingStatus === "Single or Married filing separately") {
+			} else if (!state.is_Married && bracket.filingStatus === "Single or Married filing separately") {
 				deduction = bracket.amount;
 				break;
 			}
@@ -811,27 +799,22 @@ async function processNonDiscretionaryExpensesAndTax(state, scenario, year, star
 	nonDiscExpenses.forEach((event) => {
 		// Apply expected change to the amount based on the change type
 		if (event.expected_change_type === "fixed") {
-			if (event.expected_change_numtype === "amount") {
+			if (event.expected_change_value > 1 || event.expected_change_value < -1) {
 				event.amount += event.expected_change_value; // Fixed absolute change
 			} else {
-				expected_change_value = event.expected_change_value / 100.0;
-				event.amount *= 1 + expected_change_value; // Percentage change
+				event.amount *= 1 + event.expected_change_value; // Percentage change
 			}
 		} else if (event.expected_change_type === "normal") {
-			if (event.expected_change_numtype === "amount") {
+			if (event.expected_change_mean > 1 || event.expected_change_mean < -1) {
 				event.amount += sampleNormal(event.expected_change_mean, event.expected_change_std_dev); // Add normal-distributed change
 			} else {
-				expected_change_mean = event.expected_change_mean / 100.0;
-				expected_change_std_dev = event.expected_change_std_dev / 100.0;
-				event.amount *= 1 + sampleNormal(expected_change_mean, expected_change_std_dev); // Percentage change using normal distribution
+				event.amount *= 1 + sampleNormal(event.expected_change_mean, event.expected_change_std_dev); // Percentage change using normal distribution
 			}
 		} else if (event.expected_change_type === "uniform") {
-			if (event.expected_change_numtype === "amount") {
+			if (event.expected_change_mean > 1 || event.expected_change_mean < -1) {
 				event.amount += sampleUniform(event.expected_change_lower, event.expected_change_upper); // Add uniform-distributed change
 			} else {
-				expected_change_lower = event.expected_change_lower / 100.0;
-				expected_change_upper = event.expected_change_upper / 100.0;
-				event.amount *= 1 + sampleUniform(expected_change_lower, expected_change_upper); // Percentage change using uniform distribution
+				event.amount *= 1 + sampleUniform(event.expected_change_lower, event.expected_change_upper); // Percentage change using uniform distribution
 			}
 		}
 	});
@@ -953,27 +936,22 @@ async function processDiscretionaryExpenses(state, scenario, year, yearData) {
 			}
 
 			if (event.expected_change_type === "fixed") {
-				if (event.expected_change_numtype === "amount") {
+				if (event.expected_change_value > 1 || event.expected_change_value < -1) {
 					event.amount += event.expected_change_value;
 				} else {
-					expected_change_value = event.expected_change_value / 100.0;
-					event.amount *= 1 + expected_change_value;
+					event.amount *= 1 + event.expected_change_value;
 				}
 			} else if (event.expected_change_type === "normal") {
-				if (event.expected_change_numtype === "amount") {
+				if (event.expected_change_mean > 1 || event.expected_change_mean < -1) {
 					event.amount += sampleNormal(event.expected_change_mean, event.expected_change_std_dev);
 				} else {
-					expected_change_mean = event.expected_change_mean / 100.0;
-					expected_change_std_dev = event.expected_change_std_dev / 100.0;
-					event.amount *= 1 + sampleNormal(expected_change_mean, expected_change_std_dev);
+					event.amount *= 1 + sampleNormal(event.expected_change_mean, event.expected_change_std_dev);
 				}
 			} else if (event.expected_change_type === "uniform") {
-				if (event.expected_change_numtype === "amount") {
+				if (event.expected_change_lower > 1 || event.expected_change_lower < -1) {
 					event.amount += sampleUniform(event.expected_change_lower, event.expected_change_upper);
 				} else {
-					expected_change_lower = event.expected_change_lower / 100.0;
-					expected_change_upper = event.expected_change_upper / 100.0;
-					event.amount *= 1 + sampleUniform(expected_change_lower, expected_change_upper);
+					event.amount *= 1 + sampleUniform(event.expected_change_lower, event.expected_change_upper);
 				}
 			}
 
@@ -1303,5 +1281,5 @@ function sampleUniform(lower, upper) {
 
 // Export the simulation function
 module.exports = {
-	simulateScenario,
+	simulateScenarioExp,
 };

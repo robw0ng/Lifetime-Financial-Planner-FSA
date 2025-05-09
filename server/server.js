@@ -28,7 +28,7 @@ app.use(
 		saveUninitialized: false,
 		cookie: {
 			httpOnly: true,
-			secure: true, // 🔥 required for cross-origin cookies
+			secure: true, // 🔥 required for cross-origin cookies, OFF FOR POSTMAN
 			sameSite: "none", // 🔥 allows sharing cookie to frontend on localhost or Heroku
 			// maxAge: 10 * 60 * 1000,
 			expires: null,
@@ -57,6 +57,7 @@ app.use("/investments", investmentController);
 app.use("/investmenttypes", investmentTypeController);
 app.use("/strategy", strategiesController);
 app.use("/user", userController);
+app.use("/sims", simController);
 
 // listening
 app.listen(PORT, () => {
@@ -67,4 +68,9 @@ app.listen(PORT, () => {
 app.get("/testdb", async (req, res) => {
 	const users = await db.User.findAll();
 	res.json(users);
+});
+
+app.post("/login", async (req, res) => {
+	req.session.user = req.body.user;
+	console.log("Logged in");
 });

@@ -22,12 +22,14 @@ module.exports = (sequelize, DataTypes) => {
 			charts_updated_flag: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
 			chart_configs: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
 			expl_param: { type: DataTypes.STRING, allowNull: true },
+			expl_param2: { type: DataTypes.STRING, allowNull: true },
+			exploration_flag: { type: DataTypes.INTEGER, allowNull: false },
 		},
 		{
 			sequelize,
 			modelName: "SimulationRun",
 			tableName: "SimulationRuns",
-			timestamps: true,
+			timestamps: false,
 		}
 	);
 	return SimulationRun;

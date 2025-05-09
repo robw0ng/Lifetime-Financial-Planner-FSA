@@ -39,11 +39,7 @@ module.exports = (sequelize, DataTypes) => {
 			Scenario.hasMany(models.ScenarioAccess, {
 				foreignKey: "scenario_id",
 				as: "ScenarioAccesses",
-			});
-			Scenario.hasMany(models.SimulationRun, {
-				foreignKey: "scenario_id",
-				as: "SimulationRuns",
-			});
+			});			
 		}
 	}
 	Scenario.init(
