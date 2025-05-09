@@ -16,6 +16,7 @@ export const SelectedProvider = ({ children }) => {
     const [selectedStrategyItem, setSelectedStrategyItem] = useState(null);
     const [selectedChart, setSelectedChart] = useState(null);
     const [chartStrings, setChartStrings] = useState(new Array());
+    const [selectedSim, setSelectedSim] = useState(null);
 
     const deselectScenario = () => {
         setSelectedScenario(null);
@@ -68,6 +69,8 @@ export const SelectedProvider = ({ children }) => {
         selectedEventSeries,
         setSelectedEventSeries,
         selectedStrategy,
+        selectedSim,
+        setSelectedSim,
         setSelectedStrategy,
         selectedStrategyItem,
         setSelectedStrategyItem,

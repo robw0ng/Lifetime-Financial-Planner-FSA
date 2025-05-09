@@ -1310,7 +1310,7 @@ export const DataProvider = ({ children }) => {
   const fetchLatestSimulation = async (scenarioId) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/scenarios/${scenarioId}/latest-simulation`,
+        `${import.meta.env.VITE_API_URL}/sims/scenarios/${scenarioId}/latest-simulation`,
         {
           credentials: 'include',
         }
@@ -1322,9 +1322,14 @@ export const DataProvider = ({ children }) => {
         }
         throw new Error('Failed to fetch latest simulation');
       }
-      const { latestSimulation } = await res.json();
-      setLatestSimulation(latestSimulation);
-      return latestSimulation;
+      const data = await res.json();
+      if (data.isNotThere == true){
+        console.log("returning null");
+        setLatestSimulation(0);
+        return 1;
+      }
+      setLatestSimulation(data.latestSimulation);
+      return data.latestSimulation;
     } catch (err) {
       console.error('Error fetching latest simulation:', err);
       return [];
@@ -1334,7 +1339,7 @@ export const DataProvider = ({ children }) => {
   const updateChartConfigs = async (runId, chartConfigs) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/simulation-runs/${runId}/charts`,
+        `${import.meta.env.VITE_API_URL}/sims/simulation-runs/${runId}/charts`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -1355,9 +1360,10 @@ export const DataProvider = ({ children }) => {
   };
 
   const runSimulation = async (scenarioId, simCount) => {
+    console.log("penis");
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/simulate/${scenarioId}`,
+        `${import.meta.env.VITE_API_URL}/sims/simulate/${scenarioId}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1463,6 +1469,8 @@ export const DataProvider = ({ children }) => {
         importScenario,
         updateChartConfigs,
         fetchLatestSimulation,
+        latestSimulation,
+        setLatestSimulation,
         runSimulation,
         explore1d,
         //explore2d,

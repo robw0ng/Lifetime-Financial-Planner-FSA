@@ -7,7 +7,7 @@ import styles from './Simulations.module.css';
 import * as d3 from 'd3';
 import EventSeriesList from './EventSeries.jsx';
 import { Link } from 'react-router-dom';
-import parseChartString from './Charts';
+import ParseChartString from './Charts';
 
 function ScenarioList() {
   const { selectedScenario, setSelectedScenario, deselectScenario } =
@@ -65,6 +65,8 @@ function EventSeriesListShort() {
     setSelectedEventSeries,
     deselectEventSeries,
     selectedScenario,
+    selectedSim,
+    setSelectedSim,
     simStyle,    // bring in simStyle too
     simStyle2,
   } = useSelected();
@@ -187,6 +189,7 @@ function Summary(){
   const[regularData, setRegularData] = useState({
     numRuns:'',
   });
+  const {runSimulation} = useData();
 
   const[oneData, setOneData] = useState({
     numRuns:'',
@@ -228,22 +231,67 @@ function Summary(){
       }));
     };
   const handleRegSubmit = async (e) => {
-    e.preventDefault();   
+    e.preventDefault();
+    
+
+    try{
+      runSimulation(selectedScenario.id, regularData.numRuns);
+    }catch(err){
+      console.error("error running simulation:", err);
+      return null;
+    }
   }
   const handleOneRMDSubmit = async (e) => {
-    e.preventDefault();   
+    const {explore1d} = useData();
+    e.preventDefault();
+    try{
+       explore1d(selectedScenario.id, "rmd", 0 ,0 ,0, oneData.numRuns);
+    }catch (err){
+      console.error('Error running simulation: ', err);
+    }
   }
+
   const handleOneYearSubmit = async (e) => {
+    const {explore1d} = useData();
+    e.preventDefault();
+    try{
+      if(oneData.duration === false){
+        explore1d(selectedScenario.id, "year-date", oneData.lowerBound, oneData.upperBound, oneData.stepSize, oneData.numRuns); //add support for passing selectedEventSeries
+      }else if(oneData.duration === true){
+        explore1d(selectedScenario.id, "year-duration", oneData.lowerBound, oneData.upperBound, oneData.stepSize, oneData.numRuns);
+      }
+       
+    }catch (err){
+      console.error('Error running simulation: ', err);
+    }
     e.preventDefault();   
   }
 
-  const handleOneSubmit = async (e) => {
+  const handleOneIncomeSubmit = async (e) => {
+    const {explore1d} = useData();
+    e.preventDefault();
+    try{
+      explore1d(selectedScenario.id, "income", oneData.lowerBound, oneData.upperBound, oneData.stepSize, oneData.numRuns); //add support for passing selectedEventSeries
+    }catch (err){
+      console.error('Error running simulation: ', err);
+    }
     e.preventDefault();   
   }
   const handleSubmit = async (e) => {
     e.preventDefault();   
   }
   
+  const handleOnePercentSubmit = async (e) =>{
+    const {explore1d} = useData();
+    e.preventDefault();
+    try{
+      explore1d(selectedScenario.id, "percent", oneData.lowerBound, oneData.upperBound, oneData.stepSize, oneData.numRuns); //add support for passing selectedEventSeries
+    }catch (err){
+      console.error('Error running simulation: ', err);
+    }
+    e.preventDefault();   
+  }
+
   const renderOneSimOptions = () => {
     switch (simStyle2) {
       case 0:
@@ -287,45 +335,51 @@ function Summary(){
           </div>
           <input             
             type="number"
-            value={regularData.numRuns}
+            value={oneData.numRuns}
             name="numRuns"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
+            
           </input>
           <div>
             Duration of series? If left unchecked, numeric value will be considered as start year.
           </div>
           <input             
             type="checkbox"
-            value={regularData.duration}
+            value={oneData.duration}
             name="duration"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           <div>
             lower bound:
           </div>
           <input             
             type="number"
-            value={regularData.lowerBound}
+            value={oneData.lowerBound}
             name="lowerBound"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           <div>
             upper bound:
           </div>
           <input             
             type="number"
-            value={regularData.upperBound}
+            value={oneData.upperBound}
             name="upperBound"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           <div>
             step size:
           </div>
           <input             
             type="number"
-            value={regularData.stepSize}
+            value={oneData.stepSize}
             name="stepSize"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           {selectedEventSeries !== null && (
             <button type="submit" className="submit-btn">
@@ -341,7 +395,7 @@ function Summary(){
       case 3:
         //Initial income selector
         return(
-          <form onSubmit = {handleOneYearSubmit} className ="form-container">
+          <form onSubmit = {handleOneIncomeSubmit} className ="form-container">
           <EventSeriesListShort/>
           <div>
             Number of Sims to run:
@@ -350,7 +404,8 @@ function Summary(){
             type="number"
             value={regularData.numRuns}
             name="numRuns"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           <div>
             lower bound:
@@ -359,7 +414,8 @@ function Summary(){
             type="number"
             value={regularData.lowerBound}
             name="lowerBound"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           <div>
             upper bound:
@@ -368,7 +424,8 @@ function Summary(){
             type="number"
             value={regularData.upperBound}
             name="upperBound"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           <div>
             step size:
@@ -377,7 +434,8 @@ function Summary(){
             type="number"
             value={regularData.stepSize}
             name="stepSize"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           {selectedEventSeries !== null && (
             <button type="submit" className="submit-btn">
@@ -390,7 +448,7 @@ function Summary(){
       );
       case 4:
         return(
-          <form onSubmit = {handleOneYearSubmit} className ="form-container">
+          <form onSubmit = {handleOnePercentSubmit} className ="form-container">
           <EventSeriesListShort/>
           <div>
             Number of Sims to run:
@@ -399,7 +457,9 @@ function Summary(){
             type="number"
             value={regularData.numRuns}
             name="numRuns"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
+            
           </input>
           <div>
             lower bound:
@@ -408,7 +468,8 @@ function Summary(){
             type="number"
             value={regularData.lowerBound}
             name="lowerBound"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           <div>
             upper bound:
@@ -417,7 +478,8 @@ function Summary(){
             type="number"
             value={regularData.upperBound}
             name="upperBound"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           <div>
             step size:
@@ -426,7 +488,8 @@ function Summary(){
             type="number"
             value={regularData.stepSize}
             name="stepSize"
-            onChange={handleOneChange}>
+            onChange={handleOneChange}
+            required>
           </input>
           {selectedEventSeries !== null && (
             <button type="submit" className="submit-btn">
@@ -444,7 +507,7 @@ function Summary(){
     switch (simStyle) {
       case 0:
         return (
-          <form onSubmit = {handleSubmit} className ="form-container">
+          <form onSubmit = {handleRegSubmit} className ="form-container">
             <div>
               Number of Sims to run:
             </div>
@@ -683,7 +746,24 @@ function SuccessGraph() {
   
   const simStyle = 0;
 
-  const {chartStrings, setChartStrings} = useSelected();
+  const {chartStrings, setChartStrings,selectedScenario,setSelectedScenario} = useSelected();
+
+  const {updateChartConfigs, latestSimulation} = useData();
+  
+  const handleGenerate = async(e) =>{
+    
+    e.preventDefault();
+    try{
+      updateChartConfigs(latestSimulation.id, chartStrings);
+      const tempScenario = selectedScenario;
+      setSelectedScenario(null);
+      setSelectedScenario(tempScenario);
+    }catch(err){
+      console.log(err);
+    }
+
+
+  }
 
   const handleRemove = (indexToRemove) => {
     setChartStrings(prev => prev.filter((_, idx) => idx !== indexToRemove));
@@ -717,7 +797,7 @@ function SuccessGraph() {
           ))}
         </ul>
       )}
-        <button className={`${styles['action-button']} ${styles['create']}`}>
+        <button className={`${styles['action-button']} ${styles['create']}`} onClick = {handleGenerate}>
           generate charts
         </button>
     </div>
@@ -787,8 +867,19 @@ function CustomDropdown({ items }) {
 
 
 export default function Simulations(){
-    const {chartStrings, setChartStrings, selectedChart} = useSelected();
-    
+    const {chartStrings, setChartStrings, selectedChart, setSelectedSim, selectedSim,selectedScenario} = useSelected();
+    const {fetchLatestSimulation,latestSimulation,setLatestSimulation} = useData();
+
+    useEffect(() => {
+      if(selectedScenario){
+        
+        setSelectedSim((fetchLatestSimulation(selectedScenario.id)));
+        console.log("should show null");
+        console.log(latestSimulation);
+      }else{
+        setLatestSimulation(0);
+      }
+    }, [selectedScenario]);
     return (
         <div className={styles['dashboard']}>
             <div className={`${styles['column']} ${styles['col-1']}`}> 
@@ -800,10 +891,28 @@ export default function Simulations(){
               
               {/* <SuccessGraph /> */}
               <div className={styles['outer-container']}>
+              
                 <div className={styles['inner-container']}>
-                  <SuccessGraph />
-                  <CustomDropdown items = {chartStrings}/>
-                  {parseChartString(selectedChart)}
+                
+                { (latestSimulation && !latestSimulation.charts_updated_flag)
+                    ? (
+                      <div className={styles.loading}>
+                        <SuccessGraph/>
+                      </div>
+                    )
+                    : (
+                      <>
+                        <CustomDropdown items={latestSimulation.chart_configs} />
+                        <ParseChartString command={selectedChart} />
+                      </>
+                    )
+                }
+              
+                { (latestSimulation == 0) &&
+                  (<div>
+                    You gotta run a sim!
+                  </div>)
+                }
                 </div>
               </div>
               
