@@ -1,0 +1,85 @@
+# version: 2025-05-05
+# CSE416, Software Engineering, Scott D. Stoller.
+
+# a distribution is represented as a map with one of the following forms:
+# {type: fixed, value: <number>}
+# {type: normal, mean: <number>, stdev: <number>}
+# {type: uniform, lower: <number>, upper: <number>}
+# percentages are represented by their decimal value, e.g., 4% is represented as 0.04.
+
+name: "rebalance"
+maritalStatus: individual # couple or individual
+birthYears: [2025] # a list with length 1 or 2, depending on maritalStatus. if len=2, the first entry is for the user; second entry, for the spouse.
+lifeExpectancy: [ {type: fixed, value: 19} ] # a list with length 1 or 2, depending on maritalStatus.
+
+investmentTypes:
+  - name: cash
+    description: cash
+    returnAmtOrPct: amount # "amount" or "percent"
+    returnDistribution: {type: fixed, value: 0}
+    expenseRatio: 0
+    incomeAmtOrPct: percent
+    incomeDistribution: {type: fixed, value: 0}
+    taxability: true # Boolean.  true = taxable, false = tax-exempt
+
+  - name: it1
+    description: d1
+    returnAmtOrPct: amount # whether expected annual return is specified as a dollar "amount" or a "percent"
+    returnDistribution: {type: fixed, value: 0} # distribution of expected annual return
+    expenseRatio: 0
+    incomeAmtOrPct: amount
+    incomeDistribution: {type: fixed, value: 0}
+    taxability: true
+
+  - name: it2
+    description: d2
+    returnAmtOrPct: amount # whether expected annual return is specified as a dollar "amount" or a "percent"
+    returnDistribution: {type: fixed, value: 1000}
+    expenseRatio: 0.01
+    incomeAmtOrPct: amount
+    incomeDistribution: {type: fixed, value: 0}
+    taxability: false
+
+# investment id is a unique identifier.  without it, we would need to use a pair (investment type, tax status) to identify an investment.
+investments:
+  - investmentType: cash
+    value: 0
+    taxStatus: non-retirement # "non-retirement", "pre-tax", or "after-tax"
+    id: cash
+
+  - investmentType: it1
+    value: 1000
+    taxStatus: non-retirement
+    id: i1
+    
+  - investmentType: it2
+    value: 100
+    taxStatus: non-retirement
+    id: i2
+
+eventSeries:
+  - name: wages
+    start: {type: fixed, value: 2026} # a fixed, normal, or uniform distribution (as above) or a map with the form {type: startWith, eventSeries: <name>} or {type: startAfter, eventSeries: <name>}
+    duration: {type: fixed, value: 1}
+    type: income # "income", "expense", "invest", or "rebalance"
+    initialAmount: 62000
+    changeAmtOrPct: amount
+    changeDistribution: {type: fixed, value: 0}
+    inflationAdjusted: true # boolean
+    userFraction: 1.0 # fraction of the amount associated with the user.  the rest is associated with the spouse.
+    socialSecurity: false  # boolean
+
+  - name: r1
+    start: {type: fixed, value: 2026}
+    duration: {type: fixed, value: 2}
+    type: rebalance
+    assetAllocation: {i1: 0.6, i2: 0.4}
+
+inflationAssumption: {type: fixed, value: 0}
+afterTaxContributionLimit: 7000 # annual limit on contributions to after-tax retirement accounts
+spendingStrategy: []  # list of discretionary expenses, identified by name
+expenseWithdrawalStrategy: [i1, i2] # list of investments, identified by id
+RMDStrategy: [] # list of pre-tax investments, identified by id
+RothConversionOpt: false   # boolean indicating whether the Roth Conversion optimizer is enabled
+financialGoal: 63000
+residenceState: AK  # states are identified by standard 2-letter abbreviations

@@ -111,7 +111,7 @@ async function loadRMDTable() {
 
 async function simulateScenario(scenario) {
     console.log('=== Starting Financial Simulation ===');
-    console.log(`Scenario: ${scenario.name}`);
+    console.log(`Scenario: ${scenario.name}\n`);
     const currentYear = new Date().getFullYear();
     const life_expectancy = scenario.life_expectancy_type === "fixed" ? scenario.life_expectancy_value : sampleNormal(scenario.life_expectancy_mean, scenario.life_expectancy_std_dev);
     const spouse_life_expectancy = scenario.is_married ?
@@ -170,7 +170,11 @@ async function simulateScenario(scenario) {
     for (const event of state.events) {
         if (event.start_year_type !== 'fixed' && !event.start_year_value) {
             const startYear = await getEventStartYear(event, state.events);
-            if (startYear) {
+            if (startYear === -1) {
+                //cyclic error
+                console.log("Ending Simulation")
+                return null     
+            } else {
                 event.start_year_value = startYear;
             }
         }
@@ -346,7 +350,15 @@ function updateTaxBrackets(state, inflationRate) {
     }
 }
 
-async function getEventStartYear(event, allEvents) {
+async function getEventStartYear(event, allEvents, path = []) {
+    if (path.includes(event.name)) {
+        const cyclePath = [...path, event.name].join(" -> ");
+        console.error(`Cyclic dependency detected in start years: ${cyclePath}`);
+        return -1
+    }
+
+    const newPath = [...path, event.name];
+
     switch (event.start_year_type) {
         case 'fixed':
             return event.start_year_value;
@@ -356,11 +368,10 @@ async function getEventStartYear(event, allEvents) {
             return Math.round(sampleUniform(event.start_year_lower, event.start_year_upper));
         case 'with_event':
             const otherEvent = allEvents.find(e => e.name === event.start_year_other_event);
-            return otherEvent ? await getEventStartYear(otherEvent, allEvents) : null;
+            return await getEventStartYear(otherEvent, allEvents, newPath);
         case 'after_event':
             const targetEvent = allEvents.find(e => e.name === event.start_year_other_event);
-            if (!targetEvent) return null;
-            const targetStart = await getEventStartYear(targetEvent, allEvents);
+            const targetStart = await getEventStartYear(targetEvent, allEvents, newPath);
             const targetDuration = await getEventDuration(targetEvent);
             return targetStart + targetDuration;
         default:

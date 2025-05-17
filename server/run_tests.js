@@ -167,6 +167,12 @@ function parseScenarioFromYAML(yamlText) {
 			if (ev.type === "invest") base.max_cash = ev.maxCash;
 		}
 
+		if (base.start_year_type === 'startWith') {
+			base.start_year_type = 'with_event';
+		} else if (base.start_year_type === 'startAfter') {
+			base.start_year_type = 'after_event';
+		}
+
 		scenario.EventSeries.push(base);
 	});
 
@@ -185,6 +191,7 @@ async function runTest() {
 	const yamlFiles = files.filter(file => file.endsWith(".yaml"));
 	console.log(yamlFiles)
     for (const file of yamlFiles) {
+
         const filePath = path.join(logDir, file);
         const fileContents = fs.readFileSync(filePath, "utf8");
 

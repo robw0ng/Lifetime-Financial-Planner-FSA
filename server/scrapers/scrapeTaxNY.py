@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import yaml
 
 # URL of the webpage
-url = "https://www.tax.ny.gov/forms/html-instructions/2022/it/it201i-2022.htm#nys-tax-rate-schedule"
+url = "https://www.tax.ny.gov/forms/current-forms/it/it201i.htm#nys-tax-rate-schedule"
 
 # Initialize WebDriver
 driver = webdriver.Chrome()
