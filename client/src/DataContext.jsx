@@ -1360,7 +1360,7 @@ export const DataProvider = ({ children }) => {
   };
 
   const runSimulation = async (scenarioId, simCount) => {
-    console.log("penis");
+
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/sims/simulate/${scenarioId}`,

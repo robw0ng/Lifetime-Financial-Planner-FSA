@@ -149,8 +149,15 @@ function Summary(){
     setSimStyle,
     setSimStyle2,
     selectedScenario,
-    selectedEventSeries
+    selectedEventSeries,
+    setChartStrings,
   } = useSelected();
+
+  const {
+    updateChartConfigs,
+    fetchLatestSimulation,
+    latestSimulation
+  } = useData();
   // guard in case there’s no scenario yet:
 
   function selectRegular(){
@@ -163,6 +170,7 @@ function Summary(){
 
   function selectTwoDim(){
     setSimStyle(2);
+    console.log(simStyle);
   }
 
   function selectRO1(){
@@ -236,6 +244,8 @@ function Summary(){
 
     try{
       runSimulation(selectedScenario.id, regularData.numRuns);
+      await updateChartConfigs(latestSimulation.id, null);
+      setChartStrings([]);
     }catch(err){
       console.error("error running simulation:", err);
       return null;
@@ -743,65 +753,78 @@ function Summary(){
 
 
 function SuccessGraph() {
-  
-  const simStyle = 0;
+  const {
+    chartStrings,
+    setChartStrings,
+    selectedScenario,
+    setSelectedScenario,
+  } = useSelected();
 
-  const {chartStrings, setChartStrings,selectedScenario,setSelectedScenario} = useSelected();
+  const {
+    updateChartConfigs,
+    fetchLatestSimulation,
+    latestSimulation
+  } = useData();
 
-  const {updateChartConfigs, latestSimulation} = useData();
-  
-  const handleGenerate = async(e) =>{
-    
+  const handleGenerate = async (e) => {
     e.preventDefault();
-    try{
-      updateChartConfigs(latestSimulation.id, chartStrings);
-      const tempScenario = selectedScenario;
+    if (!latestSimulation?.id || !selectedScenario?.id) return;
+
+    try {
+      // 1) send new chartStrings to server
+      await updateChartConfigs(latestSimulation.id, chartStrings);
+
+      // 2) pull back the updated simulation into context
+      await fetchLatestSimulation(selectedScenario.id);
+
+      // 3) force the parent to rerun its effect & re-render
+      const tmp = selectedScenario;
       setSelectedScenario(null);
-      setSelectedScenario(tempScenario);
-    }catch(err){
-      console.log(err);
+      setSelectedScenario(tmp);
+    } catch (err) {
+      console.error('Error generating charts:', err);
     }
-
-
-  }
-
-  const handleRemove = (indexToRemove) => {
-    setChartStrings(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
+
+  const handleRemove = (idx) =>
+    setChartStrings(prev => prev.filter((_, i) => i !== idx));
 
   return (
     <div className={styles['outer-container']}>
-        <div className={styles['inner-container']}>
-    <div>
-      <Link to="/create-chart" className={styles['action-button']}>
-        <button className={`${styles['action-button']} ${styles['create']}`}>
-          Add a chart to generate
-        </button>
-      </Link>
+      <div className={styles['inner-container']}>
+        <Link to="/create-chart">
+          <button
+            className={`${styles['action-button']} ${styles['create']}`}
+          >
+            Add a chart to generate
+          </button>
+        </Link>
 
-      {/* only show the list if there’s at least one chart */}
-      {chartStrings && chartStrings.length > 0 && (
-        <ul className={styles['chart-list']}>
-          {chartStrings.map((chartName, idx) => (
-            <li key={idx} className={styles['chart-list-item']}>
-              {chartName}
-              <button
-                type="button"
-                className={styles['remove-button']}
-                onClick={() => handleRemove(idx)}
-                aria-label={`Remove ${chartName}`}
-              >
-                &times;
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-        <button className={`${styles['action-button']} ${styles['create']}`} onClick = {handleGenerate}>
+        {chartStrings && chartStrings.length > 0 && (
+          <ul className={styles['chart-list']}>
+            {chartStrings.map((name, idx) => (
+              <li key={idx} className={styles['chart-list-item']}>
+                {name}
+                <button
+                  type="button"
+                  className={styles['remove-button']}
+                  onClick={() => handleRemove(idx)}
+                  aria-label={`Remove ${name}`}
+                >
+                  &times;
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <button
+          className={`${styles['action-button']} ${styles['create']}`}
+          onClick={handleGenerate}
+        >
           generate charts
         </button>
-    </div>
-    </div>
+      </div>
     </div>
   );
 }
@@ -820,54 +843,84 @@ function InvestmentsGraph(){
 }
 
 function CustomDropdown({ items }) {
-  const [open, setOpen] = useState(false);
-  const {selectedChart, setSelectedChart} = useSelected();
-  const ref = useRef(null);
-
-  // close when clicking outside
-  useEffect(() => {
-    const onClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, []);
+  const { selectedScenario, selectedChart, setSelectedChart } = useSelected();
+  if (!selectedScenario) return null;
 
   return (
-    <div className={styles.dropdown} ref={ref}>
-      <button
-        type="button"
-        className={styles.toggle}
-        onClick={() => setOpen((o) => !o)}
-      >
-        {selectedChart} ▾
-      </button>
-
-      {open && (
-        <ul className={styles.menu}>
-          {items.map((item) => (
-            <li
-              key={item}
-              className={styles.item}
-              onClick={() => {
-                setSelectedChart(item);
-                setOpen(false);
-              }}
-            >
+    <div className={styles['options']}>
+      <label>
+        Choose chart:
+        <select
+          value={selectedChart || ''}
+          onChange={e => setSelectedChart(e.target.value)}
+        >
+          <option value="" disabled>
+            -- select an option --
+          </option>
+          {(items) && items.map(item => (
+            <option key={item} value={item}>
               {item}
-            </li>
+            </option>
           ))}
-        </ul>
-      )}
+        </select>
+      </label>
     </div>
   );
 }
 
 
+// function CustomDropdown({ items }) {
+//   const [open, setOpen] = useState(false);
+//   const {selectedChart, setSelectedChart, selectedScenario} = useSelected();
+//   const ref = useRef(null);
+
+//   // close when clicking outside
+//   useEffect(() => {
+//     const onClick = (e) => {
+//       if (ref.current && !ref.current.contains(e.target)) {
+//         setOpen(false);
+//       }
+//     };
+//     document.addEventListener('mousedown', onClick);
+//     return () => document.removeEventListener('mousedown', onClick);
+//   }, []);
+
+//   if(!selectedScenario){
+//     return <></>
+//   }
+//   return (
+//     <div className={styles.dropdown} ref={ref}>
+//       <button
+//         type="button"
+//         className={styles.toggle}
+//         onClick={() => setOpen((o) => !o)}
+//       >
+//         {selectedChart} ▾
+//       </button>
+
+//       {open && (
+//         <ul className={styles.menu}>
+//           {items.map((item) => (
+//             <li
+//               key={item}
+//               className={styles.item}
+//               onClick={() => {
+//                 setSelectedChart(item);
+//                 setOpen(false);
+//               }}
+//             >
+//               {item}
+//             </li>
+//           ))}
+//         </ul>
+//       )}
+//     </div>
+//   );
+// }
+
+
 export default function Simulations(){
-    const {chartStrings, setChartStrings, selectedChart, setSelectedSim, selectedSim,selectedScenario} = useSelected();
+    const {chartStrings, setChartStrings, selectedChart, setSelectedChart, setSelectedSim, selectedSim,selectedScenario, reloadKey, setReloadKey} = useSelected();
     const {fetchLatestSimulation,latestSimulation,setLatestSimulation} = useData();
 
     useEffect(() => {
@@ -876,10 +929,14 @@ export default function Simulations(){
         setSelectedSim((fetchLatestSimulation(selectedScenario.id)));
         console.log("should show null");
         console.log(latestSimulation);
+        setSelectedChart(null);
       }else{
         setLatestSimulation(0);
+        
       }
     }, [selectedScenario]);
+
+
     return (
         <div className={styles['dashboard']}>
             <div className={`${styles['column']} ${styles['col-1']}`}> 
@@ -892,7 +949,7 @@ export default function Simulations(){
               {/* <SuccessGraph /> */}
               <div className={styles['outer-container']}>
               
-                <div className={styles['inner-container']}>
+                <div className={styles['inner-container']} key ={ reloadKey} >
                 
                 { (latestSimulation && !latestSimulation.charts_updated_flag)
                     ? (
@@ -902,13 +959,19 @@ export default function Simulations(){
                     )
                     : (
                       <>
+                        {
+                        (latestSimulation) &&
+                        (<div>
                         <CustomDropdown items={latestSimulation.chart_configs} />
                         <ParseChartString command={selectedChart} />
+                        </div>)
+
+                        }
                       </>
                     )
                 }
               
-                { (latestSimulation == 0) &&
+                { (latestSimulation == 0 && selectedScenario) &&
                   (<div>
                     You gotta run a sim!
                   </div>)

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from './DataContext';
 import { useSelected } from './SelectedContext';
@@ -13,6 +13,10 @@ export default function CreateChartString() {
     aggregationThreshold: '',
   });
 
+
+  useEffect(() => {
+    console.log('simStyle changed to', simStyle);
+  }, [simStyle]);
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -41,7 +45,7 @@ export default function CreateChartString() {
 
   if (simStyle === 0) {
     return (
-      <div>
+      <div className="create-event-series-container">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Chart Type</label>
@@ -129,7 +133,7 @@ export default function CreateChartString() {
     );
   } else if (simStyle === 1) {
     return (
-      <div>
+      <div className="create-event-series-container">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Chart Type</label>
@@ -182,14 +186,11 @@ export default function CreateChartString() {
                   <option value="" disabled>
                     -- select one --
                   </option>
-                  <option value="prob_of_success">
+                  <option value="final_probability_of_success">
                     Final probability of success
                   </option>
                   <option value="median_total_investments">
                     Final median total investments
-                  </option>
-                  <option value="average_total_investments">
-                    Final average total investments
                   </option>
                 </select>
               </div>
@@ -206,7 +207,81 @@ export default function CreateChartString() {
         </form>
       </div>
     );
-  } else {
-    return null;
+  }  else if (simStyle === 2) {
+    return (
+      <div className="create-event-series-container">
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Chart Type</label>
+            <select
+              name="chartType"
+              value={formData.chartType}
+              onChange={handleChange}
+              required
+            >
+              <option value="" disabled>
+                -- select one --
+              </option>
+              <option value="surface">surface</option>
+              <option value="contour">contour</option>
+            </select>
+          </div>
+
+          {formData.chartType === 'surface' && (
+            <div className="form-group">
+              <label>Metric</label>
+              <select
+                name="selectedQuantity"
+                value={formData.selectedQuantity}
+                onChange={handleChange}
+                required
+              >
+                <option value="" disabled>
+                  -- select one --
+                </option>
+                <option value="prob_of_success">
+                  Probability of success
+                </option>
+                <option value="median_total_investments">
+                  Median total investments
+                </option>
+                <option value="average_total_investments">
+                  Average total investments
+                </option>
+              </select>
+            </div>
+          )}
+          {formData.chartType === 'contour' && (
+            <div className="form-group">
+              <label>Metric</label>
+              <select
+                name="selectedQuantity"
+                value={formData.selectedQuantity}
+                onChange={handleChange}
+                required
+              >
+                <option value="" disabled>
+                  -- select one --
+                </option>
+                <option value="prob_of_success">
+                  Probability of success
+                </option>
+                <option value="median_total_investments">
+                  Median total investments
+                </option>
+                <option value="average_total_investments">
+                  Average total investments
+                </option>
+              </select>
+            </div>
+          )}
+          
+
+          <button type="submit">Add chart</button>
+        </form>
+      </div>
+    );
+  }else{
+    null
   }
 }

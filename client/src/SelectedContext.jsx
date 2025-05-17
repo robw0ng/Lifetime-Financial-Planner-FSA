@@ -17,7 +17,7 @@ export const SelectedProvider = ({ children }) => {
     const [selectedChart, setSelectedChart] = useState(null);
     const [chartStrings, setChartStrings] = useState(new Array());
     const [selectedSim, setSelectedSim] = useState(null);
-
+    const [reloadKey, setReloadKey] = useState(null);
     const deselectScenario = () => {
         setSelectedScenario(null);
         setSelectedInvestmentType(null);
@@ -79,7 +79,8 @@ export const SelectedProvider = ({ children }) => {
         deselectInvestment, 
         deselectEventSeries,
         deselectStrategy,
-        deselectStrategyItem
+        deselectStrategyItem,
+        reloadKey
         }}>
             {children}
         </SelectedContext.Provider>
